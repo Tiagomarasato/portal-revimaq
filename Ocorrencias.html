@@ -117,38 +117,6 @@
         return () => clearInterval(checkFirebase);
       }, []);
 
-      // FUNÇÃO PARA ZERAR O BANCO DE DADOS
-      const handleResetDatabase = async () => {
-          const confirm1 = window.confirm("ATENÇÃO: Você está prestes a apagar TODOS os registros, clientes e emitentes do banco de dados! Esta ação é irreversível. Deseja continuar?");
-          if (!confirm1) return;
-
-          const confirm2 = window.prompt("Para confirmar a exclusão de TUDO, digite a frase: 'APAGAR TUDO'");
-          if (confirm2 !== "APAGAR TUDO") {
-              alert("Operação cancelada. A frase digitada não confere.");
-              return;
-          }
-
-          setIsLoading(true);
-          try {
-              const { doc, deleteDoc } = window.firebaseAPI;
-              for (const record of records) await deleteDoc(doc(dbRef.current, "ocorrencias", record.idDb));
-              for (const cliente of clientes) await deleteDoc(doc(dbRef.current, "clientes", cliente.id));
-              for (const emitente of emitentes) await deleteDoc(doc(dbRef.current, "emitentes", emitente.id));
-              for (const area of areas) await deleteDoc(doc(dbRef.current, "areas", area.id));
-              for (const processo of processos) await deleteDoc(doc(dbRef.current, "processos", processo.id));
-              for (const titulo of titulos) await deleteDoc(doc(dbRef.current, "titulos", titulo.id));
-              for (const resp of responsaveis) await deleteDoc(doc(dbRef.current, "responsaveis", resp.id));
-
-              alert("O Banco de Dados foi zerado com sucesso!");
-              setCurrentView('dashboard');
-          } catch (error) {
-              console.error("Erro ao zerar banco:", error);
-              alert("Ocorreu um erro ao tentar apagar os dados.");
-          } finally {
-              setIsLoading(false);
-          }
-      };
-
       // CARREGAMENTO DE DADOS (CONEXÃO DIRETA SEM LOGIN)
       useEffect(() => {
         if (!isFirebaseReady || !dbRef.current) return;
@@ -234,7 +202,7 @@
         titulo: '',
         descricao: '',
         efeito: '',
-        procedente: 'PENDENTE',
+        procedente: '',
         disposicao: '',
         acaoImediata: '',
         respDisposicao: '',
@@ -702,10 +670,6 @@
               <button onClick={() => setCurrentView('list')} className={`flex items-center space-x-1 px-3 py-2 rounded-md text-sm font-medium transition-colors ${currentView === 'list' ? 'bg-slate-800 text-indigo-400 border-b-2 border-indigo-500' : 'hover:bg-slate-800'}`}><i className="ph ph-list-bullets text-lg uppercase uppercase"></i> <span className="hidden lg:block uppercase uppercase">CONTROLE (8.7)</span></button>
               <button onClick={() => setCurrentView('rnc')} className={`flex items-center space-x-1 px-3 py-2 rounded-md text-sm font-medium transition-colors ${currentView === 'rnc' ? 'bg-slate-800 text-indigo-400 border-b-2 border-indigo-500' : 'hover:bg-slate-800'}`}><i className="ph ph-folder-warning text-lg uppercase uppercase"></i> <span className="hidden lg:block uppercase uppercase">RNC (10.2)</span></button>
               <button onClick={() => { setFormData(initialState); setIsEditing(false); setIsRncLocked(false); setCurrentView('form'); }} className="bg-indigo-600 hover:bg-indigo-700 px-4 py-2 rounded-md text-sm font-medium flex items-center space-x-1 shadow-lg active:scale-95 transition-all uppercase uppercase ml-2"><i className="ph ph-plus-circle text-lg uppercase uppercase"></i> <span className="hidden sm:block uppercase uppercase">LANÇAR</span></button>
-              
-              <button onClick={handleResetDatabase} className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md text-sm font-medium flex items-center space-x-1 shadow-lg active:scale-95 transition-all uppercase ml-2" title="ZERAR BANCO DE DADOS">
-                 <i className="ph ph-trash text-lg uppercase"></i> <span className="hidden sm:block uppercase">ZERAR BD</span>
-              </button>
             </div>
           </div>
         </nav>
@@ -961,7 +925,7 @@
                       <button type="button" onClick={handleEditTitulo} className="bg-amber-100 text-amber-700 font-bold px-3 rounded-xl hover:bg-amber-200 transition-colors uppercase uppercase uppercase" title="EDITAR SELECIONADO"><i className="ph ph-pencil-simple text-lg"></i></button>
                     </div>
                   </div>
-                  <div className="uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase"><label className="block text-[10px] font-black text-slate-400 uppercase mb-2 uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">PROCEDENTE?</label><select name="procedente" value={formData.procedente} onChange={handleInputChange} className="w-full bg-slate-50 border border-slate-200 text-sm rounded-xl p-3 font-black text-indigo-600 focus:ring-2 focus:ring-indigo-500 transition-all uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase"><option value="PENDENTE">PENDENTE</option><option value="SIM">SIM</option><option value="NÃO">NÃO</option></select></div>
+                  <div className="uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase"><label className="block text-[10px] font-black text-slate-400 uppercase mb-2 uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">PROCEDENTE?</label><select name="procedente" value={formData.procedente} onChange={handleInputChange} className="w-full bg-slate-50 border border-slate-200 text-sm rounded-xl p-3 font-black text-indigo-600 focus:ring-2 focus:ring-indigo-500 transition-all uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase"><option value="">SELECIONE...</option><option value="SIM">SIM</option><option value="NÃO">NÃO</option></select></div>
                 </div>
                 <div className="uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase"><label className="block text-[10px] font-black text-slate-400 uppercase mb-2 uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">O QUE OCORREU? (DETALHES) *</label><textarea name="descricao" required rows="3" value={formData.descricao} onChange={handleInputChange} className="w-full bg-slate-50 border border-slate-200 text-sm rounded-2xl p-4 outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase"></textarea></div>
                 <div className="uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase"><label className="block text-[10px] font-black text-slate-400 uppercase mb-2 uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">EFEITO / CONSEQUÊNCIA</label><textarea name="efeito" rows="2" value={formData.efeito} onChange={handleInputChange} className="w-full bg-slate-50 border border-slate-200 text-sm rounded-2xl p-4 outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase"></textarea></div>
