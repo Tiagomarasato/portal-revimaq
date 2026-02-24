@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Portal Corporativo - REVIMAQ</title>
+  
+  <!-- Estilos e Bibliotecas Externas -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/@phosphor-icons/web"></script>
+  <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+  <!-- FIREBASE GLOBAL -->
+  <script src="https://www.gstatic.com/firebasejs/11.6.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/11.6.1/firebase-auth-compat.js"></script>
+  <!-- Nova Biblioteca: Banco de Dados para gerir aprovações -->
+  <script src="https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore-compat.js"></script>
+
+  <style>
+    * { text-transform: uppercase !important; }
+    input[type="email"], input[type="password"] { text-transform: none !important; }
+    input::placeholder { text-transform: uppercase !important; }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .animate-fade-in { animation: fadeIn 0.5s ease-out forwards; }
+    
+    .stagger-1 { animation-delay: 0.1s; }
+    .stagger-2 { animation-delay: 0.2s; }
+    .stagger-3 { animation-delay: 0.3s; }
+    .stagger-4 { animation-delay: 0.4s; }
+    .stagger-5 { animation-delay: 0.5s; }
+    .stagger-6 { animation-delay: 0.6s; }
+  </style>
+</head>
+<body class="bg-slate-100 font-sans text-slate-800 uppercase">
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useState, useEffect } = React;
+
+    // Função de Segurança para evitar Carregamento Infinito (Corta aos 8 segundos)
+    const fetchWithTimeout = async (promise, ms = 8000) => {
+      return Promise.race([
+        promise,
+        new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), ms))
+      ]);
+    };
+
+    // ==========================================
+    // COMPONENTE: ECRÃ DE LOGIN E REGISTO
+    // ==========================================
+    function LoginScreen({ onLoginSuccess }) {
+      const [isRegistering, setIsRegistering] = useState(false);
+      const [isResettingPassword, setIsResettingPassword] = useState(false);
+      const [email, setEmail] = useState('');
+      const [password, setPassword] = useState('');
+      const [name, setName] = useState('');
+      const [loading, setLoading] = useState(false);
+      const [error, setError] = useState('');
+      const [successMsg, setSuccessMsg] = useState('');
+
+      const handleSubmit = async (e) => {
+        e.preventDefault();
+        setLoading(true);
+        setError('');
+        setSuccessMsg('');
+
+        try {
+          const auth = firebase.auth();
+          const db = firebase.firestore();
+
+          if (isResettingPassword) {
+            // RECUPERAÇÃO DE PALAVRA-PASSE
+            await fetchWithTimeout(auth.sendPasswordResetEmail(email));
+            setSuccessMsg('Link de recuperação enviado! Verifique a sua caixa de e-mail e a pasta de SPAM.');
+            setIsResettingPassword(false);
+            setPassword('');
+          } else if (isRegistering) {
+            // 1. Cria a conta no Auth
+            const userCredential = await auth.createUserWithEmailAndPassword(email, password);
+            await userCredential.user.updateProfile({ displayName: name });
+            
+            // 2. Guarda o utilizador no Banco de Dados com estado "pendente" (com proteção de tempo)
+            await fetchWithTimeout(db.collection('usuarios').doc(userCredential.user.uid).set({
+              nome: name,
+              email: email,
+              status: 'pendente',
+              dataCadastro: new Date().toISOString()
+            }));
+
+            // 3. Desliga a sessão imediatamente e avisa o utilizador
+            await auth.signOut();
+            setIsRegistering(false);
+            setEmail('');
+            setPassword('');
+            setSuccessMsg('Cadastro realizado com sucesso! O seu acesso está em análise. Aguarde a liberação da TI para poder iniciar sessão.');
+            
+          } else {
+            // LOGIN: Verifica as credenciais
+            const userCredential = await auth.signInWithEmailAndPassword(email, password);
+            
+            // Verifica no Banco de Dados se ele tem permissão ('aprovado') com proteção de tempo
+            const userDoc = await fetchWithTimeout(db.collection('usuarios').doc(userCredential.user.uid).get());
+            
+            if (userDoc.exists) {
+              const userData = userDoc.data();
+              if (userData.status === 'aprovado') {
+                // Acesso Livre
+                onLoginSuccess({ name: userCredential.user.displayName, email: userCredential.user.email });
+              } else {
+                // Acesso Bloqueado
+                await auth.signOut();
+                setError('O seu acesso ainda está pendente de aprovação pela TI. Aguarde a liberação.');
+              }
+            } else {
+              // UTILIZADOR ANTIGO (Aprovação automática para o Tiago não ficar trancado)
+              await fetchWithTimeout(db.collection('usuarios').doc(userCredential.user.uid).set({
+                nome: userCredential.user.displayName || 'Usuário',
+                email: userCredential.user.email,
+                status: 'aprovado',
+                dataCadastro: new Date().toISOString()
+              }));
+              onLoginSuccess({ name: userCredential.user.displayName, email: userCredential.user.email });
+            }
+          }
+        } catch (err) {
+          console.error("Erro detalhado:", err);
+          if (err.message === 'timeout') setError('Tempo limite! O Banco de Dados não foi criado no Firebase ou a sua rede corporativa está a bloquear a ligação.');
+          else if (err.code === 'auth/email-already-in-use') setError('Este e-mail já está registado. Tente iniciar sessão.');
+          else if (err.code === 'auth/invalid-credential' || err.code === 'auth/user-not-found' || err.code === 'auth/wrong-password') {
+            if (isResettingPassword) setError('Não encontrámos nenhuma conta com este e-mail.');
+            else setError('Credenciais inválidas. Verifique o seu e-mail e palavra-passe.');
+          }
+          else if (err.code === 'auth/weak-password') setError('A palavra-passe deve ter pelo menos 6 caracteres.');
+          else if (err.message && err.message.includes('permission-denied')) setError('Erro de permissão no Banco de Dados (Firestore). Verifique as regras de segurança.');
+          else setError("Erro do sistema: " + err.message);
+        }
+        setLoading(false);
+      };
+
+      return (
+        <div className="min-h-screen flex items-center justify-center px-6 bg-[url('https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?auto=format&fit=crop&q=80&w=2000')] bg-cover bg-center">
+          <div className="absolute inset-0 bg-slate-900/80 backdrop-blur-sm"></div>
+          
+          <div className="relative z-10 bg-white rounded-[2rem] p-10 shadow-2xl w-full max-w-md animate-fade-in border-2 border-slate-100">
+            <div className="flex flex-col items-center mb-8">
+              <div className="bg-indigo-600 p-3.5 rounded-2xl shadow-lg mb-4">
+                <i className="ph-bold ph-squares-four text-4xl text-white"></i>
+              </div>
+              <h1 className="font-black text-2xl tracking-widest uppercase text-slate-800">REVIMAQ</h1>
+              <p className="text-xs text-indigo-500 font-bold tracking-[0.2em] uppercase mt-1">
+                {isResettingPassword ? 'Recuperação de Senha' : (isRegistering ? 'Cadastro de Acesso' : 'Portal Corporativo')}
+              </p>
+            </div>
+
+            {error && (
+              <div className="bg-red-50 text-red-600 p-4 rounded-xl mb-6 text-xs font-bold text-center border border-red-200 flex items-center justify-center gap-2">
+                <i className="ph-fill ph-warning-circle text-lg"></i>
+                {error}
+              </div>
+            )}
+
+            {successMsg && !isRegistering && (
+              <div className="bg-green-50 text-green-700 p-4 rounded-xl mb-6 text-xs font-bold text-center border border-green-200 flex flex-col items-center gap-2">
+                <i className="ph-fill ph-check-circle text-2xl"></i>
+                {successMsg}
+              </div>
+            )}
+
+            <form onSubmit={handleSubmit} className="space-y-4">
+              {isRegistering && (
+                <div>
+                  <label className="block text-[10px] font-black text-slate-400 tracking-widest mb-2 ml-1">Nome Completo</label>
+                  <div className="relative">
+                    <i className="ph ph-user absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 text-lg"></i>
+                    <input type="text" required value={name} onChange={(e) => setName(e.target.value)}
+                           className="w-full bg-slate-50 border border-slate-200 text-slate-800 text-sm rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 block p-3.5 pl-11 transition-all" 
+                           placeholder="Escreva o seu nome" />
+                  </div>
+                </div>
+              )}
+
+              <div>
+                <label className="block text-[10px] font-black text-slate-400 tracking-widest mb-2 ml-1">E-mail Corporativo</label>
+                <div className="relative">
+                  <i className="ph ph-envelope-simple absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 text-lg"></i>
+                  <input type="email" required value={email} onChange={(e) => setEmail(e.target.value)}
+                         className="w-full bg-slate-50 border border-slate-200 text-slate-800 text-sm rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 block p-3.5 pl-11 transition-all" 
+                         placeholder="seu.email@revimaq.com" />
+                </div>
+              </div>
+
+              {!isResettingPassword && (
+                <div>
+                  <div className="flex justify-between items-center mb-2">
+                    <label className="block text-[10px] font-black text-slate-400 tracking-widest ml-1">Senha de Acesso</label>
+                    {!isRegistering && (
+                      <button type="button" onClick={() => { setIsResettingPassword(true); setError(''); setSuccessMsg(''); }} className="text-[9px] text-indigo-500 hover:text-indigo-700 font-bold tracking-wider transition-colors">
+                        ESQUECEU A SENHA?
+                      </button>
+                    )}
+                  </div>
+                  <div className="relative">
+                    <i className="ph ph-lock-key absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 text-lg"></i>
+                    <input type="password" required value={password} onChange={(e) => setPassword(e.target.value)}
+                           className="w-full bg-slate-50 border border-slate-200 text-slate-800 text-sm rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 block p-3.5 pl-11 transition-all" 
+                           placeholder="••••••••" />
+                  </div>
+                </div>
+              )}
+
+              <button type="submit" disabled={loading} 
+                      className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-black py-4 rounded-xl text-xs tracking-widest transition-all shadow-md hover:shadow-lg active:scale-95 flex justify-center items-center mt-6">
+                {loading ? <i className="ph-bold ph-spinner animate-spin text-2xl"></i> : (isResettingPassword ? 'ENVIAR LINK DE RECUPERAÇÃO' : (isRegistering ? 'CRIAR CONTA' : 'ENTRAR NO SISTEMA'))}
+              </button>
+            </form>
+
+            <div className="mt-8 pt-6 border-t border-slate-100 text-center">
+              <button onClick={() => { setIsRegistering(false); setIsResettingPassword(false); setError(''); setSuccessMsg(''); }} type="button" 
+                      className="text-[10px] text-slate-500 hover:text-indigo-600 font-bold tracking-wider transition-colors flex items-center justify-center w-full gap-2">
+                {(isRegistering || isResettingPassword) ? (
+                  <><i className="ph-bold ph-arrow-left"></i> Voltar para o Login</>
+                ) : (
+                  <>Primeiro acesso? <span className="text-indigo-600">Solicite aqui</span> <i className="ph-bold ph-arrow-right"></i></>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+
+    // ==========================================
+    // COMPONENTE: DASHBOARD (O SEU CÓDIGO ORIGINAL)
+    // ==========================================
+    function PortalDashboard({ portalUser, onLogout }) {
+      const [currentDate, setCurrentDate] = useState('');
+
+      useEffect(() => {
+        const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+        setCurrentDate(new Date().toLocaleDateString('pt-PT', options));
+      }, []);
+
+      const aplicativos = [
+        { id: 1, nome: "Gestão de Ocorrências", subtitulo: "ISO 9001:2015 - REVIMAQ", descricao: "Controle de Saídas Não Conformes (8.7) e Ações Corretivas (10.2).", icone: "ph-shield-check", cor: "indigo", status: "Operacional", link: "ocorrencias.html", delay: "stagger-1" },
+        { id: 2, nome: "Controle de Documentos", descricao: "Gestão de informações documentadas (manuais, procedimentos, formulários).", icone: "ph-files", cor: "emerald", status: "Em Breve", link: "#", delay: "stagger-2" },
+        { id: 3, nome: "Gestão de Ativos e Manutenção", descricao: "Controle de manutenções preventivas e corretivas de equipamentos.", icone: "ph-wrench", cor: "amber", status: "Em Breve", link: "#", delay: "stagger-3" },
+        { id: 4, nome: "Portal do Colaborador", descricao: "Recursos Humanos, holerites, controle de ponto e comunicados internos.", icone: "ph-users-three", cor: "sky", status: "Em Desenvolvimento", link: "#", delay: "stagger-4" },
+        { id: 5, nome: "Avaliação de Fornecedores", descricao: "Gestão e qualificação de parceiros comerciais e prestadores de serviço.", icone: "ph-truck", cor: "rose", status: "Em Breve", link: "#", delay: "stagger-5" },
+        { id: 6, nome: "Indicadores de Desempenho (KPI)", descricao: "Painel de resultados, metas e análise de dados estratégicos em nuvem.", icone: "ph-chart-line-up", cor: "violet", status: "Operacional", link: "indicador.html", delay: "stagger-6" }
+      ];
+
+      const getColorClasses = (colorName) => {
+        const colors = {
+          indigo: { bg: 'bg-indigo-500', text: 'text-indigo-600', lightBg: 'bg-indigo-50', hover: 'hover:bg-indigo-600', border: 'border-indigo-100' },
+          emerald: { bg: 'bg-emerald-500', text: 'text-emerald-600', lightBg: 'bg-emerald-50', hover: 'hover:bg-emerald-600', border: 'border-emerald-100' },
+          amber: { bg: 'bg-amber-500', text: 'text-amber-600', lightBg: 'bg-amber-50', hover: 'hover:bg-amber-600', border: 'border-amber-100' },
+          sky: { bg: 'bg-sky-500', text: 'text-sky-600', lightBg: 'bg-sky-50', hover: 'hover:bg-sky-600', border: 'border-sky-100' },
+          rose: { bg: 'bg-rose-500', text: 'text-rose-600', lightBg: 'bg-rose-50', hover: 'hover:bg-rose-600', border: 'border-rose-100' },
+          violet: { bg: 'bg-violet-500', text: 'text-violet-600', lightBg: 'bg-violet-50', hover: 'hover:bg-violet-600', border: 'border-violet-100' },
+          default: { bg: 'bg-slate-500', text: 'text-slate-600', lightBg: 'bg-slate-50', hover: 'hover:bg-slate-600', border: 'border-slate-100' }
+        };
+        return colors[colorName] || colors.default;
+      };
+
+      return (
+        <div className="min-h-screen pb-16">
+          <nav className="bg-slate-900 text-white shadow-xl sticky top-0 z-50">
+            <div className="max-w-7xl mx-auto px-6 h-20 flex justify-between items-center">
+              <div className="flex items-center space-x-4">
+                <div className="bg-indigo-600 p-2.5 rounded-xl shadow-lg">
+                  <i className="ph-bold ph-squares-four text-[28px] text-white"></i>
+                </div>
+                <div>
+                  <h1 className="font-black text-xl tracking-widest uppercase">REVIMAQ</h1>
+                  <p className="text-[10px] text-indigo-300 font-bold tracking-[0.2em] uppercase">Portal Corporativo</p>
+                </div>
+              </div>
+              <div className="hidden md:flex items-center space-x-6 text-sm font-bold text-slate-300">
+                <span className="flex items-center"><i className="ph ph-calendar-blank mr-2 text-lg"></i> {currentDate}</span>
+                <div className="flex items-center space-x-3 bg-slate-800 px-4 py-2 rounded-lg border border-slate-700">
+                  <i className="ph-fill ph-user-circle text-2xl text-indigo-500"></i>
+                  <div className="flex flex-col">
+                    <span className="text-xs text-white leading-tight">{portalUser.name || 'Utilizador'}</span>
+                    <span className="text-[9px] text-slate-400 leading-tight">Acesso Autorizado</span>
+                  </div>
+                  <button onClick={onLogout} title="Sair" className="ml-3 p-1.5 bg-slate-700 hover:bg-red-500 hover:text-white rounded-md transition-colors text-slate-300">
+                    <i className="ph-bold ph-sign-out"></i>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </nav>
+
+          <main className="max-w-7xl mx-auto px-6 mt-12">
+            <div className="mb-12 opacity-0 animate-fade-in">
+              <h2 className="text-4xl font-black text-slate-800 tracking-tighter uppercase mb-2">Bem-vindo ao Workspace</h2>
+              <p className="text-slate-500 font-medium text-lg uppercase max-w-2xl">
+                Selecione o módulo desejado abaixo para aceder às ferramentas do Sistema de Gestão Integrada.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {aplicativos.map((app) => {
+                const colors = getColorClasses(app.cor);
+                const isOperacional = app.status === "Operacional";
+
+                return (
+                  <div key={app.id} className={`bg-white rounded-[2rem] p-8 shadow-sm border-2 ${colors.border} hover:shadow-2xl hover:-translate-y-2 transition-all duration-300 flex flex-col relative overflow-hidden group opacity-0 animate-fade-in ${app.delay}`}>
+                    <div className="flex justify-between items-start mb-6 z-10">
+                      <div className={`w-16 h-16 rounded-2xl flex items-center justify-center ${colors.lightBg} ${colors.text} shadow-inner`}>
+                        <i className={`ph ${app.icone} text-4xl`}></i>
+                      </div>
+                      <span className={`px-3 py-1 rounded-full text-[9px] font-black tracking-widest border ${isOperacional ? 'bg-green-50 text-green-600 border-green-200' : 'bg-slate-50 text-slate-400 border-slate-200'}`}>
+                        {app.status}
+                      </span>
+                    </div>
+
+                    <div className="flex-grow z-10">
+                      {app.subtitulo && (
+                        <div className={`inline-block mb-3 px-2 py-1 rounded-md text-[9px] font-black tracking-widest ${colors.lightBg} ${colors.text} border ${colors.border}`}>
+                          {app.subtitulo}
+                        </div>
+                      )}
+                      <h3 className="text-xl font-black text-slate-800 mb-3 uppercase tracking-tight">{app.nome}</h3>
+                      <p className="text-xs text-slate-500 font-medium leading-relaxed uppercase">
+                        {app.descricao}
+                      </p>
+                    </div>
+
+                    <div className="mt-8 pt-6 border-t border-slate-100 z-10">
+                      {isOperacional ? (
+                        <a href={app.link} className={`flex items-center justify-center w-full py-3.5 rounded-xl ${colors.bg} text-white font-black text-xs tracking-widest shadow-md ${colors.hover} active:scale-95 transition-all`}>
+                          ACESSAR SISTEMA <i className="ph-bold ph-arrow-right ml-2 text-lg"></i>
+                        </a>
+                      ) : (
+                        <button disabled className="flex items-center justify-center w-full py-3.5 rounded-xl bg-slate-100 text-slate-400 font-black text-xs tracking-widest cursor-not-allowed">
+                          MÓDULO INDISPONÍVEL <i className="ph-bold ph-lock-key ml-2 text-lg"></i>
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            <div className="mt-16 bg-white rounded-3xl p-8 border border-slate-200 shadow-sm opacity-0 animate-fade-in stagger-6 flex flex-col md:flex-row justify-between items-center uppercase">
+              <div className="flex items-center space-x-4 mb-4 md:mb-0">
+                <i className="ph-fill ph-info text-slate-300 text-3xl"></i>
+                <div>
+                  <h4 className="text-sm font-black text-slate-700 uppercase">Suporte Técnico de TI</h4>
+                  <p className="text-xs text-slate-400 uppercase">Dúvidas ou problemas de acesso? Ramal 404</p>
+                </div>
+              </div>
+              <div className="text-right">
+                <p className="text-[10px] font-black tracking-[0.2em] text-slate-400">VERSÃO DO PORTAL: 2.1.1</p>
+                <p className="text-[10px] font-bold text-slate-300 mt-1">SISTEMA INTEGRADO REVIMAQ © {new Date().getFullYear()}</p>
+              </div>
+            </div>
+          </main>
+        </div>
+      );
+    }
+
+
+    // ==========================================
+    // COMPONENTE RAIZ: GERE O FLUXO E AUTENTICAÇÃO
+    // ==========================================
+    function App() {
+      const [firebaseReady, setFirebaseReady] = useState(false);
+      const [portalUser, setPortalUser] = useState(null);
+
+      useEffect(() => {
+        const firebaseConfig = {
+          apiKey: "AIzaSyDTb8xLyEl1rUT0lqyFL-PctfY417NVoak",
+          authDomain: "portal-revimaq.firebaseapp.com",
+          projectId: "portal-revimaq",
+          storageBucket: "portal-revimaq.firebasestorage.app",
+          messagingSenderId: "426267826861",
+          appId: "1:426267826861:web:da053528212059479b4424"
+        };
+
+        try {
+          if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+          }
+          
+          const auth = firebase.auth();
+          const db = firebase.firestore();
+
+          // CORREÇÃO CRÍTICA: Fura bloqueios de firewall da rede corporativa da empresa!
+          db.settings({ experimentalForceLongPolling: true });
+
+          // Monitoriza a sessão ativa
+          auth.onAuthStateChanged(async (user) => {
+            if (user) {
+              try {
+                // Com proteção de tempo (se não tiver base de dados criada, corta nos 8s e não fica infinito)
+                const userDoc = await fetchWithTimeout(db.collection('usuarios').doc(user.uid).get());
+                
+                if (userDoc.exists && userDoc.data().status === 'aprovado') {
+                  setPortalUser({ name: user.displayName, email: user.email });
+                } else if (!userDoc.exists) {
+                   await fetchWithTimeout(db.collection('usuarios').doc(user.uid).set({
+                    nome: user.displayName || 'Usuário',
+                    email: user.email,
+                    status: 'aprovado',
+                    dataCadastro: new Date().toISOString()
+                  }));
+                  setPortalUser({ name: user.displayName, email: user.email });
+                } else {
+                  await auth.signOut();
+                  setPortalUser(null);
+                }
+              } catch (e) {
+                console.error("Erro na leitura da base de dados:", e);
+                await auth.signOut();
+                setPortalUser(null);
+              }
+            } else {
+              setPortalUser(null);
+            }
+            setFirebaseReady(true);
+          });
+
+        } catch (error) {
+          console.error("Erro ao inicializar Firebase:", error);
+          setFirebaseReady(true);
+        }
+      }, []);
+
+      if (!firebaseReady) {
+        return (
+          <div className="min-h-screen flex flex-col items-center justify-center bg-slate-900 text-white">
+            <i className="ph-bold ph-spinner animate-spin text-5xl text-indigo-500 mb-4"></i>
+            <p className="text-xs font-bold tracking-widest text-slate-400 uppercase">A ligar ao Banco de Dados...</p>
+          </div>
+        );
+      }
+
+      if (!portalUser) {
+        return <LoginScreen onLoginSuccess={setPortalUser} />;
+      }
+
+      return (
+        <PortalDashboard 
+          portalUser={portalUser} 
+          onLogout={async () => {
+            try {
+              await firebase.auth().signOut();
+            } catch (e) {
+              console.error(e);
+            }
+            setPortalUser(null);
+          }} 
+        />
+      );
+    }
+
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<App />);
+  </script>
+</body>
+</html>
