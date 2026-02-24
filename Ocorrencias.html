@@ -1,0 +1,1289 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ISO 9001:2015 - REVIMAQ</title>
+  
+  <!-- Estilos e Bibliotecas Externa -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/@phosphor-icons/web"></script>
+  <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+  <!-- Configuração Firebase -->
+  <script type="importmap">
+    {
+      "imports": {
+        "firebase/app": "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js",
+        "firebase/firestore": "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js"
+      }
+    }
+  </script>
+  <script type="module">
+    import { initializeApp } from 'firebase/app';
+    import { getFirestore, collection, onSnapshot, addDoc, updateDoc, doc, deleteDoc } from 'firebase/firestore';
+    
+    // Tornar as funções do Firebase acessíveis globalmente para o React
+    window.firebaseAPI = { 
+        initializeApp, 
+        getFirestore, 
+        collection, 
+        onSnapshot, 
+        addDoc, 
+        updateDoc, 
+        doc,
+        deleteDoc
+    };
+  </script>
+
+  <style>
+    * { text-transform: uppercase !important; }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .animate-fade-in { animation: fadeIn 0.4s ease-out forwards; }
+    
+    @media print {
+      body { background-color: white !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .no-print { display: none !important; }
+      .print-area { display: block !important; width: 100% !important; margin: 0 !important; padding: 0 !important; box-shadow: none !important; }
+      @page { margin: 1cm; size: A4 portrait; }
+    }
+
+    input::placeholder, textarea::placeholder { text-transform: uppercase !important; }
+  </style>
+</head>
+<body class="bg-slate-100/50 font-sans uppercase">
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useState, useEffect, useRef } = React;
+
+    function App() {
+      // ESTADOS DE NAVEGAÇÃO E DADOS
+      const [currentView, setCurrentView] = useState('dashboard');
+      const [isEditing, setIsEditing] = useState(false);
+      const [isLoading, setIsLoading] = useState(true);
+      const [showAllRecords, setShowAllRecords] = useState(false); 
+      const [searchTerm, setSearchTerm] = useState('');
+      const [printData, setPrintData] = useState(null);
+      const [previousView, setPreviousView] = useState('dashboard');
+      const [records, setRecords] = useState([]);
+      
+      // ESTADO DO FIREBASE
+      const [isFirebaseReady, setIsFirebaseReady] = useState(false);
+
+      // ESTADOS DE SEGURANÇA DA RNC
+      const [isRncLocked, setIsRncLocked] = useState(false);
+
+      // ESTADOS DOS DROPDOWNS
+      const [clientes, setClientes] = useState([]);
+      const [emitentes, setEmitentes] = useState([]);
+      const [areas, setAreas] = useState([]);
+      const [processos, setProcessos] = useState([]);
+      const [titulos, setTitulos] = useState([]);
+      const [responsaveis, setResponsaveis] = useState([]);
+
+      const dbRef = useRef(null);
+
+      const firebaseConfig = {
+        apiKey: "AIzaSyCra_EQ_qHExJT54Ry94kmL6xkQhzHfKAI",
+        authDomain: "ocorrencias-37268.firebaseapp.com",
+        projectId: "ocorrencias-37268",
+        storageBucket: "ocorrencias-37268.firebasestorage.app",
+        messagingSenderId: "433341647761",
+        appId: "1:433341647761:web:178b79ab22b4170c446830"
+      };
+
+      // INICIALIZAÇÃO DO FIREBASE DE FORMA SEGURA (CONEXÃO DIRETA)
+      useEffect(() => {
+        const checkFirebase = setInterval(() => {
+            if (window.firebaseAPI && window.firebaseAPI.initializeApp) {
+                clearInterval(checkFirebase);
+                try {
+                  const app = window.firebaseAPI.initializeApp(firebaseConfig);
+                  dbRef.current = window.firebaseAPI.getFirestore(app);
+                  window.db = dbRef.current; 
+                  setIsFirebaseReady(true);
+                } catch (err) {
+                  console.error("ERRO INICIALIZAÇÃO FIREBASE:", err);
+                  setIsLoading(false);
+                }
+            }
+        }, 50);
+        return () => clearInterval(checkFirebase);
+      }, []);
+
+      // FUNÇÃO PARA ZERAR O BANCO DE DADOS
+      const handleResetDatabase = async () => {
+          const confirm1 = window.confirm("ATENÇÃO: Você está prestes a apagar TODOS os registros, clientes e emitentes do banco de dados! Esta ação é irreversível. Deseja continuar?");
+          if (!confirm1) return;
+
+          const confirm2 = window.prompt("Para confirmar a exclusão de TUDO, digite a frase: 'APAGAR TUDO'");
+          if (confirm2 !== "APAGAR TUDO") {
+              alert("Operação cancelada. A frase digitada não confere.");
+              return;
+          }
+
+          setIsLoading(true);
+          try {
+              const { doc, deleteDoc } = window.firebaseAPI;
+              for (const record of records) await deleteDoc(doc(dbRef.current, "ocorrencias", record.idDb));
+              for (const cliente of clientes) await deleteDoc(doc(dbRef.current, "clientes", cliente.id));
+              for (const emitente of emitentes) await deleteDoc(doc(dbRef.current, "emitentes", emitente.id));
+              for (const area of areas) await deleteDoc(doc(dbRef.current, "areas", area.id));
+              for (const processo of processos) await deleteDoc(doc(dbRef.current, "processos", processo.id));
+              for (const titulo of titulos) await deleteDoc(doc(dbRef.current, "titulos", titulo.id));
+              for (const resp of responsaveis) await deleteDoc(doc(dbRef.current, "responsaveis", resp.id));
+
+              alert("O Banco de Dados foi zerado com sucesso!");
+              setCurrentView('dashboard');
+          } catch (error) {
+              console.error("Erro ao zerar banco:", error);
+              alert("Ocorreu um erro ao tentar apagar os dados.");
+          } finally {
+              setIsLoading(false);
+          }
+      };
+
+      // CARREGAMENTO DE DADOS (CONEXÃO DIRETA SEM LOGIN)
+      useEffect(() => {
+        if (!isFirebaseReady || !dbRef.current) return;
+
+        let unsubOcorrencias, unsubClientes, unsubEmitentes, unsubAreas, unsubProcessos, unsubTitulos, unsubResponsaveis;
+
+        setIsLoading(true);
+        const { collection, onSnapshot } = window.firebaseAPI;
+        
+        unsubOcorrencias = onSnapshot(collection(dbRef.current, "ocorrencias"), (snapshot) => {
+          const loadedRecords = snapshot.docs.map(doc => ({
+            idDb: doc.id,
+            ...doc.data()
+          }));
+          loadedRecords.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+          setRecords(loadedRecords);
+          setIsLoading(false);
+        }, (error) => {
+          console.error("ERRO FIREBASE OCORRENCIAS:", error);
+          setIsLoading(false);
+          if (error.code === 'permission-denied') {
+              alert("⚠️ ACESSO NEGADO PELO BANCO DE DADOS!\n\nVocê precisa configurar as regras (Rules) do seu Firestore Database no painel do Firebase para permitir acesso público, conforme orientado nas instruções.");
+          }
+        });
+
+        unsubClientes = onSnapshot(collection(dbRef.current, "clientes"), (snapshot) => {
+          const loadedClientes = snapshot.docs.map(doc => ({ id: doc.id, nome: doc.data().nome }));
+          loadedClientes.sort((a, b) => a.nome.localeCompare(b.nome));
+          setClientes(loadedClientes);
+        }, (error) => console.error(error));
+
+        unsubEmitentes = onSnapshot(collection(dbRef.current, "emitentes"), (snapshot) => {
+          const loadedEmitentes = snapshot.docs.map(doc => ({ id: doc.id, nome: doc.data().nome }));
+          loadedEmitentes.sort((a, b) => a.nome.localeCompare(b.nome));
+          setEmitentes(loadedEmitentes);
+        }, (error) => console.error(error));
+
+        unsubAreas = onSnapshot(collection(dbRef.current, "areas"), (snapshot) => {
+          const loadedAreas = snapshot.docs.map(doc => ({ id: doc.id, nome: doc.data().nome }));
+          loadedAreas.sort((a, b) => a.nome.localeCompare(b.nome));
+          setAreas(loadedAreas);
+        }, (error) => console.error(error));
+
+        unsubProcessos = onSnapshot(collection(dbRef.current, "processos"), (snapshot) => {
+          const loadedProcessos = snapshot.docs.map(doc => ({ id: doc.id, nome: doc.data().nome }));
+          loadedProcessos.sort((a, b) => a.nome.localeCompare(b.nome));
+          setProcessos(loadedProcessos);
+        }, (error) => console.error(error));
+
+        unsubTitulos = onSnapshot(collection(dbRef.current, "titulos"), (snapshot) => {
+          const loadedTitulos = snapshot.docs.map(doc => ({ id: doc.id, nome: doc.data().nome }));
+          loadedTitulos.sort((a, b) => a.nome.localeCompare(b.nome));
+          setTitulos(loadedTitulos);
+        }, (error) => console.error(error));
+
+        unsubResponsaveis = onSnapshot(collection(dbRef.current, "responsaveis"), (snapshot) => {
+          const loadedResponsaveis = snapshot.docs.map(doc => ({ id: doc.id, nome: doc.data().nome }));
+          loadedResponsaveis.sort((a, b) => a.nome.localeCompare(b.nome));
+          setResponsaveis(loadedResponsaveis);
+        }, (error) => console.error(error));
+
+        return () => {
+          if(unsubOcorrencias) unsubOcorrencias();
+          if(unsubClientes) unsubClientes();
+          if(unsubEmitentes) unsubEmitentes();
+          if(unsubAreas) unsubAreas();
+          if(unsubProcessos) unsubProcessos();
+          if(unsubTitulos) unsubTitulos();
+          if(unsubResponsaveis) unsubResponsaveis();
+        };
+      }, [isFirebaseReady]);
+
+      const initialState = {
+        id: '', 
+        rncId: '', 
+        dataOcorrencia: new Date().toISOString().split('T')[0],
+        origem: 'PROCESSO INTERNO',
+        referencia: '',
+        cliente: '',
+        processo: '',
+        area: '',
+        produto: '',
+        titulo: '',
+        descricao: '',
+        efeito: '',
+        procedente: 'PENDENTE',
+        disposicao: '',
+        acaoImediata: '',
+        respDisposicao: '',
+        custo: '',
+        prazo: '',
+        evidencias: '',
+        anexos: '',
+        necessitaRNC: 'NÃO AVALIADO',
+        analiseSaida: '',
+        status: 'ABERTO',
+        dataEncerramento: '',
+        emitidoPor: '',
+        email: '',
+        rncRiscoPotencial: 'NÃO',
+        rncAtualizarRiscos: 'NÃO',
+        rncResponsavelRiscos: '',
+        rncDataRiscos: '',
+        rncMetodo: '',
+        rncMaquina: '',
+        rncMedida: '',
+        rncMeioAmbiente: '',
+        rncMaoDeObra: '',
+        rncMaterial: '',
+        rncCausaRaiz: '',
+        rncAcaoCorretiva: '',
+        rncResponsavelAcao: '',
+        rncPrevisao: '',
+        rncRealizado: '',
+        rncStatusAcao: 'PENDENTE'
+      };
+
+      const [formData, setFormData] = useState(initialState);
+
+      const handleEdit = (record) => {
+        setFormData({ ...initialState, ...record });
+        setIsEditing(true);
+        setIsRncLocked((record.necessitaRNC || '').toUpperCase() === 'SIM');
+        setCurrentView('form');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      };
+
+      const handlePrint = (record, sourceView) => {
+        setPrintData(record);
+        setPreviousView(sourceView);
+        setCurrentView('print');
+        window.scrollTo({ top: 0, behavior: 'instant' });
+      };
+
+      const handleInputChange = (e) => {
+        const { name, value } = e.target;
+        setFormData({ ...formData, [name]: value.toUpperCase() });
+      };
+
+      // ----------------------------------------------------
+      // FUNÇÕES DO BANCO DE DADOS PARA CLIENTES E EMITENTES
+      // ----------------------------------------------------
+      const handleAddCliente = async () => {
+        const novoCliente = window.prompt("DIGITE O NOME DO NOVO CLIENTE:");
+        if (novoCliente && novoCliente.trim() !== "") {
+          const uppercaseName = novoCliente.trim().toUpperCase();
+          if (!clientes.find(c => c.nome === uppercaseName)) {
+            const { collection, addDoc } = window.firebaseAPI;
+            try {
+              await addDoc(collection(dbRef.current, "clientes"), { nome: uppercaseName });
+              setFormData({ ...formData, cliente: uppercaseName });
+            } catch (error) {
+              console.error("ERRO AO ADICIONAR CLIENTE:", error);
+              alert("ERRO AO SALVAR CLIENTE NO BANCO DE DADOS.");
+            }
+          } else {
+            alert("CLIENTE JÁ EXISTE NA LISTA.");
+          }
+        }
+      };
+
+      const handleEditCliente = async () => {
+        if (!formData.cliente) {
+          alert("SELECIONE UM CLIENTE PARA EDITAR.");
+          return;
+        }
+        const novoNome = window.prompt("EDITAR NOME DO CLIENTE:", formData.cliente);
+        if (novoNome && novoNome.trim() !== "") {
+          const uppercaseName = novoNome.trim().toUpperCase();
+          const clienteObj = clientes.find(c => c.nome === formData.cliente);
+          if (clienteObj) {
+            const { doc, updateDoc } = window.firebaseAPI;
+            try {
+              const dRef = doc(dbRef.current, "clientes", clienteObj.id);
+              await updateDoc(dRef, { nome: uppercaseName });
+              setFormData({ ...formData, cliente: uppercaseName });
+            } catch (error) {
+               console.error("ERRO AO EDITAR CLIENTE:", error);
+               alert("ERRO AO EDITAR CLIENTE NO BANCO DE DADOS.");
+            }
+          }
+        }
+      };
+
+      const handleAddEmitente = async () => {
+        const novoEmitente = window.prompt("DIGITE O NOME DO NOVO EMITENTE:");
+        if (novoEmitente && novoEmitente.trim() !== "") {
+          const uppercaseName = novoEmitente.trim().toUpperCase();
+          if (!emitentes.find(e => e.nome === uppercaseName)) {
+            const { collection, addDoc } = window.firebaseAPI;
+            try {
+               await addDoc(collection(dbRef.current, "emitentes"), { nome: uppercaseName });
+               setFormData({ ...formData, emitidoPor: uppercaseName });
+            } catch (error) {
+               console.error("ERRO AO ADICIONAR EMITENTE:", error);
+               alert("ERRO AO SALVAR EMITENTE NO BANCO DE DADOS.");
+            }
+          } else {
+            alert("EMITENTE JÁ EXISTE NA LISTA.");
+          }
+        }
+      };
+
+      const handleEditEmitente = async () => {
+        if (!formData.emitidoPor) {
+          alert("SELECIONE UM EMITENTE PARA EDITAR.");
+          return;
+        }
+        const novoNome = window.prompt("EDITAR NOME DO EMITENTE:", formData.emitidoPor);
+        if (novoNome && novoNome.trim() !== "") {
+          const uppercaseName = novoNome.trim().toUpperCase();
+          const emitenteObj = emitentes.find(e => e.nome === formData.emitidoPor);
+          if (emitenteObj) {
+            const { doc, updateDoc } = window.firebaseAPI;
+            try {
+              const dRef = doc(dbRef.current, "emitentes", emitenteObj.id);
+              await updateDoc(dRef, { nome: uppercaseName });
+              setFormData({ ...formData, emitidoPor: uppercaseName });
+            } catch (error) {
+               console.error("ERRO AO EDITAR EMITENTE:", error);
+               alert("ERRO AO EDITAR EMITENTE NO BANCO DE DADOS.");
+            }
+          }
+        }
+      };
+
+      const handleAddArea = async () => {
+        const novaArea = window.prompt("DIGITE O NOME DA NOVA ÁREA / SETOR:");
+        if (novaArea && novaArea.trim() !== "") {
+          const uppercaseName = novaArea.trim().toUpperCase();
+          if (!areas.find(a => a.nome === uppercaseName)) {
+            const { collection, addDoc } = window.firebaseAPI;
+            try {
+               await addDoc(collection(dbRef.current, "areas"), { nome: uppercaseName });
+               setFormData({ ...formData, area: uppercaseName });
+            } catch (error) {
+               console.error("ERRO AO ADICIONAR ÁREA:", error);
+               alert("ERRO AO SALVAR ÁREA NO BANCO DE DADOS.");
+            }
+          } else {
+            alert("ÁREA JÁ EXISTE NA LISTA.");
+          }
+        }
+      };
+
+      const handleEditArea = async () => {
+        if (!formData.area) {
+          alert("SELECIONE UMA ÁREA PARA EDITAR.");
+          return;
+        }
+        const novoNome = window.prompt("EDITAR NOME DA ÁREA:", formData.area);
+        if (novoNome && novoNome.trim() !== "") {
+          const uppercaseName = novoNome.trim().toUpperCase();
+          const areaObj = areas.find(a => a.nome === formData.area);
+          if (areaObj) {
+            const { doc, updateDoc } = window.firebaseAPI;
+            try {
+              const dRef = doc(dbRef.current, "areas", areaObj.id);
+              await updateDoc(dRef, { nome: uppercaseName });
+              setFormData({ ...formData, area: uppercaseName });
+            } catch (error) {
+               console.error("ERRO AO EDITAR ÁREA:", error);
+               alert("ERRO AO EDITAR ÁREA NO BANCO DE DADOS.");
+            }
+          }
+        }
+      };
+
+      const handleAddProcesso = async () => {
+        const novoProcesso = window.prompt("DIGITE O NOME DO NOVO PROCESSO:");
+        if (novoProcesso && novoProcesso.trim() !== "") {
+          const uppercaseName = novoProcesso.trim().toUpperCase();
+          if (!processos.find(p => p.nome === uppercaseName)) {
+            const { collection, addDoc } = window.firebaseAPI;
+            try {
+               await addDoc(collection(dbRef.current, "processos"), { nome: uppercaseName });
+               setFormData({ ...formData, processo: uppercaseName });
+            } catch (error) {
+               console.error("ERRO AO ADICIONAR PROCESSO:", error);
+               alert("ERRO AO SALVAR PROCESSO NO BANCO DE DADOS.");
+            }
+          } else {
+            alert("PROCESSO JÁ EXISTE NA LISTA.");
+          }
+        }
+      };
+
+      const handleEditProcesso = async () => {
+        if (!formData.processo) {
+          alert("SELECIONE UM PROCESSO PARA EDITAR.");
+          return;
+        }
+        const novoNome = window.prompt("EDITAR NOME DO PROCESSO:", formData.processo);
+        if (novoNome && novoNome.trim() !== "") {
+          const uppercaseName = novoNome.trim().toUpperCase();
+          const processoObj = processos.find(p => p.nome === formData.processo);
+          if (processoObj) {
+            const { doc, updateDoc } = window.firebaseAPI;
+            try {
+              const dRef = doc(dbRef.current, "processos", processoObj.id);
+              await updateDoc(dRef, { nome: uppercaseName });
+              setFormData({ ...formData, processo: uppercaseName });
+            } catch (error) {
+               console.error("ERRO AO EDITAR PROCESSO:", error);
+               alert("ERRO AO EDITAR PROCESSO NO BANCO DE DADOS.");
+            }
+          }
+        }
+      };
+
+      const handleAddTitulo = async () => {
+        const novoTitulo = window.prompt("DIGITE O NOVO TÍTULO RESUMIDO:");
+        if (novoTitulo && novoTitulo.trim() !== "") {
+          const uppercaseName = novoTitulo.trim().toUpperCase();
+          if (!titulos.find(t => t.nome === uppercaseName)) {
+            const { collection, addDoc } = window.firebaseAPI;
+            try {
+               await addDoc(collection(dbRef.current, "titulos"), { nome: uppercaseName });
+               setFormData({ ...formData, titulo: uppercaseName });
+            } catch (error) {
+               console.error("ERRO AO ADICIONAR TÍTULO:", error);
+               alert("ERRO AO SALVAR TÍTULO NO BANCO DE DADOS.");
+            }
+          } else {
+            alert("TÍTULO JÁ EXISTE NA LISTA.");
+          }
+        }
+      };
+
+      const handleEditTitulo = async () => {
+        if (!formData.titulo) {
+          alert("SELECIONE UM TÍTULO PARA EDITAR.");
+          return;
+        }
+        const novoNome = window.prompt("EDITAR TÍTULO:", formData.titulo);
+        if (novoNome && novoNome.trim() !== "") {
+          const uppercaseName = novoNome.trim().toUpperCase();
+          const tituloObj = titulos.find(t => t.nome === formData.titulo);
+          if (tituloObj) {
+            const { doc, updateDoc } = window.firebaseAPI;
+            try {
+              const dRef = doc(dbRef.current, "titulos", tituloObj.id);
+              await updateDoc(dRef, { nome: uppercaseName });
+              setFormData({ ...formData, titulo: uppercaseName });
+            } catch (error) {
+               console.error("ERRO AO EDITAR TÍTULO:", error);
+               alert("ERRO AO EDITAR TÍTULO NO BANCO DE DADOS.");
+            }
+          }
+        }
+      };
+
+      const handleAddResponsavel = async () => {
+        const novoResp = window.prompt("DIGITE O NOME DO NOVO RESPONSÁVEL:");
+        if (novoResp && novoResp.trim() !== "") {
+          const uppercaseName = novoResp.trim().toUpperCase();
+          if (!responsaveis.find(r => r.nome === uppercaseName)) {
+            const { collection, addDoc } = window.firebaseAPI;
+            try {
+               await addDoc(collection(dbRef.current, "responsaveis"), { nome: uppercaseName });
+               setFormData({ ...formData, respDisposicao: uppercaseName });
+            } catch (error) {
+               console.error("ERRO AO ADICIONAR RESPONSÁVEL:", error);
+               alert("ERRO AO SALVAR RESPONSÁVEL NO BANCO DE DADOS.");
+            }
+          } else {
+            alert("RESPONSÁVEL JÁ EXISTE NA LISTA.");
+          }
+        }
+      };
+
+      const handleEditResponsavel = async () => {
+        if (!formData.respDisposicao) {
+          alert("SELECIONE UM RESPONSÁVEL PARA EDITAR.");
+          return;
+        }
+        const novoNome = window.prompt("EDITAR NOME DO RESPONSÁVEL:", formData.respDisposicao);
+        if (novoNome && novoNome.trim() !== "") {
+          const uppercaseName = novoNome.trim().toUpperCase();
+          const respObj = responsaveis.find(r => r.nome === formData.respDisposicao);
+          if (respObj) {
+            const { doc, updateDoc } = window.firebaseAPI;
+            try {
+              const dRef = doc(dbRef.current, "responsaveis", respObj.id);
+              await updateDoc(dRef, { nome: uppercaseName });
+              setFormData({ ...formData, respDisposicao: uppercaseName });
+            } catch (error) {
+               console.error("ERRO AO EDITAR RESPONSÁVEL:", error);
+               alert("ERRO AO EDITAR RESPONSÁVEL NO BANCO DE DADOS.");
+            }
+          }
+        }
+      };
+
+      const handleAddResponsavelAcao = async () => {
+        const novoResp = window.prompt("DIGITE O NOME DO NOVO RESPONSÁVEL (AÇÃO CORRETIVA):");
+        if (novoResp && novoResp.trim() !== "") {
+          const uppercaseName = novoResp.trim().toUpperCase();
+          if (!responsaveis.find(r => r.nome === uppercaseName)) {
+            const { collection, addDoc } = window.firebaseAPI;
+            try {
+               await addDoc(collection(dbRef.current, "responsaveis"), { nome: uppercaseName });
+               setFormData({ ...formData, rncResponsavelAcao: uppercaseName });
+            } catch (error) {
+               console.error("ERRO AO ADICIONAR RESPONSÁVEL:", error);
+               alert("ERRO AO SALVAR RESPONSÁVEL NO BANCO DE DADOS.");
+            }
+          } else {
+            alert("RESPONSÁVEL JÁ EXISTE NA LISTA.");
+          }
+        }
+      };
+
+      const handleEditResponsavelAcao = async () => {
+        if (!formData.rncResponsavelAcao) {
+          alert("SELECIONE UM RESPONSÁVEL PARA EDITAR.");
+          return;
+        }
+        const novoNome = window.prompt("EDITAR NOME DO RESPONSÁVEL:", formData.rncResponsavelAcao);
+        if (novoNome && novoNome.trim() !== "") {
+          const uppercaseName = novoNome.trim().toUpperCase();
+          const respObj = responsaveis.find(r => r.nome === formData.rncResponsavelAcao);
+          if (respObj) {
+            const { doc, updateDoc } = window.firebaseAPI;
+            try {
+              const dRef = doc(dbRef.current, "responsaveis", respObj.id);
+              await updateDoc(dRef, { nome: uppercaseName });
+              setFormData({ ...formData, rncResponsavelAcao: uppercaseName });
+            } catch (error) {
+               console.error("ERRO AO EDITAR RESPONSÁVEL:", error);
+               alert("ERRO AO EDITAR RESPONSÁVEL NO BANCO DE DADOS.");
+            }
+          }
+        }
+      };
+
+      const copyToCausaRaiz = (fieldName, label) => {
+        const text = formData[fieldName];
+        if (!text || text.trim() === '') return;
+        
+        const cleanLabel = label.replace(/[0-9]+\.\s*/g, '').trim();
+        const newEntry = `${cleanLabel}: ${text}`;
+        
+        setFormData(prev => {
+          const currentCausa = prev.rncCausaRaiz || '';
+          if (currentCausa.includes(newEntry)) return prev; 
+          
+          const updatedCausa = currentCausa ? `${currentCausa}\n${newEntry}` : newEntry;
+          return { ...prev, rncCausaRaiz: updatedCausa };
+        });
+      };
+
+      const generateNewId = (prefix) => {
+        const year = new Date().getFullYear();
+        const yearPrefix = `${prefix}-${year}-`;
+        const existingIds = records
+          .map(r => prefix === 'RO' ? r.id : r.rncId)
+          .filter(id => id && id.startsWith(yearPrefix));
+        if (existingIds.length === 0) return `${yearPrefix}001`;
+        const numbers = existingIds.map(id => {
+          const parts = id.split('-');
+          return parseInt(parts[parts.length - 1], 10) || 0;
+        });
+        const maxNum = Math.max(...numbers);
+        return `${yearPrefix}${(maxNum + 1).toString().padStart(3, '0')}`;
+      };
+
+      const handleSubmit = async (e) => {
+        e.preventDefault();
+        const { collection, addDoc, updateDoc, doc } = window.firebaseAPI;
+        
+        let data = { ...formData };
+        
+        try {
+          if (isEditing) {
+            if (data.necessitaRNC === 'SIM' && !data.rncId) {
+                data.rncId = generateNewId('RNC');
+            } else if (data.necessitaRNC !== 'SIM' && data.rncId) {
+                data.rncId = ''; 
+            }
+
+            const ref = doc(dbRef.current, "ocorrencias", formData.idDb);
+            const toUpdate = { ...data, updatedAt: new Date().toISOString() };
+            delete toUpdate.idDb;
+            await updateDoc(ref, toUpdate);
+          } else {
+            const roId = generateNewId('RO');
+            const rncId = data.necessitaRNC === 'SIM' ? generateNewId('RNC') : '';
+            await addDoc(collection(dbRef.current, "ocorrencias"), { ...data, id: roId, rncId, timestamp: new Date().toISOString() });
+          }
+          setCurrentView('list');
+          setFormData(initialState);
+          setIsEditing(false);
+          setIsRncLocked(false);
+        } catch (error) {
+          console.error("ERRO AO SALVAR:", error);
+          alert("ERRO AO SALVAR DADOS NO CLOUD.");
+        }
+      };
+
+      const filteredRecords = records.filter(record => {
+        const term = searchTerm.toLowerCase();
+        const matchesSearch = (record.id || '').toLowerCase().includes(term) ||
+                              (record.rncId || '').toLowerCase().includes(term) ||
+                              (record.titulo || '').toLowerCase().includes(term) ||
+                              (record.area || '').toLowerCase().includes(term);
+        const matchesStatus = showAllRecords ? true : ((record.status || '').toUpperCase() !== 'ENCERRADO' || (record.necessitaRNC || '').toUpperCase() === 'NÃO AVALIADO');
+        return matchesSearch && matchesStatus;
+      });
+
+      const stats = {
+        total: records.length,
+        open: records.filter(r => (r.status || '').toUpperCase() === 'ABERTO').length,
+        inProgress: records.filter(r => (r.status || '').toUpperCase() === 'EM TRATAMENTO').length,
+        closed: records.filter(r => (r.status || '').toUpperCase() === 'ENCERRADO').length,
+        needsRNC: records.filter(r => (r.necessitaRNC || '').toUpperCase() === 'SIM').length
+      };
+
+      const getStatusColor = (status) => {
+        const s = (status || '').toUpperCase();
+        if (s === 'ABERTO') return 'bg-red-100 text-red-800 border-red-200';
+        if (s === 'EM TRATAMENTO') return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+        if (s === 'ENCERRADO') return 'bg-green-100 text-green-800 border-green-200';
+        return 'bg-slate-100 text-slate-800 border-slate-200';
+      };
+
+      const getRNCStatusColor = (status) => {
+        const s = (status || '').toUpperCase();
+        if (s === 'PENDENTE') return 'bg-slate-100 text-slate-800 border-slate-200';
+        if (s === 'EM ANDAMENTO') return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+        if (s === 'CONCLUÍDO') return 'bg-green-100 text-green-800 border-green-200';
+        if (s === 'ATRASADO') return 'bg-red-100 text-red-800 border-red-200';
+        return 'bg-slate-100 text-slate-800 border-slate-200';
+      };
+
+      // NAVEGAÇÃO PRINCIPAL
+      const renderNavigation = () => (
+        <nav className="bg-slate-900 text-white shadow-md sticky top-0 z-50 no-print uppercase uppercase">
+          <div className="max-w-7xl mx-auto px-4 h-16 flex justify-between items-center">
+            <div className="flex items-center space-x-3 uppercase">
+              <i className="ph-fill ph-shield-warning text-indigo-400 text-[28px] uppercase"></i>
+              <span className="font-bold text-lg tracking-tight hidden sm:block uppercase uppercase">ISO 9001:2015 - REVIMAQ</span>
+              <span className="font-bold text-lg tracking-tight sm:hidden uppercase uppercase">REVIMAQ</span>
+            </div>
+            <div className="flex items-center space-x-2 uppercase">
+              <a href="index.html" className="flex items-center space-x-1 bg-slate-800 hover:bg-slate-700 px-3 py-2 rounded-md transition-colors border border-slate-700 text-white font-bold text-sm mr-1" title="VOLTAR AO PORTAL">
+                <i className="ph-bold ph-arrow-left text-lg"></i>
+                <span className="hidden sm:block">PORTAL</span>
+              </a>
+              <button onClick={() => setCurrentView('dashboard')} className={`flex items-center space-x-1 px-3 py-2 rounded-md text-sm font-medium transition-colors ${currentView === 'dashboard' ? 'bg-slate-800 text-indigo-400 border-b-2 border-indigo-500' : 'hover:bg-slate-800'}`}><i className="ph ph-chart-bar text-lg uppercase uppercase"></i> <span className="hidden lg:block uppercase uppercase">PAINEL</span></button>
+              <button onClick={() => setCurrentView('list')} className={`flex items-center space-x-1 px-3 py-2 rounded-md text-sm font-medium transition-colors ${currentView === 'list' ? 'bg-slate-800 text-indigo-400 border-b-2 border-indigo-500' : 'hover:bg-slate-800'}`}><i className="ph ph-list-bullets text-lg uppercase uppercase"></i> <span className="hidden lg:block uppercase uppercase">CONTROLE (8.7)</span></button>
+              <button onClick={() => setCurrentView('rnc')} className={`flex items-center space-x-1 px-3 py-2 rounded-md text-sm font-medium transition-colors ${currentView === 'rnc' ? 'bg-slate-800 text-indigo-400 border-b-2 border-indigo-500' : 'hover:bg-slate-800'}`}><i className="ph ph-folder-warning text-lg uppercase uppercase"></i> <span className="hidden lg:block uppercase uppercase">RNC (10.2)</span></button>
+              <button onClick={() => { setFormData(initialState); setIsEditing(false); setIsRncLocked(false); setCurrentView('form'); }} className="bg-indigo-600 hover:bg-indigo-700 px-4 py-2 rounded-md text-sm font-medium flex items-center space-x-1 shadow-lg active:scale-95 transition-all uppercase uppercase ml-2"><i className="ph ph-plus-circle text-lg uppercase uppercase"></i> <span className="hidden sm:block uppercase uppercase">LANÇAR</span></button>
+              
+              <button onClick={handleResetDatabase} className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md text-sm font-medium flex items-center space-x-1 shadow-lg active:scale-95 transition-all uppercase ml-2" title="ZERAR BANCO DE DADOS">
+                 <i className="ph ph-trash text-lg uppercase"></i> <span className="hidden sm:block uppercase">ZERAR BD</span>
+              </button>
+            </div>
+          </div>
+        </nav>
+      );
+
+      const renderDashboard = () => (
+        <div className="p-6 max-w-7xl mx-auto animate-fade-in no-print uppercase uppercase uppercase">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4 uppercase">
+            <h2 className="text-2xl font-black text-slate-800 tracking-tight uppercase uppercase">PAINEL EXECUTIVO QUALIDADE</h2>
+            <div className="flex items-center space-x-3 w-full sm:w-auto uppercase uppercase">
+              <button onClick={() => setShowAllRecords(!showAllRecords)} className={`px-4 py-2 text-sm font-medium rounded-lg border transition-colors shadow-sm uppercase uppercase ${showAllRecords ? 'bg-indigo-50 text-indigo-700 border-indigo-200' : 'bg-white border-slate-300'}`}>{showAllRecords ? 'OCULTAR ENCERRADOS' : 'MOSTRAR TODOS'}</button>
+              <input type="text" className="bg-white border border-slate-300 text-sm rounded-lg pl-3 p-2 w-full sm:w-64 shadow-sm uppercase uppercase uppercase" placeholder="BUSCAR..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
+            </div>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8 uppercase uppercase">
+            <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 uppercase">
+              <div className="flex items-center justify-between uppercase uppercase uppercase uppercase"><p className="text-sm font-bold text-slate-400 tracking-wider uppercase uppercase">TOTAL GERAL</p><i className="ph ph-file-text text-indigo-500 text-3xl opacity-50 uppercase uppercase"></i></div>
+              <p className="text-3xl font-black text-slate-800 mt-2 uppercase uppercase">{stats.total}</p>
+            </div>
+            <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 border-l-4 border-l-red-500 uppercase">
+              <div className="flex items-center justify-between uppercase uppercase uppercase uppercase"><p className="text-sm font-bold text-red-500 tracking-wider uppercase uppercase">ABERTOS</p><i className="ph ph-warning text-red-500 text-3xl opacity-50 uppercase uppercase"></i></div>
+              <p className="text-3xl font-black text-slate-800 mt-2 uppercase uppercase">{stats.open}</p>
+            </div>
+            <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 border-l-4 border-l-yellow-500 uppercase">
+              <div className="flex items-center justify-between uppercase uppercase uppercase uppercase"><p className="text-sm font-bold text-yellow-500 tracking-wider uppercase uppercase">EM TRATATIVA</p><i className="ph ph-clock text-yellow-500 text-3xl opacity-50 uppercase uppercase"></i></div>
+              <p className="text-3xl font-black text-slate-800 mt-2 uppercase uppercase">{stats.inProgress}</p>
+            </div>
+            <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 border-l-4 border-l-green-500 uppercase">
+              <div className="flex items-center justify-between uppercase uppercase uppercase uppercase"><p className="text-sm font-bold text-green-500 tracking-wider uppercase uppercase">ENCERRADOS</p><i className="ph ph-check-circle text-green-500 text-3xl opacity-50 uppercase uppercase"></i></div>
+              <p className="text-3xl font-black text-slate-800 mt-2 uppercase uppercase">{stats.closed}</p>
+            </div>
+          </div>
+          <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden uppercase uppercase">
+            <div className="p-5 border-b bg-slate-50/50 font-bold text-slate-700 flex justify-between items-center uppercase uppercase">
+              <div className="flex items-center uppercase uppercase uppercase"><i className="ph ph-clock-counter-clockwise mr-2 text-indigo-500 uppercase uppercase"></i> REGISTROS RECENTES</div>
+              <span className="text-xs bg-red-100 text-red-700 px-3 py-1 rounded-full font-black uppercase uppercase tracking-tighter uppercase uppercase">{stats.needsRNC} RNCS REQUERIDAS</span>
+            </div>
+            <div className="overflow-x-auto uppercase uppercase">
+              <table className="w-full text-sm text-left whitespace-nowrap uppercase uppercase">
+                <thead className="text-xs text-slate-400 uppercase bg-slate-50 border-b uppercase uppercase uppercase uppercase">
+                  <tr><th className="px-6 py-4 uppercase uppercase">RO</th><th className="px-6 py-4 uppercase uppercase">RNC VINCULADA</th><th className="px-6 py-4 uppercase uppercase">ÁREA</th><th className="px-6 py-4 uppercase uppercase uppercase">TÍTULO</th><th className="px-6 py-4 uppercase uppercase">STATUS</th><th className="px-6 py-4 text-center uppercase uppercase">RNC NECESSÁRIA?</th><th className="px-6 py-4 text-center uppercase uppercase">AÇÕES</th></tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 uppercase uppercase uppercase">
+                  {filteredRecords.slice(0, 10).map((record) => (
+                    <tr key={record.idDb} className="hover:bg-slate-50/80 transition-colors uppercase uppercase uppercase uppercase">
+                      <td className="px-6 py-4 font-black text-slate-700 uppercase uppercase uppercase uppercase">{record.id}</td>
+                      <td className="px-6 py-4 uppercase uppercase uppercase uppercase uppercase"><span className={`font-bold uppercase uppercase ${record.rncId ? 'text-red-600' : 'text-slate-300 italic text-[10px] uppercase uppercase uppercase'}`}>{record.rncId || 'N/A'}</span></td>
+                      <td className="px-6 py-4 font-medium text-slate-500 uppercase uppercase uppercase uppercase uppercase uppercase">{record.area}</td>
+                      <td className="px-6 py-4 max-w-xs truncate font-bold text-slate-700 uppercase uppercase uppercase uppercase uppercase uppercase">{record.titulo}</td>
+                      <td className="px-6 py-4 uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase"><span className={`px-2.5 py-1 text-[10px] font-black rounded-full border uppercase uppercase tracking-tighter ${getStatusColor(record.status)} uppercase uppercase uppercase`}>{record.status}</span></td>
+                      <td className="px-6 py-4 text-center uppercase uppercase"><span className={`text-[9px] font-black px-2 py-0.5 rounded border uppercase uppercase ${record.necessitaRNC === 'SIM' ? 'bg-red-50 text-red-600 border-red-200' : 'bg-slate-50 text-slate-400 border-slate-200'}`}>{record.necessitaRNC}</span></td>
+                      <td className="px-6 py-4 text-center uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">
+                        <div className="flex items-center justify-center space-x-2 uppercase uppercase uppercase uppercase uppercase uppercase">
+                          <button onClick={() => handleEdit(record)} className="p-2 text-slate-400 hover:text-indigo-600 rounded-lg transition-all uppercase uppercase uppercase uppercase uppercase uppercase uppercase"><i className="ph ph-pencil-simple text-xl uppercase uppercase uppercase uppercase"></i></button>
+                          <button onClick={() => handlePrint(record, 'dashboard')} className="p-2 text-slate-400 hover:text-slate-800 rounded-lg transition-all uppercase uppercase uppercase uppercase uppercase uppercase uppercase"><i className="ph ph-printer text-xl uppercase uppercase uppercase uppercase"></i></button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      );
+
+      const renderList = () => (
+        <div className="p-6 max-w-7xl mx-auto animate-fade-in no-print uppercase uppercase uppercase uppercase uppercase">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4 uppercase uppercase uppercase uppercase uppercase uppercase uppercase">
+            <div><h2 className="text-2xl font-black text-slate-800 uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">8.7 CONTROLE DE SAÍDAS NÃO CONFORMES</h2><p className="text-sm text-slate-500 uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">GESTÃO OPERACIONAL DE DESVIOS E CONTENÇÃO.</p></div>
+            <div className="flex items-center space-x-3 w-full sm:w-auto uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">
+              <button onClick={() => setShowAllRecords(!showAllRecords)} className={`px-4 py-2 text-sm font-medium rounded-lg border transition-colors shadow-sm uppercase uppercase uppercase ${showAllRecords ? 'bg-indigo-50 text-indigo-700 border-indigo-200' : 'bg-white border-slate-300 shadow-sm uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase'}`}>{showAllRecords ? 'OCULTAR ENCERRADOS' : 'MOSTRAR TODOS'}</button>
+              <input type="text" className="bg-white border border-slate-300 text-sm rounded-lg pl-3 p-2 w-full sm:w-64 shadow-sm uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase" placeholder="PESQUISAR..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
+            </div>
+          </div>
+          <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">
+            <div className="overflow-x-auto uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">
+              <table className="w-full text-sm text-left whitespace-nowrap uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">
+                <thead className="text-xs text-slate-400 uppercase bg-slate-50 border-b uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">
+                  <tr><th className="px-6 py-4 uppercase uppercase uppercase uppercase uppercase">RO</th><th className="px-6 py-4 uppercase uppercase uppercase uppercase uppercase uppercase">DATA OCORR.</th><th className="px-6 py-4 uppercase uppercase uppercase uppercase uppercase uppercase uppercase">ÁREA / SETOR</th><th className="px-6 py-4 uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">RESPONSÁVEL DISP.</th><th className="px-6 py-4 text-center uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">RNC?</th><th className="px-6 py-4 uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">STATUS</th><th className="px-6 py-4 text-center uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">AÇÕES</th></tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">
+                  {filteredRecords.map((record) => (
+                    <tr key={record.idDb} className="hover:bg-slate-50 transition-colors uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">
+                      <td className="px-6 py-4 font-black text-slate-800 uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">{record.id}</td>
+                      <td className="px-6 py-4 text-slate-500 uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">{record.dataOcorrencia}</td>
+                      <td className="px-6 py-4 font-bold text-slate-700 uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">{record.area} <span className="text-[10px] text-slate-400 block font-medium uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">{record.processo}</span></td>
+                      <td className="px-6 py-4 font-medium uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">{record.respDisposicao || '-'}</td>
+                      <td className="px-6 py-4 text-center uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase"><span className={`text-[9px] font-black px-2 py-0.5 rounded border uppercase uppercase uppercase ${record.necessitaRNC === 'SIM' ? 'bg-red-50 text-red-600 border-red-200' : 'bg-slate-50 text-slate-400 border-slate-200 uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase'}`}>{record.necessitaRNC === 'SIM' ? 'RNC ABERTA' : 'NÃO'}</span></td>
+                      <td className="px-6 py-4 uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase"><span className={`px-2.5 py-1 text-[10px] font-black rounded-full border uppercase uppercase tracking-tighter ${getStatusColor(record.status)} uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase`}>{record.status}</span></td>
+                      <td className="px-6 py-4 text-center uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">
+                        <div className="flex items-center justify-center space-x-1 uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">
+                          <button onClick={() => handleEdit(record)} className="p-2 text-slate-400 hover:text-indigo-600 rounded-lg transition-all uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase"><i className="ph ph-pencil-simple text-xl uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase"></i></button>
+                          <button onClick={() => handlePrint(record, 'list')} className="p-2 text-slate-400 hover:text-slate-800 rounded-lg transition-all uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase"><i className="ph ph-printer text-xl uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase"></i></button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      );
+
+      const renderRNC = () => {
+        const filteredRNC = records.filter(r => (r.necessitaRNC || '').toUpperCase() === 'SIM').filter(record => {
+          const term = searchTerm.toLowerCase();
+          const matchesSearch = (record.rncId || '').toLowerCase().includes(term) ||
+                                (record.id || '').toLowerCase().includes(term) ||
+                                (record.titulo || '').toLowerCase().includes(term) ||
+                                (record.area || '').toLowerCase().includes(term);
+          const currentStatus = (record.rncStatusAcao || '').toUpperCase();
+          const matchesStatus = showAllRecords ? true : currentStatus !== 'CONCLUÍDO';
+          return matchesSearch && matchesStatus;
+        });
+        return (
+          <div className="p-6 max-w-7xl mx-auto animate-fade-in no-print uppercase uppercase uppercase uppercase uppercase uppercase">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4 uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">
+              <div><h2 className="text-2xl font-black text-slate-800 uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">10.2 NÃO CONFORMIDADE E AÇÃO CORRETIVA</h2><p className="text-sm text-slate-500 uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">GESTÃO DE MELHORIAS E ANÁLISE DE CAUSA RAIZ.</p></div>
+              <div className="flex items-center space-x-3 w-full sm:w-auto uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">
+                <button onClick={() => setShowAllRecords(!showAllRecords)} className={`px-4 py-2 text-sm font-medium rounded-lg border transition-colors shadow-sm uppercase uppercase ${showAllRecords ? 'bg-red-50 text-red-700 border-red-200' : 'bg-white border-slate-300 uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase'}`}>{showAllRecords ? 'OCULTAR CONCLUÍDOS' : 'MOSTRAR TODOS'}</button>
+                <input type="text" className="bg-white border border-slate-300 text-sm rounded-lg pl-3 p-2 w-full sm:w-64 shadow-sm uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase" placeholder="PESQUISAR RNC..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
+              </div>
+            </div>
+            <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden border-t-4 border-t-red-600 uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">
+              <div className="overflow-x-auto uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">
+                <table className="w-full text-sm text-left whitespace-nowrap uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">
+                  <thead className="text-xs text-red-400 uppercase bg-red-50/30 border-b uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">
+                    <tr><th className="px-6 py-4 uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">NÚMERO RNC</th><th className="px-6 py-4 uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">RO ORIGEM</th><th className="px-6 py-4 uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">ÁREA</th><th className="px-6 py-4 uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">RISCO POTENCIAL?</th><th className="px-6 py-4 uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">DATA ANÁLISE 10.2</th><th className="px-6 py-4 uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">STATUS AÇÃO</th><th className="px-6 py-4 text-center uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">AÇÕES</th></tr>
+                  </thead>
+                  <tbody className="divide-y divide-red-50 uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">
+                    {filteredRNC.map((record) => (
+                      <tr key={record.idDb} className="hover:bg-red-50/50 transition-colors uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">
+                        <td className="px-6 py-4 font-black text-red-600 text-base uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">{record.rncId}</td>
+                        <td className="px-6 py-4 font-bold text-slate-500 uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">{record.id}</td>
+                        <td className="px-6 py-4 font-medium text-slate-700 uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">{record.area}</td>
+                        <td className="px-6 py-4 text-center uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase"><span className={`px-2 py-0.5 rounded font-black text-[10px] border uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase ${record.rncRiscoPotencial === 'SIM' ? 'bg-red-100 text-red-600 border-red-200' : 'bg-slate-100 text-slate-500 uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase'}`}>{record.rncRiscoPotencial}</span></td>
+                        <td className="px-6 py-4 font-bold text-slate-600 uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">{record.rncDataRiscos || '-'}</td>
+                        <td className="px-6 py-4 uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase"><span className={`px-2.5 py-1 text-[10px] font-black rounded-full border uppercase tracking-tighter ${getRNCStatusColor(record.rncStatusAcao)} uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase`}>{record.rncStatusAcao || 'PENDENTE'}</span></td>
+                        <td className="px-6 py-4 text-center uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">
+                          <div className="flex items-center justify-center space-x-2 uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">
+                            <button onClick={() => handleEdit(record)} className="p-2 text-red-400 hover:text-red-700 hover:bg-red-100 rounded-lg transition-all uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase"><i className="ph ph-pencil-simple text-xl uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase"></i></button>
+                            <button onClick={() => handlePrint(record, 'rnc')} className="p-2 text-slate-400 hover:text-slate-800 hover:bg-slate-100 rounded-lg transition-all uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase"><i className="ph ph-printer text-xl uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase"></i></button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        );
+      };
+
+      const renderForm = () => (
+        <div className="p-6 max-w-5xl mx-auto animate-fade-in pb-20 no-print uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">
+          <div className="mb-8 flex justify-between items-start border-b pb-6 uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">
+            <div>
+              <h2 className="text-3xl font-black text-slate-800 tracking-tighter uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">{isEditing ? `EDIÇÃO: ${formData.id}` : 'RELATÓRIO DE OCORRÊNCIA'}</h2>
+              <p className="text-slate-500 font-medium uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">GESTÃO INTEGRADA ISO 9001 • REVIMAQ</p>
+            </div>
+            <button onClick={() => setCurrentView('list')} className="bg-slate-100 p-2 rounded-xl text-slate-400 hover:text-red-600 hover:bg-red-50 transition-all active:scale-90 uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase"><i className="ph ph-x-circle text-4xl uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase"></i></button>
+          </div>
+
+          <form onSubmit={handleSubmit} className="space-y-10 uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">
+            {/* 1. Identificação */}
+            <section className="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">
+              <div className="bg-slate-800 p-4 font-black text-white flex items-center uppercase tracking-widest text-[10px] uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">
+                <span className="bg-indigo-500 text-white w-5 h-5 rounded-md flex items-center justify-center mr-3 uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">01</span>
+                IDENTIFICAÇÃO DA ORIGEM
+              </div>
+              <div className="p-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">
+                <div>
+                  <label className="block text-[10px] font-black text-slate-400 uppercase mb-2 uppercase uppercase uppercase uppercase uppercase uppercase uppercase">EMITIDO POR *</label>
+                  <div className="flex space-x-2">
+                    <select name="emitidoPor" required value={formData.emitidoPor} onChange={handleInputChange} className="w-full bg-slate-50 border border-slate-200 text-sm rounded-xl p-3 focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">
+                      <option value="">SELECIONE...</option>
+                      {emitentes.map((e, i) => <option key={i} value={e.nome}>{e.nome}</option>)}
+                    </select>
+                    <button type="button" onClick={handleAddEmitente} className="bg-indigo-100 text-indigo-700 font-bold px-4 rounded-xl hover:bg-indigo-200 transition-colors uppercase uppercase uppercase" title="ADICIONAR NOVO">+</button>
+                    <button type="button" onClick={handleEditEmitente} className="bg-amber-100 text-amber-700 font-bold px-3 rounded-xl hover:bg-amber-200 transition-colors uppercase uppercase uppercase" title="EDITAR SELECIONADO"><i className="ph ph-pencil-simple text-lg"></i></button>
+                  </div>
+                </div>
+                <div><label className="block text-[10px] font-black text-slate-400 uppercase mb-2 uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">E-MAIL</label><input type="email" name="email" value={formData.email} onChange={handleInputChange} className="w-full bg-slate-50 border border-slate-200 text-sm rounded-xl p-3 focus:ring-4 focus:ring-indigo-500/10 focus:bg-white focus:border-indigo-500 transition-all outline-none uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase" /></div>
+                <div><label className="block text-[10px] font-black text-slate-400 uppercase mb-2 uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">DATA OCORRÊNCIA *</label><input type="date" name="dataOcorrencia" required value={formData.dataOcorrencia} onChange={handleInputChange} className="w-full bg-slate-50 border border-slate-200 text-sm rounded-xl p-3 font-black focus:ring-4 focus:ring-indigo-500/10 focus:bg-white transition-all outline-none uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase" /></div>
+                <div><label className="block text-[10px] font-black text-slate-400 uppercase mb-2 uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">ORIGEM</label><select name="origem" value={formData.origem} onChange={handleInputChange} className="w-full bg-slate-50 border border-slate-200 text-sm rounded-xl p-3 font-bold focus:ring-2 focus:ring-indigo-500 uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase"><option value="PROCESSO INTERNO">PROCESSO INTERNO</option><option value="AUDITORIA INTERNA">AUDITORIA INTERNA</option><option value="AUDITORIA EXTERNA">AUDITORIA EXTERNA</option><option value="RECLAMAÇÃO CLIENTE">RECLAMAÇÃO DE CLIENTE</option><option value="FORNECEDOR">FORNECEDOR</option><option value="INSPEÇÃO">INSPEÇÃO/ENSAIO</option></select></div>
+                <div><label className="block text-[10px] font-black text-slate-400 uppercase mb-2 uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">REFERÊNCIA</label><input type="text" name="referencia" value={formData.referencia} onChange={handleInputChange} className="w-full bg-slate-50 border border-slate-200 text-sm rounded-xl p-3 focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase" /></div>
+                <div>
+                  <label className="block text-[10px] font-black text-slate-400 uppercase mb-2 uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">CLIENTE</label>
+                  <div className="flex space-x-2">
+                    <select name="cliente" value={formData.cliente} onChange={handleInputChange} className="w-full bg-slate-50 border border-slate-200 text-sm rounded-xl p-3 focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">
+                      <option value="">SELECIONE UM CLIENTE...</option>
+                      {clientes.map((c, i) => <option key={i} value={c.nome}>{c.nome}</option>)}
+                    </select>
+                    <button type="button" onClick={handleAddCliente} className="bg-indigo-100 text-indigo-700 font-bold px-4 rounded-xl hover:bg-indigo-200 transition-colors uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase" title="ADICIONAR NOVO">+</button>
+                    <button type="button" onClick={handleEditCliente} className="bg-amber-100 text-amber-700 font-bold px-3 rounded-xl hover:bg-amber-200 transition-colors uppercase uppercase uppercase" title="EDITAR SELECIONADO"><i className="ph ph-pencil-simple text-lg"></i></button>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            {/* 2. Rastreabilidade */}
+            <section className="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">
+              <div className="bg-slate-100 p-4 font-black text-slate-600 flex items-center uppercase tracking-widest text-[10px] uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">
+                <span className="bg-slate-400 text-white w-5 h-5 rounded-md flex items-center justify-center mr-3 uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">02</span>
+                RASTREABILIDADE (ONDE OCORREU?)
+              </div>
+              <div className="p-8 grid grid-cols-1 md:grid-cols-3 gap-8 uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">
+                <div>
+                  <label className="block text-[10px] font-black text-slate-400 uppercase mb-2 uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">ÁREA / SETOR *</label>
+                  <div className="flex space-x-2">
+                    <select name="area" required value={formData.area} onChange={handleInputChange} className="w-full bg-slate-50 border border-slate-200 text-sm rounded-xl p-3 font-bold focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">
+                      <option value="">SELECIONE...</option>
+                      {areas.map((a, i) => <option key={i} value={a.nome}>{a.nome}</option>)}
+                    </select>
+                    <button type="button" onClick={handleAddArea} className="bg-indigo-100 text-indigo-700 font-bold px-4 rounded-xl hover:bg-indigo-200 transition-colors uppercase uppercase uppercase" title="ADICIONAR NOVO">+</button>
+                    <button type="button" onClick={handleEditArea} className="bg-amber-100 text-amber-700 font-bold px-3 rounded-xl hover:bg-amber-200 transition-colors uppercase uppercase uppercase" title="EDITAR SELECIONADO"><i className="ph ph-pencil-simple text-lg"></i></button>
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-[10px] font-black text-slate-400 uppercase mb-2 uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">PROCESSO</label>
+                  <div className="flex space-x-2">
+                    <select name="processo" value={formData.processo} onChange={handleInputChange} className="w-full bg-slate-50 border border-slate-200 text-sm rounded-xl p-3 focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">
+                      <option value="">SELECIONE...</option>
+                      {processos.map((p, i) => <option key={i} value={p.nome}>{p.nome}</option>)}
+                    </select>
+                    <button type="button" onClick={handleAddProcesso} className="bg-indigo-100 text-indigo-700 font-bold px-4 rounded-xl hover:bg-indigo-200 transition-colors uppercase uppercase uppercase" title="ADICIONAR NOVO">+</button>
+                    <button type="button" onClick={handleEditProcesso} className="bg-amber-100 text-amber-700 font-bold px-3 rounded-xl hover:bg-amber-200 transition-colors uppercase uppercase uppercase" title="EDITAR SELECIONADO"><i className="ph ph-pencil-simple text-lg"></i></button>
+                  </div>
+                </div>
+                <div><label className="block text-[10px] font-black text-slate-400 uppercase mb-2 uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">PRODUTO / ITEM</label><input type="text" name="produto" value={formData.produto} onChange={handleInputChange} className="w-full bg-slate-50 border border-slate-200 text-sm rounded-xl p-3 focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase" /></div>
+              </div>
+            </section>
+
+            {/* 3. Descrição */}
+            <section className="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">
+              <div className="bg-slate-100 p-4 font-black text-slate-600 flex items-center uppercase tracking-widest text-[10px] uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">
+                <span className="bg-slate-400 text-white w-5 h-5 rounded-md flex items-center justify-center mr-3 uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">03</span>
+                DESCRIÇÃO DA NÃO CONFORMIDADE
+              </div>
+              <div className="p-8 space-y-8 uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-8 uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">
+                  <div className="md:col-span-3 uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">
+                    <label className="block text-[10px] font-black text-slate-400 uppercase mb-2 uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">TÍTULO RESUMIDO *</label>
+                    <div className="flex space-x-2">
+                      <select name="titulo" required value={formData.titulo} onChange={handleInputChange} className="w-full bg-slate-50 border border-slate-200 text-sm rounded-xl p-3 font-black text-slate-800 focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">
+                        <option value="">SELECIONE...</option>
+                        {titulos.map((t, i) => <option key={i} value={t.nome}>{t.nome}</option>)}
+                      </select>
+                      <button type="button" onClick={handleAddTitulo} className="bg-indigo-100 text-indigo-700 font-bold px-4 rounded-xl hover:bg-indigo-200 transition-colors uppercase uppercase uppercase" title="ADICIONAR NOVO">+</button>
+                      <button type="button" onClick={handleEditTitulo} className="bg-amber-100 text-amber-700 font-bold px-3 rounded-xl hover:bg-amber-200 transition-colors uppercase uppercase uppercase" title="EDITAR SELECIONADO"><i className="ph ph-pencil-simple text-lg"></i></button>
+                    </div>
+                  </div>
+                  <div className="uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase"><label className="block text-[10px] font-black text-slate-400 uppercase mb-2 uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">PROCEDENTE?</label><select name="procedente" value={formData.procedente} onChange={handleInputChange} className="w-full bg-slate-50 border border-slate-200 text-sm rounded-xl p-3 font-black text-indigo-600 focus:ring-2 focus:ring-indigo-500 transition-all uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase"><option value="PENDENTE">PENDENTE</option><option value="SIM">SIM</option><option value="NÃO">NÃO</option></select></div>
+                </div>
+                <div className="uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase"><label className="block text-[10px] font-black text-slate-400 uppercase mb-2 uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">O QUE OCORREU? (DETALHES) *</label><textarea name="descricao" required rows="3" value={formData.descricao} onChange={handleInputChange} className="w-full bg-slate-50 border border-slate-200 text-sm rounded-2xl p-4 outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase"></textarea></div>
+                <div className="uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase"><label className="block text-[10px] font-black text-slate-400 uppercase mb-2 uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">EFEITO / CONSEQUÊNCIA</label><textarea name="efeito" rows="2" value={formData.efeito} onChange={handleInputChange} className="w-full bg-slate-50 border border-slate-200 text-sm rounded-2xl p-4 outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase"></textarea></div>
+              </div>
+            </section>
+
+            {/* 4. Controle 8.7 - AMARELO */}
+            <section className="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden border-l-[12px] border-l-yellow-400 uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">
+              <div className="bg-yellow-50 p-4 font-black text-yellow-700 flex items-center uppercase tracking-widest text-[10px] uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">
+                <span className="bg-yellow-400 text-white w-5 h-5 rounded-md flex items-center justify-center mr-3 uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">04</span>
+                DISPOSIÇÃO E AÇÃO IMEDIATA (CONTROLE 8.7)
+              </div>
+              <div className="p-8 space-y-8 uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">
+                  <div className="uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase"><label className="block text-[10px] font-black text-slate-400 uppercase mb-2 uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">AÇÃO CORRETIVA IMEDIATA (CONTENÇÃO) *</label><textarea name="acaoImediata" required rows="2" value={formData.acaoImediata} onChange={handleInputChange} className="w-full bg-slate-50 border border-slate-200 text-sm rounded-2xl p-4 outline-none focus:ring-2 focus:ring-yellow-500 focus:bg-white transition-all uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase"></textarea></div>
+                  <div className="uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase"><label className="block text-[10px] font-black text-slate-400 uppercase mb-2 uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">DISPOSIÇÃO APLICADA</label><select name="disposicao" value={formData.disposicao} onChange={handleInputChange} className="w-full bg-slate-50 border border-slate-200 text-sm rounded-xl p-3 font-black text-slate-700 focus:ring-2 focus:ring-yellow-500 transition-all uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase"><option value="">SELECIONE...</option><option value="RETRABALHO">RETRABALHO</option><option value="REFUGO/DESCARTE">REFUGO / DESCARTE</option><option value="ACEITE COM CONCESSÃO">ACEITE COM CONCESSÃO</option><option value="DEVOLUÇÃO AO FORNECEDOR">DEVOLUÇÃO AO FORNECEDOR</option><option value="RECLASSIFICAÇÃO">RECLASSIFICAÇÃO</option></select></div>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-8 uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">
+                  <div className="uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">
+                    <label className="block text-[10px] font-black text-slate-400 uppercase mb-2 uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">RESPONSÁVEL DISPOSIÇÃO</label>
+                    <div className="flex space-x-2">
+                      <select name="respDisposicao" value={formData.respDisposicao} onChange={handleInputChange} className="w-full bg-slate-50 border border-slate-200 text-sm rounded-xl p-3 font-bold focus:ring-2 focus:ring-yellow-500 focus:bg-white transition-all uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">
+                        <option value="">SELECIONE...</option>
+                        {responsaveis.map((r, i) => <option key={i} value={r.nome}>{r.nome}</option>)}
+                      </select>
+                      <button type="button" onClick={handleAddResponsavel} className="bg-yellow-100 text-yellow-700 font-bold px-4 rounded-xl hover:bg-yellow-200 transition-colors uppercase uppercase uppercase" title="ADICIONAR NOVO">+</button>
+                      <button type="button" onClick={handleEditResponsavel} className="bg-amber-100 text-amber-700 font-bold px-3 rounded-xl hover:bg-amber-200 transition-colors uppercase uppercase uppercase" title="EDITAR SELECIONADO"><i className="ph ph-pencil-simple text-lg"></i></button>
+                    </div>
+                  </div>
+                  <div className="uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase"><label className="block text-[10px] font-black text-slate-400 uppercase mb-2 uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">PRAZO PARA EXECUÇÃO</label><input type="date" name="prazo" value={formData.prazo} onChange={handleInputChange} className="w-full bg-slate-50 border border-slate-200 text-sm rounded-xl p-3 outline-none focus:ring-2 focus:ring-yellow-500 transition-all uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase" /></div>
+                  <div className="uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase"><label className="block text-[10px] font-black text-slate-400 uppercase mb-2 uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">CUSTO ESTIMADO (R$)</label><input type="number" step="0.01" name="custo" value={formData.custo} onChange={handleInputChange} className="w-full bg-slate-50 border border-slate-200 text-sm rounded-xl p-3 font-black text-red-600 focus:ring-2 focus:ring-yellow-500 focus:bg-white transition-all uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase" /></div>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 border-t border-slate-100 pt-8 uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">
+                   <div className="uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase"><label className="block text-[10px] font-black text-slate-400 uppercase mb-2 uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">EVIDÊNCIAS FÍSICAS</label><input type="text" name="evidencias" value={formData.evidencias} onChange={handleInputChange} className="w-full bg-slate-50 border border-slate-200 text-sm rounded-xl p-3 focus:ring-2 focus:ring-yellow-500 focus:bg-white transition-all uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase" /></div>
+                   <div className="uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase"><label className="block text-[10px] font-black text-slate-400 uppercase mb-2 uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">LINKS EXTERNOS (DOCUMENTOS)</label><input type="text" name="anexos" value={formData.anexos} onChange={handleInputChange} className="w-full bg-slate-50 border border-slate-200 text-sm rounded-xl p-3 focus:ring-2 focus:ring-yellow-500 focus:bg-white transition-all uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase" /></div>
+                </div>
+              </div>
+            </section>
+
+            {/* 5. Status Geral */}
+            <section className="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">
+              <div className="bg-slate-100 p-4 font-black text-slate-600 flex items-center uppercase tracking-widest text-[10px] uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">
+                <span className="bg-slate-400 text-white w-5 h-5 rounded-md flex items-center justify-center mr-3 uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">05</span>
+                ANÁLISE DE DADOS E ENCERRAMENTO
+              </div>
+              <div className="p-8 space-y-8 uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-8 uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">
+                   <div className="bg-red-50 p-6 rounded-2xl border-2 border-red-100 flex flex-col justify-center relative uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">
+                     {isEditing && (formData.necessitaRNC || '').toUpperCase() === 'SIM' && (
+                        <button type="button" onClick={() => {
+                          const pwd = window.prompt("INSIRA A PALAVRA-PASSE PARA DESBLOQUEAR A RNC:");
+                          if(pwd === "123456") {
+                              setFormData({...formData, necessitaRNC: 'NÃO AVALIADO'});
+                              setIsRncLocked(false);
+                              alert("CAMPO DESBLOQUEADO!");
+                          } else if (pwd !== null) {
+                              alert("PALAVRA-PASSE INCORRETA!");
+                          }
+                        }} className="absolute top-3 right-3 text-red-600 bg-white p-1.5 rounded-lg shadow-sm hover:bg-red-100 transition-colors uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase"><i className="ph ph-lock-key text-lg uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase"></i></button>
+                     )}
+                     <label className="block text-xs font-black text-red-800 mb-3 uppercase tracking-tighter uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">ABERTURA DE RNC NECESSÁRIA?</label>
+                     <select name="necessitaRNC" value={formData.necessitaRNC} onChange={handleInputChange} disabled={isRncLocked} className="w-full bg-white border-red-200 text-sm rounded-xl p-3 font-black text-red-600 shadow-sm uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase outline-none focus:ring-4 focus:ring-red-500/20 transition-all disabled:opacity-60 disabled:cursor-not-allowed">
+                       <option value="NÃO AVALIADO">AINDA NÃO AVALIADO</option>
+                       <option value="SIM">SIM (GERAR RNC 10.2)</option>
+                       <option value="NÃO">NÃO (DESVIO ISOLADO)</option>
+                     </select>
+                   </div>
+                   <div className="md:col-span-2 uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase"><label className="block text-[10px] font-black text-slate-400 uppercase mb-2 uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">ANÁLISE FINAL / JUSTIFICATIVAS</label><textarea name="analiseSaida" rows="3" value={formData.analiseSaida} onChange={handleInputChange} className="w-full bg-slate-50 border border-slate-200 text-sm rounded-2xl p-4 uppercase outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase"></textarea></div>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-8 border-t border-slate-100 uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">
+                  <div className="uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase"><label className="block text-[10px] font-black text-slate-400 uppercase mb-2 uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">STATUS ATUAL DO REGISTRO</label><select name="status" value={formData.status} onChange={handleInputChange} className="w-full bg-slate-50 border border-slate-200 text-sm rounded-xl p-3 font-black text-indigo-700 uppercase tracking-widest focus:ring-2 focus:ring-indigo-500 transition-all uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase"><option value="ABERTO">ABERTO</option><option value="EM TRATAMENTO">EM TRATAMENTO</option><option value="ENCERRADO">ENCERRADO</option><option value="CANCELADO">CANCELADO</option></select></div>
+                  <div className="uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase"><label className="block text-[10px] font-black text-slate-400 uppercase mb-2 uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">DATA EFETIVA DE ENCERRAMENTO</label><input type="date" name="dataEncerramento" value={formData.dataEncerramento} onChange={handleInputChange} className="w-full bg-slate-50 border border-slate-200 text-sm rounded-xl p-3 font-black uppercase outline-none focus:ring-2 focus:ring-indigo-500 transition-all uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase" /></div>
+                </div>
+              </div>
+            </section>
+
+            {/* SEÇÃO RNC (ITEM 10.2) COM ISHIKAWA E PLANO DE AÇÃO (VERMELHO) */}
+            {(formData.necessitaRNC || '').toUpperCase() === 'SIM' && (
+              <section className="bg-red-50 rounded-[40px] shadow-2xl border-[3px] border-red-200 overflow-hidden animate-fade-in relative uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">
+                 <div className="bg-red-600 p-6 font-black text-white flex items-center shadow-lg uppercase tracking-[0.2em] text-xs uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">
+                    <i className="ph ph-folder-warning mr-4 text-3xl uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase"></i>
+                    TRATAMENTO DE NÃO CONFORMIDADE E AÇÃO CORRETIVA (ITEM 10.2)
+                    {formData.rncId && <span className="ml-auto bg-white/20 px-4 py-1 rounded-full font-black uppercase uppercase tracking-widest uppercase uppercase uppercase uppercase uppercase uppercase uppercase">{formData.rncId}</span>}
+                 </div>
+                 
+                 <div className="p-10 space-y-10 uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">
+                       <div className="bg-white p-5 rounded-2xl shadow-sm border border-red-100 uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase"><label className="block text-[9px] font-black text-red-400 uppercase mb-2 tracking-widest uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">RISCO POTENCIAL?</label><select name="rncRiscoPotencial" value={formData.rncRiscoPotencial} onChange={handleInputChange} className="w-full border-none text-sm p-1 font-black text-red-600 focus:ring-0 uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase"><option value="SIM">SIM</option><option value="NÃO">NÃO</option></select></div>
+                       <div className="bg-white p-5 rounded-2xl shadow-sm border border-red-100 uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase"><label className="block text-[9px] font-black text-red-400 uppercase mb-2 tracking-widest uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">ATUALIZAR RISCOS/OPORT?</label><select name="rncAtualizarRiscos" value={formData.rncAtualizarRiscos} onChange={handleInputChange} className="w-full border-none text-sm p-1 font-black text-red-600 focus:ring-0 uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase"><option value="SIM">SIM</option><option value="NÃO">NÃO</option></select></div>
+                       <div className="bg-white p-5 rounded-2xl shadow-sm border border-red-100 uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase"><label className="block text-[9px] font-black text-red-400 uppercase mb-2 tracking-widest uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">GESTOR RESPONSÁVEL</label><input type="text" name="rncResponsavelRiscos" value={formData.rncResponsavelRiscos} onChange={handleInputChange} className="w-full border-none text-sm p-1 font-bold focus:ring-0 uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase" /></div>
+                       <div className="bg-white p-5 rounded-2xl shadow-sm border border-red-100 uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase"><label className="block text-[9px] font-black text-red-400 uppercase mb-2 tracking-widest uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">DATA DA ANÁLISE</label><input type="date" name="rncDataRiscos" value={formData.rncDataRiscos} onChange={handleInputChange} className="w-full border-none text-sm p-1 font-black focus:ring-0 uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase" /></div>
+                    </div>
+
+                    {/* ISHIKAWA 6M */}
+                    <div className="bg-white rounded-3xl p-8 shadow-inner border border-red-100 uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">
+                       <h4 className="text-sm font-black text-red-700 uppercase tracking-widest mb-6 flex items-center border-b pb-4 uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">
+                          <i className="ph ph-fish mr-2 uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase"></i> ANÁLISE DE CAUSA RAIZ (ISHIKAWA - 6M)
+                       </h4>
+                       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">
+                          <div className="space-y-1 uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase"><div className="flex justify-between items-end"><label className="text-[10px] font-black text-slate-400 uppercase tracking-widest uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">01. MÉTODO</label><button type="button" onClick={() => copyToCausaRaiz('rncMetodo', '01. MÉTODO')} className="text-[9px] font-bold text-red-500 hover:text-red-700 bg-red-50 px-2 py-1 rounded uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase"> + CAUSA</button></div><textarea name="rncMetodo" value={formData.rncMetodo} onChange={handleInputChange} rows="2" className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs outline-none focus:bg-white focus:border-red-400 transition-all uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase"></textarea></div>
+                          <div className="space-y-1 uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase"><div className="flex justify-between items-end"><label className="text-[10px] font-black text-slate-400 uppercase tracking-widest uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">02. MÁQUINA</label><button type="button" onClick={() => copyToCausaRaiz('rncMaquina', '02. MÁQUINA')} className="text-[9px] font-bold text-red-500 hover:text-red-700 bg-red-50 px-2 py-1 rounded uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase"> + CAUSA</button></div><textarea name="rncMaquina" value={formData.rncMaquina} onChange={handleInputChange} rows="2" className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs outline-none focus:bg-white focus:border-red-400 transition-all uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase"></textarea></div>
+                          <div className="space-y-1 uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase"><div className="flex justify-between items-end"><label className="text-[10px] font-black text-slate-400 uppercase tracking-widest uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">03. MEDIDA</label><button type="button" onClick={() => copyToCausaRaiz('rncMedida', '03. MEDIDA')} className="text-[9px] font-bold text-red-500 hover:text-red-700 bg-red-50 px-2 py-1 rounded uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase"> + CAUSA</button></div><textarea name="rncMedida" value={formData.rncMedida} onChange={handleInputChange} rows="2" className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs outline-none focus:bg-white focus:border-red-400 transition-all uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase"></textarea></div>
+                          <div className="space-y-1 uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase"><div className="flex justify-between items-end"><label className="text-[10px] font-black text-slate-400 uppercase tracking-widest uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">04. MEIO AMBIENTE</label><button type="button" onClick={() => copyToCausaRaiz('rncMeioAmbiente', '04. MEIO AMBIENTE')} className="text-[9px] font-bold text-red-500 hover:text-red-700 bg-red-50 px-2 py-1 rounded uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase"> + CAUSA</button></div><textarea name="rncMeioAmbiente" value={formData.rncMeioAmbiente} onChange={handleInputChange} rows="2" className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs outline-none focus:bg-white focus:border-red-400 transition-all uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase"></textarea></div>
+                          <div className="space-y-1 uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase"><div className="flex justify-between items-end"><label className="text-[10px] font-black text-slate-400 uppercase tracking-widest uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">05. MÃO DE OBRA</label><button type="button" onClick={() => copyToCausaRaiz('rncMaoDeObra', '05. MÃO DE OBRA')} className="text-[9px] font-bold text-red-500 hover:text-red-700 bg-red-50 px-2 py-1 rounded uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase"> + CAUSA</button></div><textarea name="rncMaoDeObra" value={formData.rncMaoDeObra} onChange={handleInputChange} rows="2" className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs outline-none focus:bg-white focus:border-red-400 transition-all uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase"></textarea></div>
+                          <div className="space-y-1 uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase"><div className="flex justify-between items-end"><label className="text-[10px] font-black text-slate-400 uppercase tracking-widest uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">06. MATERIAL</label><button type="button" onClick={() => copyToCausaRaiz('rncMaterial', '06. MATERIAL')} className="text-[9px] font-bold text-red-500 hover:text-red-700 bg-red-50 px-2 py-1 rounded uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase"> + CAUSA</button></div><textarea name="rncMaterial" value={formData.rncMaterial} onChange={handleInputChange} rows="2" className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs outline-none focus:bg-white focus:border-red-400 transition-all uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase"></textarea></div>
+                       </div>
+                    </div>
+
+                    {/* CAUSA RAIZ */}
+                    <div className="bg-white rounded-3xl p-8 shadow-inner border-l-[12px] border-red-600 uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">
+                       <h4 className="text-sm font-black text-red-700 uppercase tracking-widest mb-4 uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">CONCLUSÃO DA ANÁLISE DE CAUSA</h4>
+                       <label className="block text-[10px] font-black text-red-800 uppercase mb-2 tracking-widest uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">CAUSA RAIZ IDENTIFICADA *</label>
+                       <textarea name="rncCausaRaiz" required rows="3" value={formData.rncCausaRaiz} onChange={handleInputChange} className="w-full bg-red-50 border-2 border-red-200 text-sm rounded-2xl p-4 focus:bg-white focus:border-red-400 outline-none transition-all font-medium uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase" placeholder="APÓS ANÁLISE ACIMA, QUAL A CAUSA RAIZ DEFINITIVA?"></textarea>
+                    </div>
+
+                    {/* PLANO DE AÇÃO CORRETIVA */}
+                    <div className="bg-white rounded-3xl p-8 shadow-inner border border-red-100 uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">
+                       <h4 className="text-sm font-black text-red-700 uppercase tracking-widest mb-6 flex items-center border-b pb-4 uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">
+                          <i className="ph ph-list-checks mr-2 uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase"></i> PLANO DE AÇÃO CORRETIVA
+                       </h4>
+                       <div className="space-y-6 uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">
+                          <div className="uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">
+                            <label className="block text-[10px] font-black text-red-800 uppercase mb-2 tracking-[0.1em] uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">AÇÃO CORRETIVA (ELIMINAÇÃO DA CAUSA RAIZ) *</label>
+                            <textarea name="rncAcaoCorretiva" required rows="4" value={formData.rncAcaoCorretiva} onChange={handleInputChange} className="w-full bg-slate-50 border-2 border-red-100 text-sm rounded-2xl p-4 focus:bg-white focus:border-red-400 outline-none transition-all font-medium uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase"></textarea>
+                          </div>
+                          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">
+                             <div className="lg:col-span-2 uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">
+                               <label className="block text-[10px] font-black text-red-400 uppercase mb-2 tracking-[0.1em] uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">RESPONSÁVEL</label>
+                               <div className="flex space-x-2">
+                                 <select name="rncResponsavelAcao" value={formData.rncResponsavelAcao} onChange={handleInputChange} className="w-full bg-slate-50 border border-slate-200 text-sm rounded-xl p-3 font-bold focus:ring-2 focus:ring-red-400 focus:bg-white transition-all uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">
+                                   <option value="">SELECIONE...</option>
+                                   {responsaveis.map((r, i) => <option key={i} value={r.nome}>{r.nome}</option>)}
+                                 </select>
+                                 <button type="button" onClick={handleAddResponsavelAcao} className="bg-red-100 text-red-700 font-bold px-4 rounded-xl hover:bg-red-200 transition-colors uppercase uppercase uppercase" title="ADICIONAR NOVO">+</button>
+                                 <button type="button" onClick={handleEditResponsavelAcao} className="bg-amber-100 text-amber-700 font-bold px-3 rounded-xl hover:bg-amber-200 transition-colors uppercase uppercase uppercase" title="EDITAR SELECIONADO"><i className="ph ph-pencil-simple text-lg"></i></button>
+                               </div>
+                             </div>
+                             <div className="uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">
+                               <label className="block text-[10px] font-black text-red-400 uppercase mb-2 tracking-[0.1em] uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">PREVISÃO</label>
+                               <input type="date" name="rncPrevisao" value={formData.rncPrevisao} onChange={handleInputChange} className="w-full bg-slate-50 border border-slate-200 text-sm rounded-xl p-3 font-black uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase" />
+                             </div>
+                             <div className="uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">
+                               <label className="block text-[10px] font-black text-red-400 uppercase mb-2 tracking-[0.1em] uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">REALIZADO</label>
+                               <input type="date" name="rncRealizado" value={formData.rncRealizado} onChange={handleInputChange} className="w-full bg-slate-50 border border-slate-200 text-sm rounded-xl p-3 font-black uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase" />
+                             </div>
+                             <div className="uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">
+                               <label className="block text-[10px] font-black text-red-400 uppercase mb-2 tracking-[0.1em] uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">STATUS DA AÇÃO</label>
+                               <select name="rncStatusAcao" value={formData.rncStatusAcao} onChange={handleInputChange} className="w-full bg-slate-50 border border-slate-200 text-sm rounded-xl p-3 font-black uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">
+                                 <option value="PENDENTE">PENDENTE</option>
+                                 <option value="EM ANDAMENTO">EM ANDAMENTO</option>
+                                 <option value="CONCLUÍDO">CONCLUÍDO</option>
+                                 <option value="ATRASADO">ATRASADO</option>
+                               </select>
+                             </div>
+                          </div>
+                       </div>
+                    </div>
+                 </div>
+              </section>
+            )}
+
+            <div className="flex justify-end space-x-6 pt-10 border-t border-slate-200 uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">
+              <button type="button" onClick={() => setCurrentView('list')} className="px-10 py-4 border-2 border-slate-200 rounded-2xl hover:bg-slate-50 font-black text-slate-400 uppercase tracking-widest text-xs uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">CANCELAR</button>
+              <button type="submit" className="px-12 py-4 bg-indigo-600 text-white rounded-2xl hover:bg-indigo-700 font-black shadow-2xl flex items-center uppercase tracking-[0.15em] text-xs uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase"><i className="ph ph-floppy-disk mr-3 text-2xl uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase"></i> GRAVAR NO SISTEMA</button>
+            </div>
+          </form>
+        </div>
+      );
+
+      const renderPrintReport = () => {
+        if (!printData) return null;
+        const isRNC = (printData.necessitaRNC || '').toUpperCase() === 'SIM';
+        return (
+          <div className="print-area max-w-4xl mx-auto p-4 sm:p-8 bg-white my-8 shadow-2xl print:shadow-none print:my-0 text-slate-900 font-sans text-xs uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">
+            <div className="no-print mb-8 flex justify-between items-center bg-slate-100 p-6 border rounded-2xl shadow-sm uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">
+               <button onClick={() => setCurrentView(previousView)} className="px-6 py-2.5 bg-white border border-slate-300 rounded-lg hover:bg-slate-200 flex items-center font-bold text-slate-700 transition-all uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase"><i className="ph ph-arrow-left mr-2 uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase"></i> VOLTAR</button>
+               <button onClick={() => window.print()} className="px-8 py-2.5 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 flex items-center font-bold shadow-lg transition-all uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase"><i className="ph ph-printer mr-2 text-xl uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase"></i> IMPRIMIR / PDF</button>
+            </div>
+
+            <div className="border-[3px] border-slate-900 bg-white uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">
+               {/* HEADER */}
+               <div className="flex justify-between items-center border-b-[3px] border-slate-900 p-5 bg-slate-50/50 uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">
+                  <div className="space-y-1 uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">
+                     <h1 className="text-2xl font-black uppercase tracking-tighter leading-none uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">{isRNC ? 'RELATÓRIO DE NÃO CONFORMIDADE (RNC)' : 'RELATÓRIO DE OCORRÊNCIA (RO)'}</h1>
+                     <h2 className="text-sm font-bold text-slate-500 uppercase flex items-center uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase"><i className="ph ph-shield-check mr-1.5 text-indigo-600 uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase"></i> ISO 9001:2015 - REVIMAQ</h2>
+                  </div>
+                  <div className="text-right uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">
+                     <div className="text-2xl font-black text-red-600 border-4 border-red-600 px-4 py-1.5 inline-block leading-none shadow-sm uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">{isRNC ? printData.rncId : printData.id}</div>
+                     {isRNC && <p className="text-[8px] font-black text-slate-400 mt-1 uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">VÍNCULO RO: {printData.id}</p>}
+                     <p className="text-[10px] font-black mt-2 text-slate-400 uppercase tracking-widest uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">EMISSÃO: {printData.dataOcorrencia}</p>
+                  </div>
+               </div>
+
+               <div className="border-b-2 border-slate-900 uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">
+                  <h3 className="bg-slate-900 text-white p-1 px-4 font-black uppercase text-[9px] tracking-widest uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">1. IDENTIFICAÇÃO E RASTREABILIDADE</h3>
+                  <div className="grid grid-cols-4 border-t border-slate-900 uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">
+                     <div className="p-2 border-r border-b border-slate-900 col-span-2 uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase"><span className="font-black text-[8px] text-slate-400 uppercase block mb-0.5 uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">EMITENTE:</span> <span className="font-bold text-sm uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">{printData.emitidoPor}</span></div>
+                     <div className="p-2 border-r border-b border-slate-900 uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase"><span className="font-black text-[8px] text-slate-400 uppercase block mb-0.5 uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">ORIGEM:</span> <span className="font-bold uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">{printData.origem}</span></div>
+                     <div className="p-2 border-b border-slate-900 uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase"><span className="font-black text-[8px] text-slate-400 uppercase block mb-0.5 uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">PROCEDENTE:</span> <span className="font-bold text-indigo-700 uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">{printData.procedente}</span></div>
+                     
+                     <div className="p-2 border-r border-b border-slate-900 col-span-2 uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase"><span className="font-black text-[8px] text-slate-400 uppercase block mb-0.5 uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">ÁREA / SETOR:</span> <span className="font-bold text-sm uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">{printData.area}</span></div>
+                     <div className="p-2 border-b border-slate-900 col-span-2 uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase"><span className="font-black text-[8px] text-slate-400 uppercase block mb-0.5 uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">PROCESSO:</span> <span className="font-bold uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">{printData.processo || '-'}</span></div>
+
+                     <div className="p-2 border-r border-slate-900 col-span-2 uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase"><span className="font-black text-[8px] text-slate-400 uppercase block mb-0.5 uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">PRODUTO / REF:</span> <span className="font-bold uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">{printData.produto || '-'}</span></div>
+                     <div className="p-2 col-span-2 uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase"><span className="font-black text-[8px] text-slate-400 uppercase block mb-0.5 uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">CLIENTE / REF:</span> <span className="font-bold uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">{printData.cliente || '-'} / {printData.referencia || '-'}</span></div>
+                  </div>
+               </div>
+
+               <div className="border-b-2 border-slate-900 uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">
+                  <h3 className="bg-slate-100 p-1 px-4 font-black uppercase text-[9px] tracking-widest border-b border-slate-900 uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">2. DESCRIÇÃO DA NÃO CONFORMIDADE</h3>
+                  <div className="p-4 space-y-4 uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">
+                     <div className="uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase"><span className="font-black text-[8px] text-slate-400 uppercase block mb-1 uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">TÍTULO:</span><p className="font-black text-base uppercase tracking-tight uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">{printData.titulo}</p></div>
+                     <div className="uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase"><span className="font-black text-[8px] text-slate-400 uppercase block mb-1 uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">DESCRIÇÃO:</span><p className="text-sm whitespace-pre-wrap leading-relaxed uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">{printData.descricao}</p></div>
+                     {printData.efeito && <div className="uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase"><span className="font-black text-[8px] text-slate-400 uppercase block mb-1 uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">EFEITO:</span><p className="text-xs italic uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">{printData.efeito}</p></div>}
+                  </div>
+               </div>
+
+               <div className="border-b-2 border-slate-900 uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">
+                  <h3 className="bg-yellow-100 p-1 px-4 font-black uppercase text-[9px] tracking-widest border-b border-slate-900 uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">3. DISPOSIÇÃO E AÇÃO IMEDIATA (CONTROLE 8.7)</h3>
+                  <div className="p-4 border-b border-slate-900 bg-white uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase"><span className="font-black text-[8px] text-yellow-700 uppercase block mb-1 uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">AÇÃO IMEDIATA:</span><p className="text-sm font-semibold uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">{printData.acaoImediata}</p></div>
+                  <div className="grid grid-cols-4 bg-white divide-x divide-slate-900 uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">
+                     <div className="p-2 uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase"><span className="font-black text-[8px] text-slate-400 uppercase block mb-0.5 uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">DISPOSIÇÃO:</span> <span className="font-black text-xs uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">{printData.disposicao || '-'}</span></div>
+                     <div className="p-2 uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase"><span className="font-black text-[8px] text-slate-400 uppercase block mb-0.5 uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">RESP:</span> <span className="font-bold uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">{printData.respDisposicao || '-'}</span></div>
+                     <div className="p-2 uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase"><span className="font-black text-[8px] text-slate-400 uppercase block mb-0.5 uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">PRAZO:</span> <span className="font-bold uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">{printData.prazo || '-'}</span></div>
+                     <div className="p-2 uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase"><span className="font-black text-[8px] text-slate-400 uppercase block mb-0.5 uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">CUSTO:</span> <span className="font-bold text-red-600 uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">R$ {printData.custo || '0,00'}</span></div>
+                  </div>
+               </div>
+
+               <div className="border-b-2 border-slate-900 uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">
+                  <h3 className="bg-slate-100 p-1 px-4 font-black uppercase text-[9px] tracking-widest border-b border-slate-900 uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">4. ANÁLISE DE DADOS E ENCERRAMENTO</h3>
+                  <div className="grid grid-cols-3 divide-x divide-slate-900 border-b border-slate-900 uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">
+                     <div className="p-2 bg-red-50/50 uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase"><span className="font-black text-[8px] text-red-600 uppercase block mb-0.5 uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">ABERTURA RNC?</span> <span className="font-black text-sm uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">{printData.necessitaRNC}</span></div>
+                     <div className="p-2 uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase"><span className="font-black text-[8px] text-slate-400 uppercase block mb-0.5 uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">STATUS GERAL:</span> <span className="font-black text-sm uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">{printData.status}</span></div>
+                     <div className="p-2 uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase"><span className="font-black text-[8px] text-slate-400 uppercase block mb-0.5 uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">DATA ENC:</span> <span className="font-bold uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">{printData.dataEncerramento || '-'}</span></div>
+                  </div>
+                  <div className="p-3 uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">
+                    <span className="font-black text-[8px] text-slate-400 uppercase block mb-1 uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">JUSTIFICATIVAS / ANÁLISE FINAL:</span>
+                    <p className="text-xs uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">{printData.analiseSaida || '-'}</p>
+                  </div>
+               </div>
+
+               {/* 5. RNC 10.2 (DINÂMICA) */}
+               {isRNC && (
+                  <div className="border-b-2 border-slate-900 bg-red-50/10 uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">
+                     <h3 className="bg-red-600 text-white p-1 px-4 font-black uppercase text-[9px] tracking-widest border-b border-slate-900 flex items-center shadow-md uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">
+                        <i className="ph ph-folder-warning mr-2 text-sm uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase"></i>
+                        5. TRATAMENTO 10.2 (RNC)
+                     </h3>
+                     <div className="grid grid-cols-3 divide-x divide-slate-900 border-b border-slate-900 uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">
+                        <div className="p-2 uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase"><span className="font-black text-[8px] text-red-600 uppercase block mb-0.5 uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">RISCO POTENCIAL?</span> <span className="font-black text-xs uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">{printData.rncRiscoPotencial}</span></div>
+                        <div className="p-2 uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase"><span className="font-black text-[8px] text-red-600 uppercase block mb-0.5 uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">ATUALIZOU RISCOS?</span> <span className="font-black text-xs uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">{printData.rncAtualizarRiscos}</span></div>
+                        <div className="p-2 uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase"><span className="font-black text-[8px] text-red-600 uppercase block mb-0.5 uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">DATA ANÁLISE:</span> <span className="font-bold text-xs uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">{printData.rncDataRiscos || '-'}</span></div>
+                     </div>
+                     
+                     {/* ISHIKAWA NO RELATÓRIO DE IMPRESSÃO */}
+                     <div className="p-4 bg-slate-50 border-b border-slate-900 uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">
+                        <span className="font-black text-[8px] text-red-700 uppercase block mb-3 underline tracking-widest uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">ANÁLISE DE CAUSA RAIZ (ISHIKAWA - 6M):</span>
+                        <div className="grid grid-cols-2 gap-y-3 gap-x-8 uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">
+                           <div className="border-l-2 border-red-200 pl-2 uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase"><span className="font-black text-[7px] text-slate-400 block uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">01. MÉTODO:</span><p className="text-[10px] uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">{printData.rncMetodo || '-'}</p></div>
+                           <div className="border-l-2 border-red-200 pl-2 uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase"><span className="font-black text-[7px] text-slate-400 block uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">04. MEIO AMBIENTE:</span><p className="text-[10px] uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">{printData.rncMeioAmbiente || '-'}</p></div>
+                           <div className="border-l-2 border-red-200 pl-2 uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase"><span className="font-black text-[7px] text-slate-400 block uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">02. MÁQUINA:</span><p className="text-[10px] uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">{printData.rncMaquina || '-'}</p></div>
+                           <div className="border-l-2 border-red-200 pl-2 uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase"><span className="font-black text-[7px] text-slate-400 block uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">05. MÃO DE OBRA:</span><p className="text-[10px] uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">{printData.rncMaoDeObra || '-'}</p></div>
+                           <div className="border-l-2 border-red-200 pl-2 uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase"><span className="font-black text-[7px] text-slate-400 block uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">03. MEDIDA:</span><p className="text-[10px] uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">{printData.rncMedida || '-'}</p></div>
+                           <div className="border-l-2 border-red-200 pl-2 uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase"><span className="font-black text-[7px] text-slate-400 block uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">06. MATERIAL:</span><p className="text-[10px] uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">{printData.rncMaterial || '-'}</p></div>
+                        </div>
+                     </div>
+                     
+                     {/* CAUSA RAIZ */}
+                     <div className="p-4 bg-white border-b border-slate-900 uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">
+                        <span className="font-black text-[8px] text-red-600 block mb-1.5 underline uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">CAUSA RAIZ IDENTIFICADA:</span>
+                        <p className="text-sm font-bold uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">{printData.rncCausaRaiz || 'NÃO DEFINIDA.'}</p>
+                     </div>
+
+                     {/* PLANO DE AÇÃO NO RELATÓRIO */}
+                     <div className="p-4 bg-white min-h-[100px] uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">
+                        <span className="font-black text-[8px] text-red-600 block mb-1.5 underline uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">PLANO DE AÇÃO CORRETIVA:</span>
+                        <p className="text-sm italic whitespace-pre-wrap uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">{printData.rncAcaoCorretiva || 'PENDENTE DE AÇÃO.'}</p>
+                        
+                        <div className="grid grid-cols-4 mt-6 border-t pt-4 uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">
+                           <div className="uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase"><span className="font-black text-[7px] text-slate-400 block uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">RESP:</span><p className="text-[9px] uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">{printData.rncResponsavelAcao || '-'}</p></div>
+                           <div className="uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase"><span className="font-black text-[7px] text-slate-400 block uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">PREV:</span><p className="text-[9px] uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">{printData.rncPrevisao || '-'}</p></div>
+                           <div className="uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase"><span className="font-black text-[7px] text-slate-400 block uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">REAL:</span><p className="text-[9px] uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">{printData.rncRealizado || '-'}</p></div>
+                           <div className="uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase"><span className="font-black text-[7px] text-slate-400 block uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">STATUS AÇÃO:</span><p className="text-[9px] font-black text-indigo-700 uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">{printData.rncStatusAcao || '-'}</p></div>
+                        </div>
+                     </div>
+                  </div>
+               )}
+
+               <div className="grid grid-cols-2 h-32 divide-x divide-slate-900 uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">
+                  <div className="flex flex-col justify-end items-center p-4 uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">
+                    <div className="w-56 border-t-2 border-slate-900 pt-2 text-center text-[10px] font-black uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase text-transform: uppercase">RESPONSÁVEL PELA EMISSÃO</div>
+                  </div>
+                  <div className="flex flex-col justify-end items-center p-4 bg-slate-50/50 uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">
+                    <div className="w-56 border-t-2 border-slate-900 pt-2 text-center text-[10px] font-black uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase text-transform: uppercase">GESTÃO DA QUALIDADE / SGQ</div>
+                  </div>
+               </div>
+            </div>
+            <div className="mt-4 flex justify-between items-center text-[9px] font-black text-slate-400 px-2 border-t pt-2 uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase uppercase">
+              <span>SISTEMA SGQ - REVIMAQ</span>
+              <span>PROPRIEDADE DE USO INTERNO</span>
+              <span>PÁGINA 01 / 01</span>
+            </div>
+          </div>
+        );
+      };
+
+      return (
+        <div className="min-h-screen uppercase uppercase uppercase uppercase">
+          {currentView !== 'print' && renderNavigation()}
+          <main>
+            {currentView === 'dashboard' && renderDashboard()}
+            {currentView === 'list' && renderList()}
+            {currentView === 'rnc' && renderRNC()}
+            {currentView === 'form' && renderForm()}
+            {currentView === 'print' && renderPrintReport()}
+          </main>
+        </div>
+      );
+    }
+
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<App />);
+  </script>
+</body>
+</html>

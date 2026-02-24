@@ -1,0 +1,683 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Painel de Indicadores - REVIMAQ Cloud</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Adicionando Chart.js e plugin Datalabels para os gráficos -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
+
+    <style>
+        .fade-in { animation: fadeIn 0.3s ease-in-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+        .loading-overlay {
+            position: fixed; inset: 0; background: white;
+            display: flex; align-items: center; justify-content: center; z-index: 9999;
+        }
+        button:disabled { opacity: 0.5; cursor: not-allowed; }
+    </style>
+</head>
+<body class="min-h-screen bg-slate-50 text-slate-900 font-sans">
+
+    <!-- Tela de Carregamento -->
+    <div id="loading" class="loading-overlay">
+        <div class="flex flex-col items-center">
+            <div class="w-12 h-12 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
+            <p class="mt-4 text-slate-600 font-bold tracking-widest text-xs uppercase">Sincronizando com a Nuvem...</p>
+        </div>
+    </div>
+
+    <!-- Cabeçalho -->
+    <header id="app-header" class="bg-indigo-700 text-white shadow-lg">
+        <div class="max-w-7xl mx-auto px-4 h-16 flex justify-between items-center">
+            <div class="flex items-center space-x-3">
+                <i data-lucide="activity" class="h-8 w-8 text-indigo-200"></i>
+                <h1 class="text-xl font-black tracking-tight uppercase">Painel de Desempenho</h1>
+            </div>
+            <div id="status-cloud" class="flex items-center text-[10px] font-black bg-indigo-800 px-3 py-1.5 rounded-full border border-indigo-600 uppercase">
+                <span class="w-2 h-2 bg-amber-400 rounded-full mr-2" id="status-dot"></span>
+                <span id="status-text">Conectando...</span>
+            </div>
+        </div>
+    </header>
+
+    <nav id="app-nav" class="bg-white border-b border-slate-200 sticky top-0 z-10 print:hidden">
+        <div class="max-w-7xl mx-auto px-4 flex justify-between items-center">
+            <div class="flex items-center space-x-6">
+                <!-- BOTÃO DE VOLTAR AO PORTAL -->
+                <a href="index.html" class="flex items-center space-x-1 bg-slate-800 hover:bg-slate-700 px-3 py-2 rounded-md transition-colors border border-slate-700 text-white font-bold text-xs tracking-widest mr-2 uppercase" title="VOLTAR AO PORTAL">
+                    <i data-lucide="arrow-left" class="w-4 h-4"></i>
+                    <span class="hidden sm:block">PORTAL</span>
+                </a>
+
+                <div class="flex space-x-8">
+                    <button onclick="changeTab('dashboard')" id="btn-dashboard" class="py-4 border-b-2 border-indigo-600 text-indigo-600 font-bold text-sm flex items-center transition-colors">
+                        <i data-lucide="bar-chart-3" class="mr-2 h-4 w-4"></i> Visão Geral
+                    </button>
+                    <button onclick="changeTab('indicators')" id="btn-indicators" class="py-4 border-b-2 border-transparent text-slate-500 font-bold text-sm flex items-center hover:text-indigo-600 transition-colors">
+                        <i data-lucide="target" class="mr-2 h-4 w-4"></i> Indicadores
+                    </button>
+                </div>
+            </div>
+            <button onclick="window.print()" class="text-slate-600 hover:text-indigo-600 p-2"><i data-lucide="printer" class="w-5 h-5"></i></button>
+        </div>
+    </nav>
+
+    <main id="app-main" class="max-w-7xl mx-auto px-4 py-8">
+        <div id="view-dashboard" class="fade-in space-y-6">
+            <div id="dashboard-stats" class="grid grid-cols-1 md:grid-cols-3 gap-4"></div>
+            <div id="dashboard-charts" class="grid grid-cols-1 lg:grid-cols-2 gap-6"></div>
+        </div>
+
+        <div id="view-indicators" class="fade-in hidden bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+            <div class="p-5 border-b flex justify-between items-center bg-slate-50">
+                <h2 class="text-lg font-black text-slate-800 uppercase tracking-tight">Gerir Indicadores</h2>
+                <button onclick="openIndicatorModal()" class="bg-indigo-600 text-white px-4 py-2 rounded-lg text-xs font-black shadow-md hover:bg-indigo-700 transition-all uppercase tracking-widest">
+                    + Novo Indicador
+                </button>
+            </div>
+            <div id="indicators-list" class="divide-y divide-slate-100"></div>
+        </div>
+
+        <!-- Modal Novo/Editar Indicador -->
+        <div id="modal-indicator" class="fixed inset-0 bg-slate-900/60 hidden flex items-center justify-center z-50 p-4 font-bold text-sm">
+            <div class="bg-white rounded-xl shadow-2xl w-full max-w-lg overflow-hidden flex flex-col max-h-[90vh]">
+                <div class="p-5 border-b flex justify-between items-center bg-slate-50">
+                    <h3 class="font-black text-sm uppercase tracking-widest" id="modal-indicator-title">Novo Indicador</h3>
+                    <button onclick="closeIndicatorModal()"><i data-lucide="x" class="w-5 h-5 text-slate-400"></i></button>
+                </div>
+                <form onsubmit="saveIndicator(event)" class="p-5 space-y-4 overflow-y-auto">
+                    <input type="hidden" id="ind-id">
+                    <div>
+                        <label class="block text-xs uppercase text-slate-500 mb-1">Nome do Indicador</label>
+                        <input type="text" id="ind-name" required class="w-full border border-slate-300 p-2.5 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500">
+                    </div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div><label class="block text-xs uppercase text-slate-500 mb-1">Meta</label><input type="number" step="any" id="ind-target" required class="w-full border border-slate-300 p-2.5 rounded-lg"></div>
+                        <div><label class="block text-xs uppercase text-slate-500 mb-1">Unidade</label><input type="text" id="ind-unit" required class="w-full border border-slate-300 p-2.5 rounded-lg"></div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs uppercase text-slate-500 mb-1">Tipo</label>
+                            <select id="ind-type" class="w-full border border-slate-300 p-2.5 rounded-lg">
+                                <option value="maior">Quanto Maior, Melhor</option>
+                                <option value="menor">Quanto Menor, Melhor</option>
+                            </select>
+                        </div>
+                        <div><label class="block text-xs uppercase text-slate-500 mb-1">Frequência</label><input type="text" id="ind-freq" required class="w-full border border-slate-300 p-2.5 rounded-lg"></div>
+                    </div>
+                    <div class="pt-4 flex justify-end space-x-3">
+                        <button type="button" onclick="closeIndicatorModal()" class="px-4 py-2 text-slate-600 hover:bg-slate-100 rounded-lg">Cancelar</button>
+                        <button type="submit" id="btn-save-ind" class="px-6 py-2 bg-indigo-600 text-white rounded-lg shadow-lg uppercase tracking-widest text-xs">Salvar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Modal Lançamento -->
+        <div id="modal-record" class="fixed inset-0 bg-slate-900/60 hidden flex items-center justify-center z-50 p-4 font-bold text-sm">
+            <div class="bg-white rounded-xl shadow-2xl w-full max-w-lg overflow-hidden flex flex-col max-h-[90vh]">
+                <div class="p-5 border-b flex justify-between items-center bg-slate-50">
+                    <h3 class="font-black text-sm uppercase tracking-widest" id="modal-record-title">Lançar Dados</h3>
+                    <button onclick="closeRecordModal()"><i data-lucide="x" class="w-5 h-5 text-slate-400"></i></button>
+                </div>
+                <form onsubmit="saveRecord(event)" class="p-5 space-y-4 overflow-y-auto">
+                    <input type="hidden" id="rec-id">
+                    <input type="hidden" id="rec-ind-id">
+                    <div class="grid grid-cols-2 gap-4">
+                        <div><label class="block text-xs uppercase text-slate-500 mb-1">Período</label><input type="text" id="rec-period" required class="w-full border border-slate-300 p-2.5 rounded-lg"></div>
+                        <div><label class="block text-xs uppercase text-slate-500 mb-1">Valor</label><input type="number" step="any" id="rec-value" required class="w-full border border-slate-300 p-2.5 rounded-lg"></div>
+                    </div>
+                    <div><label class="block text-xs uppercase text-slate-500 mb-1">Análise</label><textarea id="rec-analysis" rows="2" class="w-full border border-slate-300 p-2.5 rounded-lg"></textarea></div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div><label class="block text-xs uppercase text-slate-500 mb-1">Data</label><input type="date" id="rec-date" class="w-full border border-slate-300 p-2.5 rounded-lg"></div>
+                        <div>
+                            <label class="block text-xs uppercase text-slate-500 mb-1">Quem</label>
+                            <div class="flex space-x-2">
+                                <select id="rec-responsible" class="flex-1 border border-slate-300 p-2.5 rounded-lg"></select>
+                                <button type="button" onclick="addNewResp()" class="bg-indigo-100 p-2.5 rounded-lg text-indigo-600">+</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="pt-4 flex justify-end space-x-3">
+                        <button type="button" onclick="closeRecordModal()" class="px-4 py-2 text-slate-600 hover:bg-slate-100 rounded-lg">Cancelar</button>
+                        <button type="submit" id="btn-save-rec" class="px-6 py-2 bg-indigo-600 text-white rounded-lg shadow-lg uppercase tracking-widest text-xs">Salvar Dados</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </main>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+        import { getFirestore, collection, addDoc, onSnapshot, doc, deleteDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyAB9-Z4QtjUKZJSyl4kRp7uuxZs80MK_vs",
+            authDomain: "indicadores-25a62.firebaseapp.com",
+            projectId: "indicadores-25a62",
+            storageBucket: "indicadores-25a62.firebasestorage.app",
+            messagingSenderId: "499958955200",
+            appId: "1:499958955200:web:c0e638c123b461b96b0125"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        let indicators = [];
+        let records = [];
+        let activeTab = 'dashboard';
+        let responsaveis = ['Ana', 'Carlos', 'João', 'Maria', 'Roberto'];
+        
+        window.dashboardCharts = {};
+
+        // SINCRONIZAÇÃO FIREBASE
+        onSnapshot(collection(db, "indicators"), (snap) => {
+            indicators = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+            document.getElementById('status-dot').className = "w-2 h-2 bg-green-400 rounded-full mr-2";
+            document.getElementById('status-text').innerText = "Cloud Ativo";
+            document.getElementById('loading').classList.add('hidden');
+            renderApp();
+        }, (err) => { alert("Erro: Publique as Regras no Firebase!"); });
+
+        onSnapshot(collection(db, "records"), (snap) => {
+            records = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+            renderApp();
+        });
+
+        // CRUD
+        async function saveIndicator(e) {
+            e.preventDefault();
+            const btn = document.getElementById('btn-save-ind');
+            const id = document.getElementById('ind-id').value;
+            const data = {
+                name: document.getElementById('ind-name').value,
+                target: parseFloat(document.getElementById('ind-target').value),
+                unit: document.getElementById('ind-unit').value,
+                targetType: document.getElementById('ind-type').value,
+                frequency: document.getElementById('ind-freq').value,
+                updatedAt: new Date().toISOString()
+            };
+            try {
+                btn.disabled = true; btn.innerText = "Gravando...";
+                if(id) await updateDoc(doc(db, "indicators", id), data);
+                else await addDoc(collection(db, "indicators"), data);
+                closeIndicatorModal();
+            } catch(err) { alert("Erro ao salvar!"); }
+            finally { btn.disabled = false; btn.innerText = "Salvar"; }
+        }
+
+        async function saveRecord(e) {
+            e.preventDefault();
+            const btn = document.getElementById('btn-save-rec');
+            const id = document.getElementById('rec-id').value;
+            const data = {
+                indicatorId: document.getElementById('rec-ind-id').value,
+                period: document.getElementById('rec-period').value,
+                value: parseFloat(document.getElementById('rec-value').value),
+                date: document.getElementById('rec-date').value,
+                responsible: document.getElementById('rec-responsible').value,
+                analysis: document.getElementById('rec-analysis').value || ""
+            };
+            try {
+                btn.disabled = true; btn.innerText = "Gravando...";
+                if(id) await updateDoc(doc(db, "records", id), data);
+                else await addDoc(collection(db, "records"), data);
+                closeRecordModal();
+            } catch(err) { alert("Erro ao lançar!"); }
+            finally { btn.disabled = false; btn.innerText = "Salvar Dados"; }
+        }
+
+        async function deleteIndicator(id) {
+            if(confirm("Eliminar este indicador?")) {
+                await deleteDoc(doc(db, "indicators", id));
+                records.filter(r => r.indicatorId === id).forEach(async r => await deleteDoc(doc(db, "records", r.id)));
+            }
+        }
+
+        async function deleteRecord(id) {
+            if(confirm("Eliminar lançamento?")) await deleteDoc(doc(db, "records", id));
+        }
+
+        // INTERFACE
+        function changeTab(tab) {
+            activeTab = tab;
+            const bD = document.getElementById('btn-dashboard');
+            const bI = document.getElementById('btn-indicators');
+            if(tab === 'dashboard') {
+                bD.className = "py-4 border-b-2 border-indigo-600 text-indigo-600 font-bold text-sm flex items-center transition-colors";
+                bI.className = "py-4 border-b-2 border-transparent text-slate-500 font-bold text-sm flex items-center hover:text-indigo-600 transition-colors";
+                document.getElementById('view-dashboard').classList.remove('hidden');
+                document.getElementById('view-indicators').classList.add('hidden');
+            } else {
+                bI.className = "py-4 border-b-2 border-indigo-600 text-indigo-600 font-bold text-sm flex items-center transition-colors";
+                bD.className = "py-4 border-b-2 border-transparent text-slate-500 font-bold text-sm flex items-center hover:text-indigo-600 transition-colors";
+                document.getElementById('view-indicators').classList.remove('hidden');
+                document.getElementById('view-dashboard').classList.add('hidden');
+            }
+            renderApp();
+        }
+
+        function renderApp() {
+            if(activeTab === 'dashboard') {
+                renderDashboard();
+            } else {
+                renderIndicators();
+            }
+            if(window.lucide) lucide.createIcons();
+        }
+
+        function renderDashboard() {
+            let met = 0;
+            let htmlCharts = '';
+
+            Object.values(window.dashboardCharts).forEach(chart => chart.destroy());
+            window.dashboardCharts = {};
+
+            indicators.forEach(ind => {
+                const indRecs = records.filter(r => r.indicatorId === ind.id).sort((a, b) => new Date(a.date) - new Date(b.date));
+                const last = indRecs[indRecs.length - 1];
+                const previous = indRecs[indRecs.length - 2];
+                let isMet = false;
+
+                if(last) {
+                    isMet = ind.targetType === 'maior' ? last.value >= ind.target : last.value <= ind.target;
+                    if(isMet) met++;
+                }
+
+                let trendHtml = '';
+                if (last) {
+                    let trendIcon = 'minus';
+                    let trendColorClass = 'text-slate-500 bg-slate-50';
+                    
+                    if (previous) {
+                        if (last.value > previous.value) {
+                            trendIcon = 'trending-up';
+                            trendColorClass = ind.targetType === 'maior' ? 'text-green-600 bg-green-50' : 'text-red-600 bg-red-50';
+                        } else if (last.value < previous.value) {
+                            trendIcon = 'trending-down';
+                            trendColorClass = ind.targetType === 'maior' ? 'text-red-600 bg-red-50' : 'text-green-600 bg-green-50';
+                        }
+                    } else {
+                        trendColorClass = isMet ? 'text-green-600 bg-green-50' : 'text-red-600 bg-red-50';
+                    }
+
+                    trendHtml = `
+                        <div class="flex items-center px-2 py-1 rounded-md text-sm font-bold ${trendColorClass}">
+                            <i data-lucide="${trendIcon}" class="w-4 h-4 mr-1"></i>
+                            ${last.value}${ind.unit}
+                        </div>
+                    `;
+                }
+
+                htmlCharts += `
+                    <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
+                        <div class="flex justify-between items-start mb-6">
+                            <div>
+                                <h3 class="font-bold text-slate-800 text-lg">${ind.name}</h3>
+                                <p class="text-sm text-slate-500 mt-1">${ind.frequency} • Meta: ${ind.target}${ind.unit}</p>
+                            </div>
+                            ${trendHtml}
+                        </div>
+                        <div class="relative h-56 w-full">
+                            <canvas id="chart-${ind.id}"></canvas>
+                        </div>
+                    </div>`;
+            });
+
+            document.getElementById('dashboard-charts').innerHTML = htmlCharts || '<div class="col-span-2 text-center text-slate-400 py-10 font-bold">Nenhum dado cadastrado.</div>';
+            
+            document.getElementById('dashboard-stats').innerHTML = `
+                <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex items-center">
+                    <div class="p-3 bg-blue-50 text-blue-500 rounded-lg mr-4">
+                        <i data-lucide="bar-chart-2" class="w-6 h-6"></i>
+                    </div>
+                    <div>
+                        <p class="text-[13px] text-slate-500 mb-1">Total de Indicadores</p>
+                        <p class="text-2xl font-bold">${indicators.length}</p>
+                    </div>
+                </div>
+                <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex items-center">
+                    <div class="p-3 bg-green-50 text-green-500 rounded-lg mr-4">
+                        <i data-lucide="check-circle" class="w-6 h-6"></i>
+                    </div>
+                    <div>
+                        <p class="text-[13px] text-slate-500 mb-1">Metas Atingidas (Último Mês)</p>
+                        <p class="text-2xl font-bold">${met}</p>
+                    </div>
+                </div>
+                <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex items-center">
+                    <div class="p-3 bg-red-50 text-red-500 rounded-lg mr-4">
+                        <i data-lucide="alert-circle" class="w-6 h-6"></i>
+                    </div>
+                    <div>
+                        <p class="text-[13px] text-slate-500 mb-1">Abaixo da Meta (Último Mês)</p>
+                        <p class="text-2xl font-bold">${indicators.length - met}</p>
+                    </div>
+                </div>`;
+
+            setTimeout(() => {
+                if(window.lucide) lucide.createIcons();
+                if(typeof Chart !== 'undefined' && typeof ChartDataLabels !== 'undefined') {
+                    Chart.register(ChartDataLabels);
+                }
+
+                indicators.forEach(ind => {
+                    const ctx = document.getElementById(`chart-${ind.id}`);
+                    if (!ctx) return;
+
+                    const indRecs = records.filter(r => r.indicatorId === ind.id).sort((a, b) => new Date(a.date) - new Date(b.date));
+                    const labels = indRecs.map(r => r.period);
+                    const values = indRecs.map(r => r.value);
+                    const targetValues = indRecs.map(() => ind.target);
+
+                    const pointColors = values.map(val => {
+                        const isMet = ind.targetType === 'maior' ? val >= ind.target : val <= ind.target;
+                        return isMet ? '#22c55e' : '#ef4444'; 
+                    });
+
+                    const allData = [...values, ind.target];
+                    const minVal = allData.length > 0 ? Math.min(...allData) * 0.9 : 0;
+                    const maxVal = allData.length > 0 ? Math.max(...allData) * 1.1 : 100;
+
+                    window.dashboardCharts[ind.id] = new Chart(ctx, {
+                        type: 'line',
+                        data: {
+                            labels: labels,
+                            datasets: [
+                                {
+                                    data: values,
+                                    borderColor: '#3b82f6',
+                                    backgroundColor: '#3b82f6',
+                                    pointBackgroundColor: pointColors,
+                                    pointBorderColor: pointColors,
+                                    borderWidth: 2,
+                                    pointRadius: 4,
+                                    pointHoverRadius: 6,
+                                    datalabels: {
+                                        align: 'top', anchor: 'end', offset: 6, color: '#1e293b',
+                                        font: { weight: 'bold', size: 11, family: 'Inter, sans-serif' },
+                                        formatter: (val) => val + ind.unit
+                                    }
+                                },
+                                {
+                                    data: targetValues,
+                                    borderColor: '#ef4444',
+                                    borderWidth: 1.5,
+                                    borderDash: [5, 5],
+                                    pointRadius: 0,
+                                    datalabels: {
+                                        display: function(context) { return context.dataIndex === context.dataset.data.length - 1; },
+                                        align: 'right', anchor: 'end', offset: 4, color: '#ef4444',
+                                        font: { weight: 'bold', size: 11, family: 'Inter, sans-serif' },
+                                        formatter: () => 'Meta:'
+                                    }
+                                }
+                            ]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            layout: { padding: { top: 20, right: 45, bottom: 0, left: 10 } },
+                            plugins: { legend: { display: false }, tooltip: { callbacks: { label: (context) => `${context.raw}${ind.unit}` } } },
+                            scales: {
+                                x: { grid: { display: false }, border: { display: true, color: '#cbd5e1' }, ticks: { font: { size: 11, family: 'Inter, sans-serif' }, color: '#64748b' } },
+                                y: { display: false, min: minVal, max: maxVal }
+                            }
+                        }
+                    });
+                });
+            }, 50);
+        }
+
+        function renderIndicators() {
+            let html = '';
+            indicators.forEach(ind => {
+                const indRecs = records.filter(r => r.indicatorId === ind.id);
+                html += `
+                    <div class="p-6 border-b border-slate-100 hover:bg-slate-50 transition-colors">
+                        <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-4">
+                            <div>
+                                <h3 class="font-bold text-slate-800 text-base">${ind.name}</h3>
+                                <p class="text-xs font-bold text-indigo-600 mt-1 uppercase">Meta: ${ind.target}${ind.unit} | ${ind.frequency}</p>
+                            </div>
+                            <div class="flex space-x-2">
+                                <button onclick="openRecordModal('${ind.id}')" class="bg-indigo-600 text-white px-4 py-2 rounded-lg text-[10px] font-black shadow-md hover:bg-indigo-700 uppercase tracking-widest">+ Lançar</button>
+                                <button onclick="printIndicator('${ind.id}')" class="p-2 text-slate-400 hover:text-indigo-600" title="Imprimir Relatório"><i data-lucide="printer" class="w-5 h-5"></i></button>
+                                <button onclick="openIndicatorModal('${ind.id}')" class="p-2 text-slate-400 hover:text-indigo-600"><i data-lucide="settings" class="w-5 h-5"></i></button>
+                                <button onclick="deleteIndicator('${ind.id}')" class="p-2 text-slate-400 hover:text-red-500"><i data-lucide="trash-2" class="w-5 h-5"></i></button>
+                            </div>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left text-sm">
+                                <thead class="text-xs text-slate-400 font-bold uppercase border-b border-slate-100"><tr><th class="p-2">Período</th><th class="p-2">Valor</th><th class="p-2">Meta</th><th class="p-2">Análise</th><th class="p-2">Quem</th><th class="p-2 text-right">Ação</th></tr></thead>
+                                <tbody>
+                                    ${indRecs.map(r => `
+                                        <tr class="border-t border-slate-50 uppercase">
+                                            <td class="p-2 font-semibold text-slate-700">${r.period}</td>
+                                            <td class="p-2 font-bold ${ (ind.targetType==='maior' ? r.value >= ind.target : r.value <= ind.target) ? 'text-green-600' : 'text-red-600' }">${r.value}${ind.unit}</td>
+                                            <td class="p-2 font-semibold text-slate-500">${ind.target}${ind.unit}</td>
+                                            <td class="p-2 text-slate-500 max-w-[200px] truncate" title="${r.analysis || ''}">${r.analysis || '-'}</td>
+                                            <td class="p-2 text-slate-500">${r.responsible || '-'}</td>
+                                            <td class="p-2 text-right">
+                                                <button onclick="openRecordModal('${ind.id}', '${r.id}')" class="text-slate-300 hover:text-indigo-600 mr-2" title="Editar"><i data-lucide="pencil" class="w-4 h-4"></i></button>
+                                                <button onclick="deleteRecord('${r.id}')" class="text-slate-300 hover:text-red-500" title="Eliminar"><i data-lucide="trash" class="w-4 h-4"></i></button>
+                                            </td>
+                                        </tr>`).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>`;
+            });
+            document.getElementById('indicators-list').innerHTML = html || '<p class="p-10 text-center text-slate-400 font-bold">Nenhum indicador cadastrado.</p>';
+        }
+
+        function openIndicatorModal(id = null) {
+            document.getElementById('ind-id').value = id || '';
+            document.getElementById('ind-name').value = '';
+            document.getElementById('ind-target').value = '';
+            document.getElementById('ind-unit').value = '';
+            document.getElementById('ind-freq').value = '';
+            document.getElementById('modal-indicator-title').innerText = id ? "Editar Indicador" : "Novo Indicador";
+            if(id) {
+                const i = indicators.find(ind => ind.id === id);
+                document.getElementById('ind-name').value = i.name;
+                document.getElementById('ind-target').value = i.target;
+                document.getElementById('ind-unit').value = i.unit;
+                document.getElementById('ind-type').value = i.targetType;
+                document.getElementById('ind-freq').value = i.frequency;
+            }
+            document.getElementById('modal-indicator').classList.remove('hidden');
+        }
+
+        function openRecordModal(indId, recId = null) {
+            document.getElementById('rec-ind-id').value = indId;
+            document.getElementById('rec-id').value = recId || '';
+            document.getElementById('rec-period').value = '';
+            document.getElementById('rec-value').value = '';
+            document.getElementById('rec-analysis').value = '';
+            document.getElementById('rec-date').value = new Date().toISOString().split('T')[0];
+            const sel = document.getElementById('rec-responsible');
+            sel.innerHTML = '<option value="">Seleccione...</option>' + responsaveis.sort().map(r => `<option value="${r}">${r}</option>`).join('');
+            
+            if (recId) {
+                const r = records.find(rec => rec.id === recId);
+                if (r) {
+                    document.getElementById('rec-period').value = r.period || '';
+                    document.getElementById('rec-value').value = r.value || '';
+                    document.getElementById('rec-analysis').value = r.analysis || '';
+                    if (r.date) document.getElementById('rec-date').value = r.date;
+                    if (r.responsible) sel.value = r.responsible;
+                    document.getElementById('modal-record-title').innerText = "Editar Lançamento";
+                }
+            } else {
+                document.getElementById('modal-record-title').innerText = "Lançar Dados";
+            }
+            
+            document.getElementById('modal-record').classList.remove('hidden');
+        }
+
+        function closeIndicatorModal() { document.getElementById('modal-indicator').classList.add('hidden'); }
+        function closeRecordModal() { document.getElementById('modal-record').classList.add('hidden'); }
+        function addNewResp() { const n = prompt("Novo Responsável:"); if(n) { responsaveis.push(n.trim()); openRecordModal(document.getElementById('rec-ind-id').value); } }
+
+        function printIndicator(id) {
+            const ind = indicators.find(i => i.id === id);
+            if(!ind) return;
+            const indRecs = records.filter(r => r.indicatorId === id).sort((a, b) => new Date(a.date) - new Date(b.date));
+
+            let printArea = document.getElementById('print-area');
+            if (!printArea) {
+                printArea = document.createElement('div');
+                printArea.id = 'print-area';
+                printArea.className = 'hidden bg-white w-full h-full absolute top-0 left-0 z-[99999] p-8';
+                document.body.appendChild(printArea);
+            }
+
+            // CORREÇÃO: Removido o erro de escape de crases (`\``) dentro desta construção que bloqueava o carregamento
+            let html = `
+                <div class="max-w-5xl mx-auto font-sans">
+                    <div class="border-b-2 border-slate-200 pb-6 mb-8 flex items-center justify-between">
+                        <div>
+                            <h1 class="text-3xl font-black text-slate-800 uppercase">${ind.name}</h1>
+                            <p class="text-sm font-bold text-indigo-600 mt-2 uppercase tracking-widest">
+                                Meta: ${ind.target}${ind.unit} | Frequência: ${ind.frequency}
+                            </p>
+                        </div>
+                        <div class="text-right">
+                            <p class="text-xs font-bold text-slate-400 uppercase tracking-widest">Relatório de Indicador</p>
+                            <p class="text-sm font-bold text-slate-600 mt-1">${new Date().toLocaleDateString('pt-PT')}</p>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-10 w-full relative" style="height: 350px;">
+                        <canvas id="print-chart"></canvas>
+                    </div>
+
+                    <table class="w-full text-left text-sm border-collapse">
+                        <thead class="text-xs text-slate-400 font-bold uppercase border-b-2 border-slate-200">
+                            <tr>
+                                <th class="p-3">Período</th>
+                                <th class="p-3">Valor</th>
+                                <th class="p-3">Meta</th>
+                                <th class="p-3">Análise</th>
+                                <th class="p-3">Quem</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${indRecs.map(r => {
+                                const isMet = ind.targetType === 'maior' ? r.value >= ind.target : r.value <= ind.target;
+                                return `
+                                <tr class="border-b border-slate-100 uppercase">
+                                    <td class="p-3 font-semibold text-slate-700">${r.period}</td>
+                                    <td class="p-3 font-bold ${isMet ? 'text-green-600' : 'text-red-600'}">${r.value}${ind.unit}</td>
+                                    <td class="p-3 font-semibold text-slate-500">${ind.target}${ind.unit}</td>
+                                    <td class="p-3 text-slate-600">${r.analysis || '-'}</td>
+                                    <td class="p-3 text-slate-500">${r.responsible || '-'}</td>
+                                </tr>`;
+                            }).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            `;
+
+            printArea.innerHTML = html;
+
+            document.getElementById('app-header').classList.add('hidden', 'print:hidden');
+            document.getElementById('app-nav').classList.add('hidden', 'print:hidden');
+            document.getElementById('app-main').classList.add('hidden', 'print:hidden');
+            printArea.classList.remove('hidden');
+            printArea.classList.add('print:block');
+
+            const ctx = document.getElementById('print-chart');
+            const labels = indRecs.map(r => r.period);
+            const values = indRecs.map(r => r.value);
+            const targetValues = indRecs.map(() => ind.target);
+            
+            const pointColors = values.map(val => {
+                const isMet = ind.targetType === 'maior' ? val >= ind.target : val <= ind.target;
+                return isMet ? '#22c55e' : '#ef4444';
+            });
+
+            const allData = [...values, ind.target];
+            const minVal = allData.length > 0 ? Math.min(...allData) * 0.9 : 0;
+            const maxVal = allData.length > 0 ? Math.max(...allData) * 1.1 : 100;
+
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            data: values,
+                            borderColor: '#3b82f6',
+                            backgroundColor: '#3b82f6',
+                            pointBackgroundColor: pointColors,
+                            pointBorderColor: pointColors,
+                            borderWidth: 2,
+                            pointRadius: 4,
+                            datalabels: {
+                                align: 'top', anchor: 'end', offset: 6, color: '#1e293b',
+                                font: { weight: 'bold', size: 11, family: 'Inter, sans-serif' },
+                                formatter: (val) => val + ind.unit
+                            }
+                        },
+                        {
+                            data: targetValues,
+                            borderColor: '#ef4444',
+                            borderWidth: 1.5,
+                            borderDash: [5, 5],
+                            pointRadius: 0,
+                            datalabels: {
+                                display: (context) => context.dataIndex === context.dataset.data.length - 1,
+                                align: 'right', anchor: 'end', offset: 4, color: '#ef4444',
+                                font: { weight: 'bold', size: 11, family: 'Inter, sans-serif' },
+                                formatter: () => 'Meta:'
+                            }
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    animation: false,
+                    layout: { padding: { top: 20, right: 45, bottom: 0, left: 10 } },
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        x: { grid: { display: false }, border: { display: true, color: '#cbd5e1' }, ticks: { font: { size: 11, family: 'Inter, sans-serif' }, color: '#64748b' } },
+                        y: { display: false, min: minVal, max: maxVal }
+                    }
+                }
+            });
+
+            setTimeout(() => {
+                window.print();
+                document.getElementById('app-header').classList.remove('hidden', 'print:hidden');
+                document.getElementById('app-nav').classList.remove('hidden', 'print:hidden');
+                document.getElementById('app-main').classList.remove('hidden', 'print:hidden');
+                printArea.classList.add('hidden');
+                printArea.classList.remove('print:block');
+                printArea.innerHTML = ''; 
+            }, 300);
+        }
+
+        window.changeTab = changeTab;
+        window.openIndicatorModal = openIndicatorModal;
+        window.closeIndicatorModal = closeIndicatorModal;
+        window.saveIndicator = saveIndicator;
+        window.deleteIndicator = deleteIndicator;
+        window.openRecordModal = openRecordModal;
+        window.closeRecordModal = closeRecordModal;
+        window.saveRecord = saveRecord;
+        window.deleteRecord = deleteRecord;
+        window.addNewResp = addNewResp;
+        window.printIndicator = printIndicator;
+
+        window.onload = () => renderApp();
+    </script>
+</body>
+</html>
