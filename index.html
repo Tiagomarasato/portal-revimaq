@@ -31,7 +31,6 @@
     }
     .animate-fade-in { animation: fadeIn 0.5s ease-out forwards; }
     
-    /* Atraso em cascata para a animação dos cards (Original) */
     .stagger-1 { animation-delay: 0.1s; }
     .stagger-2 { animation-delay: 0.2s; }
     .stagger-3 { animation-delay: 0.3s; }
@@ -46,7 +45,6 @@
   <script type="text/babel">
     const { useState, useEffect } = React;
 
-    // Função de Segurança para Redes Corporativas
     const fetchWithTimeout = async (promise, ms = 15000) => {
       return Promise.race([
         promise,
@@ -55,7 +53,7 @@
     };
 
     // ==========================================
-    // COMPONENTE: ECRÃ DE LOGIN (DESIGN PREMIUM)
+    // COMPONENTE: ECRÃ DE LOGIN
     // ==========================================
     function LoginScreen({ onLoginSuccess }) {
       const [isRegistering, setIsRegistering] = useState(false);
@@ -107,7 +105,6 @@
                 setError('ACESSO PENDENTE DE APROVAÇÃO PELA TI.');
               }
             } else {
-              // Admin/Tiago ou primeiro acesso
               await db.collection('usuarios').doc(userCredential.user.uid).set({
                 nome: userCredential.user.displayName || 'ADMIN',
                 email: userCredential.user.email,
@@ -184,7 +181,7 @@
 
 
     // ==========================================
-    // COMPONENTE: PORTAL DASHBOARD (SEU DESIGN ORIGINAL)
+    // COMPONENTE: PORTAL DASHBOARD (DESIGN ORIGINAL)
     // ==========================================
     function PortalDashboard({ portalUser, onLogout }) {
       const [currentDate, setCurrentDate] = useState('');
@@ -194,13 +191,14 @@
         setCurrentDate(new Date().toLocaleDateString('pt-BR', options));
       }, []);
 
+      // LISTA DE APLICATIVOS COM NOMES DE ARQUIVOS CORRIGIDOS (CASE-SENSITIVE)
       const aplicativos = [
-        { id: 1, nome: "Gestão de Ocorrências", subtitulo: "ISO 9001:2015 - REVIMAQ", descricao: "Controle de Saídas Não Conformes (8.7) e Ações Corretivas (10.2).", icone: "ph-shield-check", cor: "indigo", status: "Operacional", link: "ocorrencias.html", delay: "stagger-1" },
+        { id: 1, nome: "Gestão de Ocorrências", subtitulo: "ISO 9001:2015 - REVIMAQ", descricao: "Controle de Saídas Não Conformes (8.7) e Ações Corretivas (10.2).", icone: "ph-shield-check", cor: "indigo", status: "Operacional", link: "Ocorrencias.html", delay: "stagger-1" },
         { id: 2, nome: "Controle de Documentos", descricao: "Gestão de informações documentadas (manuais, procedimentos, formulários).", icone: "ph-files", cor: "emerald", status: "Em Breve", link: "#", delay: "stagger-2" },
         { id: 3, nome: "Gestão de Ativos e Manutenção", descricao: "Controle de manutenções preventivas e corretivas de equipamentos.", icone: "ph-wrench", cor: "amber", status: "Em Breve", link: "#", delay: "stagger-3" },
         { id: 4, nome: "Portal do Colaborador", descricao: "Recursos Humanos, holerites, controle de ponto e comunicados internos.", icone: "ph-users-three", cor: "sky", status: "Em Desenvolvimento", link: "#", delay: "stagger-4" },
         { id: 5, nome: "Avaliação de Fornecedores", descricao: "Gestão e qualificação de parceiros comerciais e prestadores de serviço.", icone: "ph-truck", cor: "rose", status: "Em Breve", link: "#", delay: "stagger-5" },
-        { id: 6, nome: "Indicadores de Desempenho (KPI)", descricao: "Painel de resultados, metas e análise de dados estratégicos em nuvem.", icone: "ph-chart-line-up", cor: "violet", status: "Operacional", link: "indicador.html", delay: "stagger-6" }
+        { id: 6, nome: "Indicadores de Desempenho (KPI)", descricao: "Painel de resultados, metas e análise de dados estratégicos em nuvem.", icone: "ph-chart-line-up", cor: "violet", status: "Operacional", link: "Indicador.html", delay: "stagger-6" }
       ];
 
       const getColorClasses = (colorName) => {
@@ -343,11 +341,9 @@
             if (u) {
               try {
                 const doc = await fetchWithTimeout(db.collection('usuarios').doc(u.uid).get());
-                
                 if (doc.exists && doc.data().status === 'aprovado') {
                   setUser({ name: u.displayName || u.email, email: u.email });
                 } else if (!doc.exists) {
-                  // Primeiro acesso (Admin/Tiago)
                   await fetchWithTimeout(db.collection('usuarios').doc(u.uid).set({
                     nome: u.displayName || 'ADMIN', 
                     email: u.email, 
@@ -362,7 +358,6 @@
             }
             setReady(true);
           });
-
         } catch (error) {
           console.error("Erro crítico:", error);
           setReady(true);
