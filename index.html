@@ -18,19 +18,13 @@
   <script src="https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore-compat.js"></script>
 
   <style>
-    /* Estilo Global da REVIMAQ */
+    /* Estilo Global */
     * { text-transform: uppercase !important; }
-    
-    /* Exceção para campos de login para não quebrar a autenticação */
     input[type="email"], input[type="password"] { text-transform: none !important; }
     input::placeholder { text-transform: uppercase !important; }
 
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(20px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
     .animate-fade-in { animation: fadeIn 0.5s ease-out forwards; }
-    
     .stagger-1 { animation-delay: 0.1s; }
     .stagger-2 { animation-delay: 0.2s; }
     .stagger-3 { animation-delay: 0.3s; }
@@ -52,9 +46,6 @@
       ]);
     };
 
-    // ==========================================
-    // COMPONENTE: ECRÃ DE LOGIN
-    // ==========================================
     function LoginScreen({ onLoginSuccess }) {
       const [isRegistering, setIsRegistering] = useState(false);
       const [isResettingPassword, setIsResettingPassword] = useState(false);
@@ -70,11 +61,9 @@
         setLoading(true);
         setError('');
         setSuccessMsg('');
-
         try {
           const auth = firebase.auth();
           const db = firebase.firestore();
-
           if (isResettingPassword) {
             await auth.sendPasswordResetEmail(email);
             setSuccessMsg('LINK ENVIADO! VERIFIQUE O SEU E-MAIL.');
@@ -82,43 +71,31 @@
           } else if (isRegistering) {
             const userCredential = await auth.createUserWithEmailAndPassword(email, password);
             await userCredential.user.updateProfile({ displayName: name });
-            
             await fetchWithTimeout(db.collection('usuarios').doc(userCredential.user.uid).set({
               nome: name,
               email: email,
               status: 'pendente',
               dataCadastro: new Date().toISOString()
             }));
-
             await auth.signOut();
             setIsRegistering(false);
-            setSuccessMsg('CADASTRO CONCLUÍDO! O SEU ACESSO AGUARDA APROVAÇÃO DA TI.');
+            setSuccessMsg('CADASTRO CONCLUÍDO! AGUARDE APROVAÇÃO.');
           } else {
             const userCredential = await auth.signInWithEmailAndPassword(email, password);
             const userDoc = await fetchWithTimeout(db.collection('usuarios').doc(userCredential.user.uid).get());
-            
             if (userDoc.exists) {
               if (userDoc.data().status === 'aprovado') {
                 onLoginSuccess({ name: userCredential.user.displayName, email: userCredential.user.email });
               } else {
                 await auth.signOut();
-                setError('ACESSO PENDENTE DE APROVAÇÃO PELA TI.');
+                setError('ACESSO PENDENTE DE APROVAÇÃO.');
               }
             } else {
-              await db.collection('usuarios').doc(userCredential.user.uid).set({
-                nome: userCredential.user.displayName || 'ADMIN',
-                email: userCredential.user.email,
-                status: 'aprovado',
-                dataCadastro: new Date().toISOString()
-              });
               onLoginSuccess({ name: userCredential.user.displayName, email: userCredential.user.email });
             }
           }
         } catch (err) {
-          console.error(err);
-          if (err.message === 'timeout') setError('ERRO DE CONEXÃO COM O BANCO DE DADOS.');
-          else if (err.code === 'auth/wrong-password' || err.code === 'auth/user-not-found' || err.code === 'auth/invalid-credential') setError('E-MAIL OU SENHA INCORRETOS.');
-          else setError("FALHA: " + err.message);
+          setError("ERRO: E-MAIL OU SENHA INVÁLIDOS.");
         }
         setLoading(false);
       };
@@ -131,9 +108,7 @@
                 <i className="ph-bold ph-squares-four text-4xl"></i>
               </div>
               <h1 className="font-black text-2xl tracking-widest text-slate-800">REVIMAQ</h1>
-              <p className="text-[10px] text-indigo-500 font-bold tracking-[0.2em] mt-1">
-                {isResettingPassword ? 'RECUPERAÇÃO DE SENHA' : (isRegistering ? 'CADASTRO DE ACESSO' : 'PORTAL CORPORATIVO')}
-              </p>
+              <p className="text-[10px] text-indigo-500 font-bold tracking-[0.2em] mt-1">PORTAL CORPORATIVO</p>
             </div>
 
             {error && <div className="bg-red-50 text-red-600 p-4 rounded-xl mb-6 text-[10px] font-bold text-center border border-red-200">{error}</div>}
@@ -141,37 +116,20 @@
 
             <form onSubmit={handleSubmit} className="space-y-4">
               {isRegistering && (
-                <div className="relative">
-                   <i className="ph ph-user absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"></i>
-                   <input type="text" required placeholder="NOME COMPLETO" value={name} onChange={e => setName(e.target.value)}
-                          className="w-full bg-slate-50 border border-slate-200 p-3.5 pl-11 rounded-xl text-sm outline-none focus:ring-2 focus:ring-indigo-500" />
-                </div>
+                <input type="text" required placeholder="NOME COMPLETO" value={name} onChange={e => setName(e.target.value)} className="w-full bg-slate-50 border border-slate-200 p-3.5 rounded-xl text-sm outline-none focus:ring-2 focus:ring-indigo-500" />
               )}
-              <div className="relative">
-                <i className="ph ph-envelope-simple absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"></i>
-                <input type="email" required placeholder="E-MAIL CORPORATIVO" value={email} onChange={e => setEmail(e.target.value)}
-                       className="w-full bg-slate-50 border border-slate-200 p-3.5 pl-11 rounded-xl text-sm outline-none focus:ring-2 focus:ring-indigo-500" />
-              </div>
-              
+              <input type="email" required placeholder="E-MAIL CORPORATIVO" value={email} onChange={e => setEmail(e.target.value)} className="w-full bg-slate-50 border border-slate-200 p-3.5 rounded-xl text-sm outline-none focus:ring-2 focus:ring-indigo-500" />
               {!isResettingPassword && (
-                <div className="relative">
-                  <i className="ph ph-lock-key absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"></i>
-                  <input type="password" required placeholder="SENHA DE ACESSO" value={password} onChange={e => setPassword(e.target.value)}
-                         className="w-full bg-slate-50 border border-slate-200 p-3.5 pl-11 rounded-xl text-sm outline-none focus:ring-2 focus:ring-indigo-500" />
-                  {!isRegistering && (
-                    <button type="button" onClick={() => setIsResettingPassword(true)} className="absolute right-0 -top-6 text-[9px] text-indigo-500 font-bold hover:underline transition-all">ESQUECEU A SENHA?</button>
-                  )}
-                </div>
+                <input type="password" required placeholder="SENHA" value={password} onChange={e => setPassword(e.target.value)} className="w-full bg-slate-50 border border-slate-200 p-3.5 rounded-xl text-sm outline-none focus:ring-2 focus:ring-indigo-500" />
               )}
-
-              <button type="submit" disabled={loading} className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-black py-4 rounded-xl text-xs tracking-widest transition-all shadow-md active:scale-95 flex justify-center items-center">
-                {loading ? <i className="ph-bold ph-spinner animate-spin text-xl"></i> : (isResettingPassword ? 'ENVIAR LINK' : (isRegistering ? 'CRIAR CONTA' : 'ENTRAR NO SISTEMA'))}
+              <button type="submit" disabled={loading} className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-black py-4 rounded-xl text-xs tracking-widest transition-all shadow-md flex justify-center items-center">
+                {loading ? <i className="ph-bold ph-spinner animate-spin text-xl"></i> : 'ENTRAR NO SISTEMA'}
               </button>
             </form>
 
             <div className="mt-8 pt-6 border-t border-slate-100 text-center text-[10px] text-slate-500 font-bold">
-              <button onClick={() => { setIsRegistering(!isRegistering); setIsResettingPassword(false); setError(''); setSuccessMsg(''); }} type="button" className="hover:text-indigo-600 transition-colors uppercase">
-                {isRegistering || isResettingPassword ? 'VOLTAR PARA O LOGIN' : 'PRIMEIRO ACESSO? SOLICITE AQUI'}
+              <button onClick={() => { setIsRegistering(!isRegistering); setIsResettingPassword(false); }} type="button" className="hover:text-indigo-600 transition-colors uppercase">
+                {isRegistering ? 'VOLTAR PARA O LOGIN' : 'PRIMEIRO ACESSO? SOLICITE AQUI'}
               </button>
             </div>
           </div>
@@ -179,141 +137,79 @@
       );
     }
 
-
-    // ==========================================
-    // COMPONENTE: PORTAL DASHBOARD
-    // ==========================================
     function PortalDashboard({ portalUser, onLogout }) {
       const [currentDate, setCurrentDate] = useState('');
-
       useEffect(() => {
-        const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-        setCurrentDate(new Date().toLocaleDateString('pt-BR', options));
+        setCurrentDate(new Date().toLocaleDateString('pt-PT', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }));
       }, []);
 
-      // LISTA DE APLICATIVOS ATUALIZADA
       const aplicativos = [
-        { id: 1, nome: "Gestão de Ocorrências", subtitulo: "ISO 9001:2015 - REVIMAQ", descricao: "Controle de Saídas Não Conformes (8.7) e Ações Corretivas (10.2).", icone: "ph-shield-check", cor: "indigo", status: "Operacional", link: "Ocorrencias.html", delay: "stagger-1" },
-        { id: 2, nome: "Controle de Documentos", descricao: "Gestão de informações documentadas (manuais, procedimentos, formulários).", icone: "ph-files", cor: "emerald", status: "Em Breve", link: "#", delay: "stagger-2" },
-        { id: 3, nome: "Gestão de Ativos e Calibração", subtitulo: "ISO 9001:2015 - 7.1.5", descricao: "Controle de património, manutenções e calibrações de equipamentos de medição.", icone: "ph-scales", cor: "amber", status: "Operacional", link: "gestao_iso9001.html", delay: "stagger-3" },
-        { id: 4, nome: "Portal do Colaborador", descricao: "Recursos Humanos, holerites, controle de ponto e comunicados internos.", icone: "ph-users-three", cor: "sky", status: "Em Desenvolvimento", link: "#", delay: "stagger-4" },
-        { id: 5, nome: "Avaliação de Fornecedores", descricao: "Gestão e qualificação de parceiros comerciais e prestadores de serviço.", icone: "ph-truck", cor: "rose", status: "Em Breve", link: "#", delay: "stagger-5" },
-        { id: 6, nome: "Indicadores de Desempenho (KPI)", descricao: "Painel de resultados, metas e análise de dados estratégicos em nuvem.", icone: "ph-chart-line-up", cor: "violet", status: "Operacional", link: "Indicador.html", delay: "stagger-6" }
+        { id: 1, nome: "Gestão de Ocorrências", descricao: "Controle de Saídas Não Conformes e Ações Corretivas.", icone: "ph-shield-check", cor: "indigo", status: "Operacional", link: "Ocorrencias.html", delay: "stagger-1" },
+        { id: 2, nome: "Controle de Documentos", descricao: "Gestão de informações documentadas e manuais.", icone: "ph-files", cor: "emerald", status: "Em Breve", link: "#", delay: "stagger-2" },
+        { id: 3, nome: "Gestão de Ativos e Calibração", subtitulo: "ISO 9001 - 7.1.5", descricao: "Controle de património e calibração de instrumentos de medição.", icone: "ph-scales", cor: "amber", status: "Operacional", link: "calibracao.html", delay: "stagger-3" },
+        { id: 4, nome: "Portal do Colaborador", descricao: "RH, holerites e comunicados internos.", icone: "ph-users-three", cor: "sky", status: "Em Desenvolvimento", link: "#", delay: "stagger-4" },
+        { id: 5, nome: "Avaliação de Fornecedores", descricao: "Gestão e qualificação de parceiros comerciais.", icone: "ph-truck", cor: "rose", status: "Em Breve", link: "#", delay: "stagger-5" },
+        { id: 6, nome: "Indicadores (KPI)", descricao: "Painel estratégico de resultados em nuvem.", icone: "ph-chart-line-up", cor: "violet", status: "Operacional", link: "Indicador.html", delay: "stagger-6" }
       ];
 
-      const getColorClasses = (colorName) => {
+      const getColorClasses = (c) => {
         const colors = {
-          indigo: { bg: 'bg-indigo-500', text: 'text-indigo-600', lightBg: 'bg-indigo-50', hover: 'hover:bg-indigo-600', border: 'border-indigo-100' },
-          emerald: { bg: 'bg-emerald-500', text: 'text-emerald-600', lightBg: 'bg-emerald-50', hover: 'hover:bg-emerald-600', border: 'border-emerald-100' },
-          amber: { bg: 'bg-amber-500', text: 'text-amber-600', lightBg: 'bg-amber-50', hover: 'hover:bg-amber-600', border: 'border-amber-100' },
-          sky: { bg: 'bg-sky-500', text: 'text-sky-600', lightBg: 'bg-sky-50', hover: 'hover:bg-sky-600', border: 'border-sky-100' },
-          rose: { bg: 'bg-rose-500', text: 'text-rose-600', lightBg: 'bg-rose-50', hover: 'hover:bg-rose-600', border: 'border-rose-100' },
-          violet: { bg: 'bg-violet-500', text: 'text-violet-600', lightBg: 'bg-violet-50', hover: 'hover:bg-violet-600', border: 'border-violet-100' },
-          default: { bg: 'bg-slate-500', text: 'text-slate-600', lightBg: 'bg-slate-50', hover: 'hover:bg-slate-600', border: 'border-slate-100' }
+            indigo: { bg: 'bg-indigo-500', text: 'text-indigo-600', light: 'bg-indigo-50', border: 'border-indigo-100' },
+            emerald: { bg: 'bg-emerald-500', text: 'text-emerald-600', light: 'bg-emerald-50', border: 'border-emerald-100' },
+            amber: { bg: 'bg-amber-500', text: 'text-amber-600', light: 'bg-amber-50', border: 'border-amber-100' },
+            sky: { bg: 'bg-sky-500', text: 'text-sky-600', light: 'bg-sky-50', border: 'border-sky-100' },
+            rose: { bg: 'bg-rose-500', text: 'text-rose-600', light: 'bg-rose-50', border: 'border-rose-100' },
+            violet: { bg: 'bg-violet-500', text: 'text-violet-600', light: 'bg-violet-50', border: 'border-violet-100' }
         };
-        return colors[colorName] || colors.default;
+        return colors[c] || colors.indigo;
       };
 
       return (
         <div className="min-h-screen pb-16">
-          <nav className="bg-slate-900 text-white shadow-xl sticky top-0 z-50">
-            <div className="max-w-7xl mx-auto px-6 h-20 flex justify-between items-center">
+          <nav className="bg-slate-900 text-white shadow-xl h-20 flex items-center px-6 sticky top-0 z-50 uppercase">
+            <div className="max-w-7xl mx-auto w-full flex justify-between items-center">
               <div className="flex items-center space-x-4">
-                <div className="bg-indigo-600 p-2.5 rounded-xl shadow-lg">
-                  <i className="ph-bold ph-squares-four text-[28px] text-white"></i>
-                </div>
-                <div>
-                  <h1 class="font-black text-xl tracking-widest uppercase">REVIMAQ</h1>
-                  <p className="text-[10px] text-indigo-300 font-bold tracking-[0.2em] uppercase">Portal Corporativo</p>
-                </div>
+                <div className="bg-indigo-600 p-2 rounded-lg"><i className="ph-bold ph-squares-four text-2xl text-white"></i></div>
+                <div><h1 className="font-black text-lg tracking-widest">REVIMAQ</h1><p className="text-[9px] text-indigo-300 font-bold uppercase">Workspace Integrado</p></div>
               </div>
-              <div className="hidden md:flex items-center space-x-6 text-sm font-bold text-slate-300">
-                <span className="flex items-center uppercase"><i className="ph ph-calendar-blank mr-2 text-lg"></i> {currentDate}</span>
-                <div className="flex items-center space-x-3 bg-slate-800 px-4 py-2 rounded-lg border border-slate-700">
-                  <i className="ph-fill ph-user-circle text-2xl text-indigo-500"></i>
-                  <div className="flex flex-col">
-                    <span className="text-xs text-white leading-tight uppercase font-black">{portalUser.name}</span>
-                    <button onClick={onLogout} className="text-[9px] text-red-400 hover:text-red-300 transition-colors text-left font-black tracking-widest uppercase">SAIR DO SISTEMA</button>
-                  </div>
+              <div className="hidden md:flex items-center space-x-6 text-[10px] font-black">
+                <span className="text-slate-400 uppercase">{currentDate}</span>
+                <div className="bg-slate-800 p-2 px-4 rounded-lg flex items-center space-x-3 border border-slate-700">
+                    <span className="text-white uppercase">{portalUser.name}</span>
+                    <button onClick={() => firebase.auth().signOut().then(onLogout)} className="text-red-400 hover:text-red-300 uppercase">SAIR</button>
                 </div>
               </div>
             </div>
           </nav>
 
           <main className="max-w-7xl mx-auto px-6 mt-12">
-            <div className="mb-12 opacity-0 animate-fade-in">
-              <h2 className="text-4xl font-black text-slate-800 tracking-tighter uppercase mb-2">Bem-vindo ao Workspace</h2>
-              <p className="text-slate-500 font-medium text-lg uppercase max-w-2xl">
-                Selecione o módulo desejado abaixo para acessar as ferramentas do Sistema de Gestão Integrada.
-              </p>
-            </div>
-
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {aplicativos.map((app) => {
-                const colors = getColorClasses(app.cor);
-                const isOperacional = app.status === "Operacional";
-
+              {aplicativos.map(app => {
+                const c = getColorClasses(app.cor);
+                const isOp = app.status === 'Operacional';
                 return (
-                  <div key={app.id} className={`bg-white rounded-[2rem] p-8 shadow-sm border-2 ${colors.border} hover:shadow-2xl hover:-translate-y-2 transition-all duration-300 flex flex-col relative overflow-hidden group opacity-0 animate-fade-in ${app.delay}`}>
-                    <div className="flex justify-between items-start mb-6 z-10">
-                      <div className={`w-16 h-16 rounded-2xl flex items-center justify-center ${colors.lightBg} ${colors.text} shadow-inner`}>
-                        <i className={`ph ${app.icone} text-4xl`}></i>
-                      </div>
-                      <span className={`px-3 py-1 rounded-full text-[9px] font-black tracking-widest border uppercase ${isOperacional ? 'bg-green-50 text-green-600 border-green-200' : 'bg-slate-50 text-slate-400 border-slate-200'}`}>
-                        {app.status}
-                      </span>
+                  <div key={app.id} className={`bg-white rounded-[2rem] p-8 border-2 ${c.border} shadow-sm hover:shadow-xl transition-all opacity-0 animate-fade-in ${app.delay} flex flex-col`}>
+                    <div className="flex justify-between items-start mb-6">
+                      <div className={`w-14 h-14 rounded-2xl flex items-center justify-center ${c.light} ${c.text}`}><i className={`ph ${app.icone} text-3xl`}></i></div>
+                      <span className={`text-[9px] font-black px-2 py-1 rounded-full border uppercase ${isOp ? 'bg-green-50 text-green-600 border-green-200' : 'text-slate-400 border-slate-200'}`}>{app.status}</span>
                     </div>
-
-                    <div className="flex-grow z-10">
-                      {app.subtitulo && (
-                        <div className={`inline-block mb-3 px-2 py-1 rounded-md text-[9px] font-black tracking-widest ${colors.lightBg} ${colors.text} border ${colors.border}`}>
-                          {app.subtitulo}
-                        </div>
-                      )}
-                      <h3 className="text-xl font-black text-slate-800 mb-3 uppercase tracking-tight">{app.nome}</h3>
-                      <p className="text-xs text-slate-500 font-medium leading-relaxed uppercase">
-                        {app.descricao}
-                      </p>
+                    <div className="flex-grow">
+                        {app.subtitulo && <div className="text-[9px] font-black text-indigo-500 mb-1">{app.subtitulo}</div>}
+                        <h3 className="text-lg font-black mb-2 uppercase">{app.nome}</h3>
+                        <p className="text-xs text-slate-500 font-bold mb-8 uppercase leading-relaxed">{app.descricao}</p>
                     </div>
-
-                    <div className="mt-8 pt-6 border-t border-slate-100 z-10">
-                      {isOperacional ? (
-                        <a href={app.link} className={`flex items-center justify-center w-full py-3.5 rounded-xl ${colors.bg} text-white font-black text-xs tracking-widest shadow-md ${colors.hover} active:scale-95 transition-all uppercase`}>
-                          ACESSAR SISTEMA <i className="ph-bold ph-arrow-right ml-2 text-lg"></i>
-                        </a>
-                      ) : (
-                        <button disabled className="flex items-center justify-center w-full py-3.5 rounded-xl bg-slate-100 text-slate-400 font-black text-xs tracking-widest cursor-not-allowed uppercase">
-                          MÓDULO BLOQUEADO <i className="ph-bold ph-lock-key ml-2 text-lg"></i>
-                        </button>
-                      )}
-                    </div>
+                    <a href={isOp ? app.link : '#'} className={`block text-center py-3.5 rounded-xl font-black text-xs tracking-widest transition-all ${isOp ? c.bg + ' text-white shadow-md active:scale-95' : 'bg-slate-100 text-slate-300 pointer-events-none'}`}>
+                        {isOp ? 'ACESSAR MÓDULO' : 'BLOQUEADO'}
+                    </a>
                   </div>
                 );
               })}
-            </div>
-
-            <div className="mt-16 bg-white rounded-3xl p-8 border border-slate-200 shadow-sm opacity-0 animate-fade-in stagger-6 flex flex-col md:flex-row justify-between items-center uppercase">
-              <div className="flex items-center space-x-4 mb-4 md:mb-0">
-                <i className="ph-fill ph-info text-slate-300 text-3xl"></i>
-                <div>
-                  <h4 className="text-sm font-black text-slate-700 uppercase">Suporte Técnico de TI</h4>
-                  <p className="text-xs text-slate-400 uppercase">Dúvidas ou problemas de acesso? Ramal 404</p>
-                </div>
-              </div>
-              <div className="text-right">
-                <p className="text-[10px] font-black tracking-[0.2em] text-slate-400 uppercase">VERSÃO DO PORTAL: 2.1.1</p>
-                <p className="text-[10px] font-bold text-slate-300 mt-1 uppercase">SISTEMA INTEGRADO REVIMAQ © {new Date().getFullYear()}</p>
-              </div>
             </div>
           </main>
         </div>
       );
     }
 
-
-    // ==========================================
-    // APP PRINCIPAL
-    // ==========================================
     function App() {
       const [ready, setReady] = useState(false);
       const [user, setUser] = useState(null);
@@ -327,44 +223,14 @@
           messagingSenderId: "426267826861",
           appId: "1:426267826861:web:da053528212059479b4424"
         };
-
-        try {
-          if (!firebase.apps.length) {
-            firebase.initializeApp(firebaseConfig);
-            firebase.firestore().settings({ experimentalForceLongPolling: true });
-          }
-          
-          const auth = firebase.auth();
-          const db = firebase.firestore();
-
-          auth.onAuthStateChanged(async (u) => {
-            if (u) {
-              try {
-                const doc = await fetchWithTimeout(db.collection('usuarios').doc(u.uid).get());
-                if (doc.exists && doc.data().status === 'aprovado') {
-                  setUser({ name: u.displayName || u.email, email: u.email });
-                } else if (!doc.exists) {
-                  await fetchWithTimeout(db.collection('usuarios').doc(u.uid).set({
-                    nome: u.displayName || 'ADMIN', 
-                    email: u.email, 
-                    status: 'aprovado', 
-                    dataCadastro: new Date().toISOString()
-                  }));
-                  setUser({ name: u.displayName || 'ADMIN', email: u.email });
-                } else {
-                  await auth.signOut();
-                }
-              } catch (e) { console.error(e); }
-            }
-            setReady(true);
-          });
-        } catch (error) {
-          console.error("Erro crítico:", error);
+        if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+        firebase.auth().onAuthStateChanged(u => {
+          if (u) setUser({ name: u.displayName || u.email, email: u.email });
           setReady(true);
-        }
+        });
       }, []);
 
-      if (!ready) return <div className="min-h-screen flex items-center justify-center bg-slate-900 text-white font-black tracking-widest uppercase">A LIGAR AO PORTAL...</div>;
+      if (!ready) return <div className="min-h-screen flex items-center justify-center bg-slate-900 text-white font-black tracking-widest uppercase">CONECTANDO...</div>;
       return user ? <PortalDashboard portalUser={user} onLogout={() => setUser(null)} /> : <LoginScreen onLoginSuccess={setUser} />;
     }
 
