@@ -4,30 +4,44 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sistema de Gestão de Calibração - ISO 9001</title>
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome para Ícones -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script>
-        tailwind.config = { theme: { extend: { colors: { isoBlue: '#0f4c81' } } } }
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        isoBlue: '#0f4c81',
+                    }
+                }
+            }
+        }
     </script>
     <style>
+        /* Estilos personalizados para scrollbar e transições */
         ::-webkit-scrollbar { width: 8px; height: 8px; }
         ::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 4px; }
         ::-webkit-scrollbar-thumb { background: #c1c1c1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #a8a8a8; }
         .fade-in { animation: fadeIn 0.3s ease-in-out; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        
+        /* Forçar caixa alta em inputs de texto e textareas visualmente */
         input[type="text"], textarea { text-transform: uppercase; }
     </style>
 </head>
 <body class="bg-gray-50 text-gray-800 font-sans min-h-screen flex flex-col">
 
-    <!-- Header Restaurado -->
+    <!-- Header/Navbar -->
     <header class="bg-isoBlue text-white shadow-md">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
             <div class="flex items-center gap-3">
                 <i class="fa-solid fa-ruler-combined text-2xl"></i>
                 <div>
-                    <h1 class="text-xl font-bold tracking-wide uppercase">MetroGestão ISO 9001</h1>
-                    <p class="text-xs text-blue-200 uppercase">Controle de Patrimônio e Calibração</p>
+                    <h1 class="text-xl font-bold tracking-wide">MetroGestão ISO 9001</h1>
+                    <p class="text-xs text-blue-200">Controle de Patrimônio e Calibração</p>
                 </div>
             </div>
             <div class="text-sm">
@@ -36,23 +50,23 @@
         </div>
     </header>
 
-    <!-- Navegação Restaurada -->
+    <!-- Sistema de Abas (Navegação) -->
     <div class="bg-white border-b border-gray-200 shadow-sm sticky top-0 z-40">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <nav class="-mb-px flex space-x-8 overflow-x-auto" aria-label="Tabs">
-                <button onclick="switchTab('dashboard')" id="tab-dashboard" class="border-isoBlue text-isoBlue whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center gap-2 transition-all">
+                <button onclick="switchTab('dashboard')" id="tab-dashboard" class="border-isoBlue text-isoBlue whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center gap-2 transition-colors duration-200">
                     <i class="fa-solid fa-chart-line"></i> Dashboard & Inventário
                 </button>
-                <button onclick="switchTab('cadastro')" id="tab-cadastro" class="border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center gap-2 transition-all">
-                    <i class="fa-solid fa-file-signature"></i> Cadastro
+                <button onclick="switchTab('cadastro')" id="tab-cadastro" class="border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center gap-2 transition-colors duration-200">
+                    <i class="fa-solid fa-file-signature"></i> Cadastro de Equipamento
                 </button>
                 <button onclick="switchTab('calibracao')" id="tab-calibracao" class="border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center gap-2 transition-all">
                     <i class="fa-solid fa-stamp"></i> Registrar Calibração
                 </button>
-                <button onclick="switchTab('manutencao')" id="tab-manutencao" class="border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center gap-2 transition-all">
-                    <i class="fa-solid fa-wrench"></i> Manutenção
+                <button onclick="switchTab('manutencao')" id="tab-manutencao" class="border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center gap-2 transition-colors duration-200">
+                    <i class="fa-solid fa-wrench"></i> Registrar Manutenção
                 </button>
-                <button onclick="switchTab('historico')" id="tab-historico" class="border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center gap-2 transition-all">
+                <button onclick="switchTab('historico')" id="tab-historico" class="border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center gap-2 transition-colors duration-200">
                     <i class="fa-solid fa-clock-rotate-left"></i> Histórico
                 </button>
                 <button onclick="switchTab('logs')" id="tab-logs" class="border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center gap-2 transition-all">
@@ -63,67 +77,107 @@
     </div>
 
     <main class="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
-        <!-- Dashboard View Restaurada -->
+        
+        <!-- ABA 1: DASHBOARD E INVENTÁRIO -->
         <div id="view-dashboard" class="block fade-in">
+            <!-- Dashboard KPIs -->
             <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
                 <div class="bg-white rounded-lg shadow p-5 border-l-4 border-blue-500 flex items-center justify-between">
-                    <div><p class="text-sm text-gray-500 font-semibold uppercase">Total Ativos</p><p class="text-2xl font-bold text-gray-800" id="kpiTotal">0</p></div>
+                    <div>
+                        <p class="text-sm text-gray-500 font-semibold uppercase">Total de Ativos</p>
+                        <p class="text-2xl font-bold text-gray-800" id="kpiTotal">0</p>
+                    </div>
                     <div class="bg-blue-100 p-3 rounded-full text-blue-600"><i class="fa-solid fa-boxes-stacked"></i></div>
                 </div>
                 <div class="bg-white rounded-lg shadow p-5 border-l-4 border-green-500 flex items-center justify-between">
-                    <div><p class="text-sm text-gray-500 font-semibold uppercase">Conformes</p><p class="text-2xl font-bold text-gray-800" id="kpiConforme">0</p></div>
+                    <div>
+                        <p class="text-sm text-gray-500 font-semibold uppercase">Conformes</p>
+                        <p class="text-2xl font-bold text-gray-800" id="kpiConforme">0</p>
+                    </div>
                     <div class="bg-green-100 p-3 rounded-full text-green-600"><i class="fa-solid fa-check-circle"></i></div>
                 </div>
                 <div class="bg-white rounded-lg shadow p-5 border-l-4 border-yellow-500 flex items-center justify-between">
-                    <div><p class="text-sm text-gray-500 font-semibold uppercase">Atenção (30d)</p><p class="text-2xl font-bold text-gray-800" id="kpiAtencao">0</p></div>
+                    <div>
+                        <p class="text-sm text-gray-500 font-semibold uppercase">Atenção (Vence < 30d)</p>
+                        <p class="text-2xl font-bold text-gray-800" id="kpiAtencao">0</p>
+                    </div>
                     <div class="bg-yellow-100 p-3 rounded-full text-yellow-600"><i class="fa-solid fa-triangle-exclamation"></i></div>
                 </div>
                 <div class="bg-white rounded-lg shadow p-5 border-l-4 border-red-500 flex items-center justify-between">
-                    <div><p class="text-sm text-gray-500 font-semibold uppercase">Vencidos</p><p class="text-2xl font-bold text-gray-800" id="kpiVencido">0</p></div>
+                    <div>
+                        <p class="text-sm text-gray-500 font-semibold uppercase">Vencidos</p>
+                        <p class="text-2xl font-bold text-gray-800" id="kpiVencido">0</p>
+                    </div>
                     <div class="bg-red-100 p-3 rounded-full text-red-600"><i class="fa-solid fa-ban"></i></div>
                 </div>
             </div>
 
-            <div class="bg-white rounded-lg shadow-md p-6">
-                <div class="flex flex-col sm:flex-row justify-between items-center border-b pb-4 mb-4 gap-4">
-                    <h2 class="text-lg font-bold text-gray-700 uppercase flex items-center gap-2"><i class="fa-solid fa-list text-isoBlue"></i> Inventário Geral</h2>
-                    <div class="flex flex-wrap items-center gap-3">
-                        <button onclick="exportarBackup()" class="bg-gray-100 text-gray-700 px-3 py-1.5 rounded-md hover:bg-gray-200 text-xs font-bold border transition-all uppercase"><i class="fa-solid fa-download"></i> Exportar</button>
-                        <label class="bg-gray-100 text-gray-700 px-3 py-1.5 rounded-md hover:bg-gray-200 text-xs font-bold border cursor-pointer uppercase transition-all">
-                            <i class="fa-solid fa-upload"></i> Importar
-                            <input type="file" id="fileImport" class="hidden" accept=".json" onchange="importarBackup(event)">
-                        </label>
-                        <div class="relative">
-                            <i class="fa-solid fa-search absolute left-3 top-2.5 text-gray-400"></i>
-                            <input type="text" id="searchInput" onkeyup="renderTable()" class="pl-9 pr-3 py-2 border rounded-md text-sm outline-none focus:ring-1 focus:ring-isoBlue uppercase" placeholder="Buscar TAG...">
+            <!-- Tabela de Inventário -->
+            <div class="w-full">
+                <div class="bg-white rounded-lg shadow-md p-6">
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b pb-4 mb-4 gap-4">
+                        <h2 class="text-lg font-bold text-gray-700 flex items-center gap-2">
+                            <i class="fa-solid fa-list text-isoBlue"></i>
+                            Lista Mestra de Equipamentos
+                        </h2>
+                        
+                        <div class="flex flex-col sm:flex-row items-center gap-3 w-full sm:w-auto">
+                            <!-- Botões de Backup -->
+                            <div class="flex gap-2 w-full sm:w-auto">
+                                <button onclick="exportarBackup()" class="bg-gray-100 text-gray-700 px-3 py-2 rounded-md hover:bg-gray-200 text-sm font-medium border border-gray-300 transition-colors w-full sm:w-auto flex justify-center items-center gap-2" title="Baixar cópia do banco de dados">
+                                    <i class="fa-solid fa-download"></i> Exportar
+                                </button>
+                                <label class="bg-gray-100 text-gray-700 px-3 py-2 rounded-md hover:bg-gray-200 text-sm font-medium border border-gray-300 transition-colors cursor-pointer w-full sm:w-auto flex justify-center items-center gap-2" title="Importar base de dados antiga">
+                                    <i class="fa-solid fa-upload"></i> Importar
+                                    <input type="file" id="fileImport" class="hidden" accept=".json" onchange="importarBackup(event)">
+                                </label>
+                            </div>
+
+                            <div class="relative w-full sm:w-64">
+                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                    <i class="fa-solid fa-search text-gray-400"></i>
+                                </div>
+                                <input type="text" id="searchInput" onkeyup="renderTable()" class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-isoBlue focus:border-isoBlue sm:text-sm uppercase" placeholder="Buscar TAG ou Descrição...">
+                            </div>
                         </div>
                     </div>
+
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200 text-sm">
+                            <thead class="bg-gray-50 uppercase">
+                                <tr>
+                                    <th scope="col" class="px-4 py-3 text-left font-semibold text-gray-600 tracking-wider">TAG / Ativo</th>
+                                    <th scope="col" class="px-4 py-3 text-left font-semibold text-gray-600 tracking-wider">Descrição</th>
+                                    <th scope="col" class="px-4 py-3 text-left font-semibold text-gray-600 tracking-wider">Última Cal.</th>
+                                    <th scope="col" class="px-4 py-3 text-left font-semibold text-gray-600 tracking-wider">Próxima Cal.</th>
+                                    <th scope="col" class="px-4 py-3 text-center font-semibold text-gray-600 tracking-wider">Status</th>
+                                    <th scope="col" class="px-4 py-3 text-center font-semibold text-gray-600 tracking-wider">Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tableBody" class="bg-white divide-y divide-gray-200">
+                                <!-- Linhas renderizadas via JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <!-- Empty State -->
+                    <div id="emptyState" class="hidden flex flex-col items-center justify-center py-12 text-gray-500">
+                        <i class="fa-solid fa-clipboard-list text-5xl mb-4 text-gray-300"></i>
+                        <p class="text-lg font-medium">Nenhum equipamento cadastrado.</p>
+                        <p class="text-sm">Vá para a aba "Cadastro de Equipamento" para registrar o primeiro.</p>
+                    </div>
                 </div>
-                <div class="overflow-x-auto">
-                    <table class="min-w-full divide-y divide-gray-200 text-sm">
-                        <thead class="bg-gray-50 uppercase">
-                            <tr>
-                                <th class="px-4 py-3 text-left font-bold text-gray-600">TAG / Ativo</th>
-                                <th class="px-4 py-3 text-left font-bold text-gray-600">Descrição</th>
-                                <th class="px-4 py-3 text-left font-bold text-gray-600">Última Cal.</th>
-                                <th class="px-4 py-3 text-left font-bold text-gray-600">Próxima Cal.</th>
-                                <th class="px-4 py-3 text-center font-bold text-gray-600">Status</th>
-                                <th class="px-4 py-3 text-center font-bold text-gray-600">Ações</th>
-                            </tr>
-                        </thead>
-                        <tbody id="tableBody" class="bg-white divide-y divide-gray-200"></tbody>
-                    </table>
-                </div>
-                <div id="emptyState" class="hidden py-12 text-center text-gray-400 font-bold uppercase">Nenhum equipamento cadastrado.</div>
             </div>
         </div>
 
-        <!-- ABA DE LOGS DE ATIVIDADES -->
+        <!-- ABA DE LOGS (Nova Seção Integrada) -->
         <div id="view-logs" class="hidden fade-in">
             <div class="max-w-5xl mx-auto bg-white rounded-lg shadow-md border overflow-hidden">
                 <div class="p-6 border-b bg-gray-50 flex justify-between items-center">
-                    <h2 class="text-lg font-bold text-gray-700 uppercase flex items-center gap-2"><i class="fa-solid fa-list-ul text-isoBlue"></i> Histórico de Operações</h2>
-                    <span class="text-[10px] font-bold text-gray-400 uppercase">Rastreabilidade ISO 9001</span>
+                    <h2 class="text-lg font-bold text-gray-700 flex items-center gap-2">
+                        <i class="fa-solid fa-list-ul text-isoBlue"></i> REGISTRO DE ATIVIDADES (LOG)
+                    </h2>
+                    <span class="text-[10px] font-bold text-gray-400 border px-3 py-1 rounded-full uppercase">ISO 9001 RASTREABILIDADE</span>
                 </div>
                 <div class="overflow-x-auto max-h-[600px] overflow-y-auto">
                     <table class="min-w-full divide-y divide-gray-200 text-xs">
@@ -135,63 +189,138 @@
                                 <th class="px-6 py-3 text-left font-bold uppercase text-gray-500">Descrição Detalhada</th>
                             </tr>
                         </thead>
-                        <tbody id="logsTableBody" class="bg-white divide-y divide-gray-200"></tbody>
+                        <tbody id="logsTableBody" class="bg-white divide-y divide-gray-200">
+                            <!-- Logs via JS -->
+                        </tbody>
                     </table>
                 </div>
-                <div id="logsEmptyState" class="hidden py-20 text-center text-gray-400 uppercase font-bold">Nenhum registro de atividade encontrado.</div>
+                <div id="logsEmptyState" class="hidden py-20 text-center text-gray-400 font-bold uppercase">Nenhum registro de atividade encontrado.</div>
             </div>
         </div>
 
-        <!-- Outras views básicas para manter a estrutura original -->
+        <!-- ABA 2: FORMULÁRIO DE CADASTRO -->
         <div id="view-cadastro" class="hidden fade-in">
-            <div class="max-w-2xl mx-auto bg-white p-8 rounded-lg shadow-md border">
-                <h2 class="text-xl font-bold mb-6 border-b pb-4 uppercase" id="formTitle">Novo Equipamento</h2>
-                <form id="instrumentForm" class="space-y-4">
-                    <input type="hidden" id="instrumentId">
-                    <div class="grid grid-cols-2 gap-4">
-                        <input type="text" id="tag" required placeholder="TAG *" class="border p-2.5 rounded-lg w-full">
-                        <input type="text" id="descricao" required placeholder="DESCRIÇÃO *" class="border p-2.5 rounded-lg w-full">
-                    </div>
-                    <div class="grid grid-cols-2 gap-4">
-                        <input type="text" id="resolucao" placeholder="RESOLUÇÃO" class="border p-2.5 rounded-lg w-full">
-                        <input type="number" id="frequencia" value="12" class="border p-2.5 rounded-lg w-full">
-                    </div>
-                    <select id="setor" class="w-full border p-2.5 rounded-lg uppercase">
-                        <option value="Qualidade">QUALIDADE</option>
-                        <option value="Produção">PRODUÇÃO</option>
-                        <option value="Manutenção">MANUTENÇÃO</option>
-                    </select>
-                    <div class="border-t pt-4">
-                        <label class="block text-xs font-bold text-gray-500 mb-1 uppercase">Anexos (Lim. 800KB)</label>
-                        <input type="file" multiple onchange="processarAnexos(event)" class="text-xs">
-                        <div id="listaAnexosForm" class="mt-2 space-y-1"></div>
-                    </div>
-                    <button type="submit" id="btnSubmit" class="w-full bg-isoBlue text-white py-3 rounded-lg font-bold shadow-lg uppercase">Salvar Registro</button>
-                </form>
+            <div class="max-w-3xl mx-auto">
+                <div class="bg-white rounded-lg shadow-md p-6">
+                    <h2 class="text-lg font-bold border-b pb-2 mb-4 text-gray-700 flex items-center gap-2">
+                        <i class="fa-solid fa-plus-circle text-isoBlue"></i>
+                        <span id="formTitle">Novo Instrumento / Ativo</span>
+                    </h2>
+                    
+                    <form id="instrumentForm" class="space-y-4">
+                        <input type="hidden" id="instrumentId">
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1 uppercase">TAG / Nº Patrimônio *</label>
+                                <input type="text" id="tag" required class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-isoBlue/20" placeholder="Ex: PA-0012">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1 uppercase">Descrição do Equipamento *</label>
+                                <input type="text" id="descricao" required class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-isoBlue/20" placeholder="Ex: Paquímetro Digital 150mm">
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1 uppercase">Fabricante</label>
+                                <input type="text" id="fabricante" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-isoBlue/20">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1 uppercase">Nº Série</label>
+                                <input type="text" id="serie" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-isoBlue/20">
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1 uppercase">Resolução</label>
+                                <input type="text" id="resolucao" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-isoBlue/20" placeholder="Ex: 0,01 mm">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1 uppercase">Tolerância do Processo</label>
+                                <input type="text" id="tolerancia" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-isoBlue/20" placeholder="Ex: ± 0,05 mm">
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1 uppercase">Localização / Setor</label>
+                            <select id="setor" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-isoBlue/20 bg-white">
+                                <option value="Controle de Qualidade">Controle de Qualidade</option>
+                                <option value="Produção">Produção</option>
+                                <option value="Manutenção">Manutenção</option>
+                                <option value="Laboratório">Laboratório</option>
+                                <option value="Almoxarifado">Almoxarifado</option>
+                            </select>
+                        </div>
+
+                        <!-- SESSÃO DE ANEXOS -->
+                        <div class="border-t border-gray-200 pt-4 mt-4">
+                            <label class="block text-sm font-medium text-gray-700 mb-1 uppercase">Anexos (Lim. 800KB por arquivo)</label>
+                            <input type="file" id="fileAnexos" multiple onchange="processarAnexos(event)" class="text-xs" accept=".pdf,image/*">
+                            <div id="listaAnexosForm" class="mt-2 space-y-1"></div>
+                        </div>
+
+                        <div class="border-t border-gray-200 pt-4 mt-4">
+                            <label class="flex items-center gap-2 cursor-pointer mb-3">
+                                <input type="checkbox" id="requerCalibracao" checked class="w-4 h-4 text-isoBlue border-gray-300 rounded focus:ring-isoBlue" onchange="toggleCalibracaoFields()">
+                                <span class="text-sm font-semibold text-gray-700 uppercase">Instrumento Requer Calibração</span>
+                            </label>
+                        </div>
+
+                        <div id="calibracaoFields" class="space-y-4 bg-gray-50 p-4 rounded-md border border-gray-200 transition-opacity">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1 uppercase">Frequência (Meses) *</label>
+                                <input type="number" id="frequencia" min="1" max="120" value="12" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-isoBlue/20">
+                            </div>
+                        </div>
+
+                        <div class="flex gap-3 pt-4 border-t">
+                            <button type="submit" id="btnSubmit" class="w-2/3 bg-isoBlue text-white py-2 px-4 rounded font-bold shadow-md hover:bg-blue-800 transition-all uppercase">Salvar Registro</button>
+                            <button type="button" onclick="resetForm()" class="w-1/3 bg-gray-200 text-gray-700 py-2 rounded font-bold uppercase">Limpar</button>
+                        </div>
+                    </form>
+                </div>
             </div>
         </div>
 
+        <!-- ABA 3: LANÇAMENTO DE CALIBRAÇÃO -->
         <div id="view-calibracao" class="hidden fade-in">
-            <div class="max-w-xl mx-auto bg-white p-8 rounded-lg shadow-md border">
-                <h2 class="text-xl font-bold mb-6 border-b pb-4 uppercase">Lançar Calibração</h2>
+            <div class="max-w-xl mx-auto bg-white rounded-lg shadow-md p-6">
+                <h2 class="text-lg font-bold border-b pb-2 mb-4 text-gray-700 uppercase">Lançar Nova Calibração</h2>
                 <form id="calibracaoForm" class="space-y-4">
-                    <select id="selectEquipamentoCal" required class="w-full border p-2.5 rounded-lg uppercase"></select>
-                    <input type="date" id="novaDataCal" required class="w-full border p-2.5 rounded-lg">
-                    <input type="text" id="novoCertificado" required placeholder="Nº CERTIFICADO *" class="w-full border p-2.5 rounded-lg uppercase">
-                    <button type="submit" class="w-full bg-green-600 text-white py-3 rounded-lg font-bold shadow uppercase">Confirmar Registro</button>
+                    <select id="selectEquipamentoCal" required class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-isoBlue/20 bg-white uppercase"></select>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <input type="date" id="novaDataCal" required class="border border-gray-300 rounded-md px-3 py-2 w-full outline-none">
+                        <input type="text" id="novoCertificado" required placeholder="Nº CERTIFICADO" class="border border-gray-300 rounded-md px-3 py-2 w-full outline-none uppercase">
+                    </div>
+                    <button type="submit" class="w-full bg-green-600 text-white py-3 rounded font-bold shadow hover:bg-green-700 uppercase transition-all">Confirmar Registro</button>
                 </form>
             </div>
         </div>
 
-        <div id="view-historico" class="hidden fade-in text-center py-20 text-gray-400 font-bold uppercase">Consulte os itens no Dashboard.</div>
+        <div id="view-historico" class="hidden fade-in text-center py-20 text-gray-400 font-bold uppercase">Consulte os itens através da Lista Mestra.</div>
         <div id="view-manutencao" class="hidden fade-in text-center py-20 text-gray-400 font-bold uppercase">Módulo de Manutenção Reservado.</div>
+
     </main>
 
-    <footer class="bg-gray-800 text-gray-500 py-6 text-center text-[10px] font-bold uppercase mt-auto">
-        REVIMAQ &copy; 2026 - Controle Metrológico
+    <!-- Modal Anexos -->
+    <div id="modalAnexos" class="fixed inset-0 z-[100] hidden bg-black bg-opacity-60 flex items-center justify-center p-4">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-md overflow-hidden">
+            <div class="px-6 py-4 border-b flex justify-between items-center bg-gray-50">
+                <h3 class="font-bold text-gray-700 uppercase">Visualizar Anexos</h3>
+                <button onclick="fecharModalAnexos()" class="text-gray-400 hover:text-red-500"><i class="fa-solid fa-xmark text-xl"></i></button>
+            </div>
+            <div id="modalAnexosBody" class="p-6 space-y-2"></div>
+            <div class="p-4 border-t flex justify-end"><button onclick="fecharModalAnexos()" class="bg-gray-100 px-4 py-2 rounded text-xs font-bold uppercase">Fechar</button></div>
+        </div>
+    </div>
+
+    <footer class="bg-gray-800 text-gray-400 py-6 text-center text-[10px] font-bold uppercase mt-auto">
+        &copy; 2026 REVIMAQ - Controle de Monitoramento e Medição (ISO 9001:2015)
     </footer>
 
-    <!-- Firebase e Scripts de Lógica Restaurados -->
+    <!-- Scripts de Lógica -->
     <script>
         const firebaseConfig = {
             apiKey: "AIzaSyBLTXamOjbBkLwIj9kfmy7edW2IAHOYKqU",
@@ -232,7 +361,7 @@
                 });
             } catch (e) { 
                 console.error(e);
-                const local = JSON.parse(localStorage.getItem('backup_spark') || '{"lista":[],"logs":[]}');
+                const local = JSON.parse(localStorage.getItem('backup_calibracao') || '{"lista":[],"logs":[]}');
                 ativos = local.lista; logs = local.logs;
                 renderTable(); renderLogsTable();
             }
@@ -243,14 +372,14 @@
             const { doc, setDoc } = await import("https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js");
             const docRef = doc(db, 'artifacts', appId, 'users', userId, 'gestao_calibracao', 'inventario');
             await setDoc(docRef, { lista: ativos, logs: logs });
-            localStorage.setItem('backup_spark', JSON.stringify({ lista: ativos, logs: logs }));
+            localStorage.setItem('backup_calibracao', JSON.stringify({ lista: ativos, logs: logs }));
         }
 
         async function registrarLog(acao, detalhe) {
             logs.unshift({
                 data: new Date().toISOString(),
                 acao: acao.toUpperCase(),
-                user: userId ? userId.substring(0, 8).toUpperCase() : "ANONIMO",
+                user: userId ? userId.substring(0, 8).toUpperCase() : "SISTEMA",
                 detalhe: detalhe.toUpperCase()
             });
             if (logs.length > 500) logs.pop();
@@ -297,7 +426,7 @@
         function processarAnexos(e) {
             const files = Array.from(e.target.files);
             files.forEach(f => {
-                if (f.size > 800 * 1024) return alert(`FICHEIRO ${f.name} EXCEDE O LIMITE.`);
+                if (f.size > 800 * 1024) return alert(`ARQUIVO ${f.name} EXCEDE 800KB.`);
                 const r = new FileReader();
                 r.onload = ev => {
                     anexosPendentes.push({ nome: f.name.toUpperCase(), tipo: f.type, dados: ev.target.result });
@@ -311,7 +440,7 @@
             document.getElementById('listaAnexosForm').innerHTML = anexosPendentes.map((f, i) => `
                 <div class="flex justify-between items-center bg-blue-50 p-1.5 rounded border border-blue-100">
                     <span class="text-[9px] font-bold text-blue-800 truncate w-3/4"><i class="fa-solid fa-file mr-1"></i> ${f.nome}</span>
-                    <button type="button" onclick="anexosPendentes.splice(${i},1); renderListaFicheiros()" class="text-red-500"><i class="fa-solid fa-trash"></i></button>
+                    <button type="button" onclick="anexosPendentes.splice(${i},1); renderListaFicheiros()" class="text-red-500 text-xs"><i class="fa-solid fa-trash"></i></button>
                 </div>
             `).join('');
         }
@@ -326,23 +455,49 @@
                 resolucao: document.getElementById('resolucao').value.toUpperCase(),
                 frequencia: parseInt(document.getElementById('frequencia').value),
                 setor: document.getElementById('setor').value,
-                anexos: [...anexosPendentes]
+                anexos: anexosPendentes,
+                historico: []
             };
             const idx = ativos.findIndex(a => a.id === id);
-            if (idx > -1) { 
-                ativos[idx] = { ...ativos[idx], ...novo };
-                await registrarLog("EDITAR", `DADOS DE ${tag} ATUALIZADOS.`);
-            } else { 
-                ativos.push({ ...novo, historico: [] });
-                await registrarLog("ADICIONAR", `EQUIPAMENTO ${tag} CADASTRADO.`);
+            if (idx > -1) {
+                ativos[idx] = { ...ativos[idx], ...novo, anexos: [...(ativos[idx].anexos || []), ...anexosPendentes] };
+                await registrarLog("EDITAR", `EQUIPAMENTO ${tag} ATUALIZADO.`);
+            } else {
+                ativos.push(novo);
+                await registrarLog("ADICIONAR", `NOVO EQUIPAMENTO ${tag} CADASTRADO.`);
             }
             resetForm(); switchTab('dashboard');
+        });
+
+        async function apagarAtivo(id) {
+            const a = ativos.find(x => x.id === id);
+            if (confirm(`DESEJA REMOVER ${a.tag} PERMANENTEMENTE?`)) {
+                const tag = a.tag; ativos = ativos.filter(x => x.id !== id);
+                await registrarLog("ELIMINAR", `EQUIPAMENTO ${tag} REMOVIDO DO INVENTÁRIO.`);
+                await salvar();
+            }
+        }
+
+        document.getElementById('calibracaoForm').addEventListener('submit', async e => {
+            e.preventDefault();
+            const id = document.getElementById('selectEquipamentoCal').value;
+            const idx = ativos.findIndex(a => a.id === id);
+            const data = document.getElementById('novaDataCal').value;
+            const cert = document.getElementById('novoCertificado').value.toUpperCase();
+            
+            ativos[idx].dataUltimaCal = data;
+            ativos[idx].certificado = cert;
+            ativos[idx].dataProximaCal = calcularProx(data, ativos[idx].frequencia);
+            
+            await registrarLog("CALIBRAÇÃO", `CERTIFICADO ${cert} LANÇADO PARA ${ativos[idx].tag}.`);
+            document.getElementById('calibracaoForm').reset(); switchTab('dashboard');
         });
 
         function renderTable() {
             const tbody = document.getElementById('tableBody');
             const search = document.getElementById('searchInput').value.toLowerCase();
             const filtrados = ativos.filter(a => a.tag.toLowerCase().includes(search) || a.descricao.toLowerCase().includes(search));
+            
             if (filtrados.length === 0) { document.getElementById('emptyState').classList.remove('hidden'); tbody.innerHTML = ''; }
             else {
                 document.getElementById('emptyState').classList.add('hidden');
@@ -350,20 +505,32 @@
                     const status = avaliarStatus(a.dataProximaCal);
                     return `
                         <tr class="hover:bg-slate-50 transition-colors border-b">
-                            <td class="px-4 py-4 font-black text-isoBlue">${a.tag}<div class="text-[8px] text-gray-400 font-bold uppercase">${a.setor}</div></td>
+                            <td class="px-4 py-4 font-black text-isoBlue">${a.tag}<div class="text-[8px] text-gray-400 font-bold">${a.setor}</div></td>
                             <td class="px-4 py-4 font-bold text-gray-600 uppercase">${a.descricao}<div class="text-[8px] text-gray-400 uppercase">RES: ${a.resolucao || '-'}</div></td>
                             <td class="px-4 py-4 font-bold text-slate-500 uppercase">${formatarData(a.dataUltimaCal)}</td>
                             <td class="px-4 py-4 font-bold text-slate-600 uppercase">${formatarData(a.dataProximaCal)}</td>
-                            <td class="px-4 py-4 text-center"><span class="px-3 py-1 rounded-full text-[9px] font-black border ${status.classe}">${status.texto}</span></td>
+                            <td class="px-4 py-4 text-center"><span class="px-2 py-1 rounded-full text-[9px] font-black border ${status.classe}">${status.texto}</span></td>
                             <td class="px-4 py-4 flex justify-center gap-3">
-                                <button onclick="editarAtivo('${a.id}')" class="text-blue-500 hover:scale-110"><i class="fa-solid fa-pen"></i></button>
-                                <button onclick="apagarAtivo('${a.id}')" class="text-red-400 hover:scale-110"><i class="fa-solid fa-trash"></i></button>
+                                ${a.anexos?.length ? `<button onclick="verAnexos('${a.id}')" class="text-green-600" title="Ver Anexos"><i class="fa-solid fa-paperclip"></i></button>` : ''}
+                                <button onclick="editarAtivo('${a.id}')" class="text-blue-500" title="Editar"><i class="fa-solid fa-pen"></i></button>
+                                <button onclick="apagarAtivo('${a.id}')" class="text-red-400" title="Remover"><i class="fa-solid fa-trash"></i></button>
                             </td>
                         </tr>
                     `;
                 }).join('');
             }
             atualizarKPIs();
+        }
+
+        function verAnexos(id) {
+            const a = ativos.find(x => x.id === id);
+            document.getElementById('modalAnexosBody').innerHTML = a.anexos.map(f => `
+                <div class="flex justify-between items-center bg-gray-50 p-3 rounded border">
+                    <span class="text-xs font-bold text-gray-700 truncate w-3/4">${f.nome}</span>
+                    <a href="${f.dados}" download="${f.nome}" class="bg-isoBlue text-white p-1 px-2 rounded text-xs uppercase"><i class="fa-solid fa-download"></i></a>
+                </div>
+            `).join('');
+            document.getElementById('modalAnexos').classList.remove('hidden');
         }
 
         function editarAtivo(id) {
@@ -379,35 +546,11 @@
             switchTab('cadastro');
         }
 
-        async function apagarAtivo(id) {
-            const a = ativos.find(x => x.id === id);
-            if (confirm(`DESEJA REMOVER ${a.tag}?`)) {
-                const t = a.tag; ativos = ativos.filter(x => x.id !== id);
-                await registrarLog("ELIMINAR", `EQUIPAMENTO ${t} REMOVIDO.`);
-                await salvar();
-            }
-        }
-
-        document.getElementById('calibracaoForm').addEventListener('submit', async e => {
-            e.preventDefault();
-            const id = document.getElementById('selectEquipamentoCal').value;
-            const idx = ativos.findIndex(a => a.id === id);
-            const data = document.getElementById('novaDataCal').value;
-            const cert = document.getElementById('novoCertificado').value.toUpperCase();
-            ativos[idx].dataUltimaCal = data;
-            ativos[idx].certificado = cert;
-            ativos[idx].dataProximaCal = calcularProx(data, ativos[idx].frequencia);
-            await registrarLog("CALIBRAÇÃO", `CERTIFICADO ${cert} LANÇADO PARA ${ativos[idx].tag}.`);
-            document.getElementById('calibracaoForm').reset(); switchTab('dashboard');
-        });
-
-        function populateSelects() {
-            const html = '<option value="">-- SELECIONAR --</option>' + ativos.sort((a,b)=>a.tag.localeCompare(b.tag)).map(a => `<option value="${a.id}">${a.tag} - ${a.descricao}</option>`).join('');
-            document.getElementById('selectEquipamentoCal').innerHTML = html;
-        }
-
+        function fecharModalAnexos() { document.getElementById('modalAnexos').classList.add('hidden'); }
+        function resetForm() { document.getElementById('instrumentForm').reset(); document.getElementById('instrumentId').value = ''; document.getElementById('formTitle').innerText = "NOVO INSTRUMENTO"; anexosPendentes = []; renderListaFicheiros(); }
         function formatarData(iso) { if (!iso) return '-'; const [y,m,d] = iso.split('-'); return `${d}/${m}/${y}`; }
         function calcularProx(d, m) { const date = new Date(d + 'T12:00:00'); date.setMonth(date.getMonth() + m); return date.toISOString().split('T')[0]; }
+        
         function avaliarStatus(p) {
             if (!p) return { texto: 'PENDENTE', classe: 'bg-red-50 text-red-600 border-red-100' };
             const hoje = new Date(); hoje.setHours(0,0,0,0);
@@ -417,27 +560,42 @@
             if (diff <= 30) return { texto: 'ATENÇÃO', classe: 'bg-yellow-50 text-yellow-700 border-yellow-200' };
             return { texto: 'CONFORME', classe: 'bg-green-50 text-green-700 border-green-200' };
         }
+
         function atualizarKPIs() {
             document.getElementById('kpiTotal').innerText = ativos.length;
             document.getElementById('kpiConforme').innerText = ativos.filter(a => avaliarStatus(a.dataProximaCal).texto === 'CONFORME').length;
             document.getElementById('kpiAtencao').innerText = ativos.filter(a => avaliarStatus(a.dataProximaCal).texto === 'ATENÇÃO').length;
             document.getElementById('kpiVencido').innerText = ativos.filter(a => ['VENCIDO', 'PENDENTE'].includes(avaliarStatus(a.dataProximaCal).texto)).length;
         }
-        function resetForm() { document.getElementById('instrumentForm').reset(); document.getElementById('instrumentId').value = ''; document.getElementById('formTitle').innerText = "NOVO INSTRUMENTO"; anexosPendentes = []; renderListaFicheiros(); }
+
+        function populateSelects() {
+            const html = '<option value="">-- SELECIONAR EQUIPAMENTO --</option>' + ativos.sort((a,b)=>a.tag.localeCompare(b.tag)).map(a => `<option value="${a.id}">${a.tag} - ${a.descricao}</option>`).join('');
+            document.getElementById('selectEquipamentoCal').innerHTML = html;
+        }
+
         function exportarBackup() {
-            const blob = new Blob([JSON.stringify({ lista: ativos, logs: logs }, null, 2)], { type: 'application/json' });
+            const data = { lista: ativos, logs: logs };
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a'); a.href = url; a.download = `backup_iso9001_${new Date().toISOString().split('T')[0]}.json`; a.click();
+            registrarLog("EXPORTAR", "SISTEMA GEROU UM BACKUP JSON.");
         }
+
         function importarBackup(e) {
             const file = e.target.files[0]; if (!file) return;
             const r = new FileReader(); r.onload = async ev => {
                 try {
                     const d = JSON.parse(ev.target.result);
-                    if (confirm("SUBSTITUIR TUDO?")) { ativos = d.lista || d; logs = d.logs || []; await registrarLog("IMPORTAR", "DADOS RESTAURADOS."); }
-                } catch(ex) { alert("ERRO NO FICHEIRO."); }
+                    if (confirm("SUBSTITUIR DADOS ATUAIS?")) {
+                        if (Array.isArray(d)) { ativos = d; logs = []; }
+                        else { ativos = d.lista || []; logs = d.logs || []; }
+                        await registrarLog("IMPORTAR", "DADOS RESTAURADOS VIA ARQUIVO EXTERNO.");
+                        alert("IMPORTADO COM SUCESSO.");
+                    }
+                } catch(ex) { alert("ERRO AO LER BACKUP."); }
             }; r.readAsText(file);
         }
+
         function toggleCalibracaoFields() {}
         window.onload = init;
         document.getElementById('currentDate').innerText = new Date().toLocaleDateString('pt-BR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }).toUpperCase();
