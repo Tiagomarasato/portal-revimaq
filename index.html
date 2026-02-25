@@ -181,7 +181,7 @@
 
 
     // ==========================================
-    // COMPONENTE: PORTAL DASHBOARD (DESIGN ORIGINAL)
+    // COMPONENTE: PORTAL DASHBOARD
     // ==========================================
     function PortalDashboard({ portalUser, onLogout }) {
       const [currentDate, setCurrentDate] = useState('');
@@ -191,11 +191,11 @@
         setCurrentDate(new Date().toLocaleDateString('pt-BR', options));
       }, []);
 
-      // LISTA DE APLICATIVOS COM NOMES DE ARQUIVOS CORRIGIDOS (CASE-SENSITIVE)
+      // LISTA DE APLICATIVOS ATUALIZADA
       const aplicativos = [
         { id: 1, nome: "Gestão de Ocorrências", subtitulo: "ISO 9001:2015 - REVIMAQ", descricao: "Controle de Saídas Não Conformes (8.7) e Ações Corretivas (10.2).", icone: "ph-shield-check", cor: "indigo", status: "Operacional", link: "Ocorrencias.html", delay: "stagger-1" },
         { id: 2, nome: "Controle de Documentos", descricao: "Gestão de informações documentadas (manuais, procedimentos, formulários).", icone: "ph-files", cor: "emerald", status: "Em Breve", link: "#", delay: "stagger-2" },
-        { id: 3, nome: "Gestão de Ativos e Manutenção", descricao: "Controle de manutenções preventivas e corretivas de equipamentos.", icone: "ph-wrench", cor: "amber", status: "Em Breve", link: "#", delay: "stagger-3" },
+        { id: 3, nome: "Gestão de Ativos e Calibração", subtitulo: "ISO 9001:2015 - 7.1.5", descricao: "Controle de património, manutenções e calibrações de equipamentos de medição.", icone: "ph-scales", cor: "amber", status: "Operacional", link: "gestao_iso9001.html", delay: "stagger-3" },
         { id: 4, nome: "Portal do Colaborador", descricao: "Recursos Humanos, holerites, controle de ponto e comunicados internos.", icone: "ph-users-three", cor: "sky", status: "Em Desenvolvimento", link: "#", delay: "stagger-4" },
         { id: 5, nome: "Avaliação de Fornecedores", descricao: "Gestão e qualificação de parceiros comerciais e prestadores de serviço.", icone: "ph-truck", cor: "rose", status: "Em Breve", link: "#", delay: "stagger-5" },
         { id: 6, nome: "Indicadores de Desempenho (KPI)", descricao: "Painel de resultados, metas e análise de dados estratégicos em nuvem.", icone: "ph-chart-line-up", cor: "violet", status: "Operacional", link: "Indicador.html", delay: "stagger-6" }
@@ -223,7 +223,7 @@
                   <i className="ph-bold ph-squares-four text-[28px] text-white"></i>
                 </div>
                 <div>
-                  <h1 className="font-black text-xl tracking-widest uppercase">REVIMAQ</h1>
+                  <h1 class="font-black text-xl tracking-widest uppercase">REVIMAQ</h1>
                   <p className="text-[10px] text-indigo-300 font-bold tracking-[0.2em] uppercase">Portal Corporativo</p>
                 </div>
               </div>
