@@ -39,6 +39,7 @@
   <script type="text/babel">
     const { useState, useEffect } = React;
 
+    // Utilitário para evitar esperas infinitas em conexões lentas
     const fetchWithTimeout = async (promise, ms = 15000) => {
       return Promise.race([
         promise,
@@ -64,6 +65,7 @@
         try {
           const auth = firebase.auth();
           const db = firebase.firestore();
+          
           if (isResettingPassword) {
             await auth.sendPasswordResetEmail(email);
             setSuccessMsg('LINK ENVIADO! VERIFIQUE O SEU E-MAIL.');
@@ -71,18 +73,22 @@
           } else if (isRegistering) {
             const userCredential = await auth.createUserWithEmailAndPassword(email, password);
             await userCredential.user.updateProfile({ displayName: name });
+            
+            // Registra o utilizador com status pendente para aprovação do administrador
             await fetchWithTimeout(db.collection('usuarios').doc(userCredential.user.uid).set({
               nome: name,
               email: email,
               status: 'pendente',
               dataCadastro: new Date().toISOString()
             }));
+            
             await auth.signOut();
             setIsRegistering(false);
             setSuccessMsg('CADASTRO CONCLUÍDO! AGUARDE APROVAÇÃO.');
           } else {
             const userCredential = await auth.signInWithEmailAndPassword(email, password);
             const userDoc = await fetchWithTimeout(db.collection('usuarios').doc(userCredential.user.uid).get());
+            
             if (userDoc.exists) {
               if (userDoc.data().status === 'aprovado') {
                 onLoginSuccess({ name: userCredential.user.displayName, email: userCredential.user.email });
@@ -91,11 +97,13 @@
                 setError('ACESSO PENDENTE DE APROVAÇÃO.');
               }
             } else {
+              // Se o documento não existe mas o login foi feito (migração), permite entrada
               onLoginSuccess({ name: userCredential.user.displayName, email: userCredential.user.email });
             }
           }
         } catch (err) {
           setError("ERRO: E-MAIL OU SENHA INVÁLIDOS.");
+          console.error(err);
         }
         setLoading(false);
       };
@@ -123,14 +131,19 @@
                 <input type="password" required placeholder="SENHA" value={password} onChange={e => setPassword(e.target.value)} className="w-full bg-slate-50 border border-slate-200 p-3.5 rounded-xl text-sm outline-none focus:ring-2 focus:ring-indigo-500" />
               )}
               <button type="submit" disabled={loading} className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-black py-4 rounded-xl text-xs tracking-widest transition-all shadow-md flex justify-center items-center">
-                {loading ? <i className="ph-bold ph-spinner animate-spin text-xl"></i> : 'ENTRAR NO SISTEMA'}
+                {loading ? <i className="ph-bold ph-spinner animate-spin text-xl"></i> : (isResettingPassword ? 'ENVIAR LINK' : isRegistering ? 'CRIAR CONTA' : 'ENTRAR NO SISTEMA')}
               </button>
             </form>
 
-            <div className="mt-8 pt-6 border-t border-slate-100 text-center text-[10px] text-slate-500 font-bold">
+            <div className="mt-8 pt-6 border-t border-slate-100 text-center text-[10px] text-slate-500 font-bold flex flex-col gap-2">
               <button onClick={() => { setIsRegistering(!isRegistering); setIsResettingPassword(false); }} type="button" className="hover:text-indigo-600 transition-colors uppercase">
                 {isRegistering ? 'VOLTAR PARA O LOGIN' : 'PRIMEIRO ACESSO? SOLICITE AQUI'}
               </button>
+              {!isRegistering && (
+                <button onClick={() => setIsResettingPassword(!isResettingPassword)} type="button" className="hover:text-indigo-600 transition-colors uppercase">
+                    {isResettingPassword ? 'VOLTAR' : 'ESQUECEU A SENHA?'}
+                </button>
+              )}
             </div>
           </div>
         </div>
@@ -147,7 +160,7 @@
         { id: 1, nome: "Gestão de Ocorrências", descricao: "Controle de Saídas Não Conformes e Ações Corretivas.", icone: "ph-shield-check", cor: "indigo", status: "Operacional", link: "Ocorrencias.html", delay: "stagger-1" },
         { id: 2, nome: "Controle de Documentos", descricao: "Gestão de informações documentadas e manuais.", icone: "ph-files", cor: "emerald", status: "Em Breve", link: "#", delay: "stagger-2" },
         { id: 3, nome: "Gestão de Ativos e Calibração", subtitulo: "ISO 9001 - 7.1.5", descricao: "Controle de património e calibração de instrumentos de medição.", icone: "ph-scales", cor: "amber", status: "Operacional", link: "calibracao.html", delay: "stagger-3" },
-        { id: 4, nome: "Portal do Colaborador", descricao: "RH, holerites e comunicados internos.", icone: "ph-users-three", cor: "sky", status: "Em Desenvolvimento", link: "#", delay: "stagger-4" },
+        { id: 4, nome: "Portal do Colaborador", subtitulo: "ISO 9001 - Competências", descricao: "RH, habilidades e competências dos colaboradores.", icone: "ph-users-three", cor: "sky", status: "Operacional", link: "Pessoas.html", delay: "stagger-4" },
         { id: 5, nome: "Avaliação de Fornecedores", descricao: "Gestão e qualificação de parceiros comerciais.", icone: "ph-truck", cor: "rose", status: "Em Breve", link: "#", delay: "stagger-5" },
         { id: 6, nome: "Indicadores (KPI)", descricao: "Painel estratégico de resultados em nuvem.", icone: "ph-chart-line-up", cor: "violet", status: "Operacional", link: "Indicador.html", delay: "stagger-6" }
       ];
@@ -214,23 +227,40 @@
       const [ready, setReady] = useState(false);
       const [user, setUser] = useState(null);
 
+      // --- ATUALIZAÇÃO DO BANCO DE DADOS UNIFICADO ---
+      const firebaseConfig = {
+        apiKey: "AIzaSyBqV0KOQMAYR4z6P_RKnrQPDfkAR2CsXBI",
+        authDomain: "gestao-de-pessoas-49200.firebaseapp.com",
+        projectId: "gestao-de-pessoas-49200",
+        storageBucket: "gestao-de-pessoas-49200.firebasestorage.app",
+        messagingSenderId: "615097388185",
+        appId: "1:615097388185:web:ef87969b64f4a886f23c08"
+      };
+
       useEffect(() => {
-        const firebaseConfig = {
-          apiKey: "AIzaSyDTb8xLyEl1rUT0lqyFL-PctfY417NVoak",
-          authDomain: "portal-revimaq.firebaseapp.com",
-          projectId: "portal-revimaq",
-          storageBucket: "portal-revimaq.firebasestorage.app",
-          messagingSenderId: "426267826861",
-          appId: "1:426267826861:web:da053528212059479b4424"
-        };
         if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
-        firebase.auth().onAuthStateChanged(u => {
-          if (u) setUser({ name: u.displayName || u.email, email: u.email });
+        
+        const unsubscribe = firebase.auth().onAuthStateChanged(u => {
+          if (u) {
+            setUser({ name: u.displayName || u.email, email: u.email });
+          } else {
+            setUser(null);
+          }
           setReady(true);
         });
+        
+        return () => unsubscribe();
       }, []);
 
-      if (!ready) return <div className="min-h-screen flex items-center justify-center bg-slate-900 text-white font-black tracking-widest uppercase">CONECTANDO...</div>;
+      if (!ready) return (
+        <div className="min-h-screen flex items-center justify-center bg-slate-900 text-white font-black tracking-widest uppercase">
+          <div className="flex flex-col items-center">
+            <i className="ph-bold ph-spinner animate-spin text-4xl mb-4"></i>
+            CONECTANDO AO SISTEMA...
+          </div>
+        </div>
+      );
+
       return user ? <PortalDashboard portalUser={user} onLogout={() => setUser(null)} /> : <LoginScreen onLoginSuccess={setUser} />;
     }
 

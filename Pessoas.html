@@ -1,0 +1,653 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SGQ - Gestão de Pessoas e Competências (ISO 9001)</title>
+    
+    <!-- Tailwind CSS para Estilização -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Lucide Icons para Ícones -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <!-- SweetAlert2 para Modais e Mensagens -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <!-- FIREBASE V8 (A versão blindada) -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; }
+        .custom-scrollbar::-webkit-scrollbar { height: 8px; width: 8px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        .modal-open { overflow: hidden; }
+    </style>
+</head>
+<body class="flex flex-col h-screen text-gray-800 bg-gray-50">
+
+    <!-- Header / Navbar Superior -->
+    <header class="bg-white shadow-sm z-20">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex">
+                    <div class="flex-shrink-0 flex items-center">
+                        <h1 class="text-xl font-bold text-blue-700">SGQ ISO 9001</h1>
+                    </div>
+                    <!-- Desktop Menu -->
+                    <nav class="hidden md:ml-6 md:flex md:space-x-4">
+                        <a href="#" onclick="navigate('dashboard')" class="nav-dashboard menu-item inline-flex items-center px-1 pt-1 border-b-2 border-transparent text-sm font-medium text-gray-500 hover:text-gray-700 hover:border-gray-300 transition-colors">Dashboard</a>
+                        <a href="#" onclick="navigate('cargos')" class="nav-cargos menu-item inline-flex items-center px-1 pt-1 border-b-2 border-transparent text-sm font-medium text-gray-500 hover:text-gray-700 hover:border-gray-300 transition-colors">Cargos</a>
+                        <a href="#" onclick="navigate('colaboradores')" class="nav-colaboradores menu-item inline-flex items-center px-1 pt-1 border-b-2 border-transparent text-sm font-medium text-gray-500 hover:text-gray-700 hover:border-gray-300 transition-colors">Colaboradores</a>
+                        <a href="#" onclick="navigate('habilidades')" class="nav-habilidades menu-item inline-flex items-center px-1 pt-1 border-b-2 border-transparent text-sm font-medium text-gray-500 hover:text-gray-700 hover:border-gray-300 transition-colors">Habilidades</a>
+                        <a href="#" onclick="navigate('treinamentos')" class="nav-treinamentos menu-item inline-flex items-center px-1 pt-1 border-b-2 border-transparent text-sm font-medium text-gray-500 hover:text-gray-700 hover:border-gray-300 transition-colors">Treinamentos</a>
+                        <a href="#" onclick="navigate('presenca')" class="nav-presenca menu-item inline-flex items-center px-1 pt-1 border-b-2 border-transparent text-sm font-medium text-gray-500 hover:text-gray-700 hover:border-gray-300 transition-colors">Presença</a>
+                        <a href="#" onclick="navigate('eficacia')" class="nav-eficacia menu-item inline-flex items-center px-1 pt-1 border-b-2 border-transparent text-sm font-medium text-gray-500 hover:text-gray-700 hover:border-gray-300 transition-colors">Eficácia</a>
+                        <a href="#" onclick="navigate('desempenho')" class="nav-desempenho menu-item inline-flex items-center px-1 pt-1 border-b-2 border-transparent text-sm font-medium text-gray-500 hover:text-gray-700 hover:border-gray-300 transition-colors">Desempenho</a>
+                    </nav>
+                </div>
+                <div class="flex items-center">
+                    <div id="status-cloud" class="flex items-center text-[10px] font-black bg-blue-50 text-blue-600 px-3 py-1.5 rounded-full border border-blue-100 uppercase mr-4">
+                        <span class="w-2 h-2 bg-amber-400 rounded-full mr-2" id="status-dot"></span>
+                        <span id="status-text">Conectando...</span>
+                    </div>
+                    <!-- Mobile menu button -->
+                    <div class="flex items-center md:hidden">
+                        <button type="button" onclick="toggleMobileMenu()" class="inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 focus:outline-none">
+                            <i data-lucide="menu" class="w-6 h-6"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Mobile Menu -->
+        <div class="md:hidden hidden border-t border-gray-200 shadow-lg absolute w-full bg-white z-50 top-16" id="mobile-menu">
+            <div class="pt-2 pb-3 space-y-1">
+                <a href="#" onclick="navigate('dashboard')" class="nav-dashboard menu-item block pl-4 pr-4 py-3 border-l-4 border-transparent text-base font-medium text-gray-600 hover:bg-gray-50">Dashboard</a>
+                <a href="#" onclick="navigate('cargos')" class="nav-cargos menu-item block pl-4 pr-4 py-3 border-l-4 border-transparent text-base font-medium text-gray-600 hover:bg-gray-50">Cargos</a>
+                <a href="#" onclick="navigate('colaboradores')" class="nav-colaboradores menu-item block pl-4 pr-4 py-3 border-l-4 border-transparent text-base font-medium text-gray-600 hover:bg-gray-50">Colaboradores</a>
+                <a href="#" onclick="navigate('habilidades')" class="nav-habilidades menu-item block pl-4 pr-4 py-3 border-l-4 border-transparent text-base font-medium text-gray-600 hover:bg-gray-50">Habilidades</a>
+                <a href="#" onclick="navigate('treinamentos')" class="nav-treinamentos menu-item block pl-4 pr-4 py-3 border-l-4 border-transparent text-base font-medium text-gray-600 hover:bg-gray-50">Treinamentos</a>
+                <a href="#" onclick="navigate('presenca')" class="nav-presenca menu-item block pl-4 pr-4 py-3 border-l-4 border-transparent text-base font-medium text-gray-600 hover:bg-gray-50">Presença</a>
+                <a href="#" onclick="navigate('eficacia')" class="nav-eficacia menu-item block pl-4 pr-4 py-3 border-l-4 border-transparent text-base font-medium text-gray-600 hover:bg-gray-50">Eficácia</a>
+                <a href="#" onclick="navigate('desempenho')" class="nav-desempenho menu-item block pl-4 pr-4 py-3 border-l-4 border-transparent text-base font-medium text-gray-600 hover:bg-gray-50">Desempenho</a>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="flex-1 overflow-auto bg-gray-50 p-4 md:p-6" id="main-container">
+        <div class="max-w-7xl mx-auto mb-4 flex justify-between items-center">
+             <h2 class="text-2xl font-semibold text-gray-800" id="page-title">Dashboard</h2>
+        </div>
+        
+        <div class="max-w-7xl mx-auto" id="app-content">
+            <div class="flex h-64 w-full items-center justify-center">
+                <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600"></div>
+                <span class="ml-3 text-gray-500 font-medium">Sincronizando dados...</span>
+            </div>
+        </div>
+    </main>
+
+    <!-- Generic Modal Container -->
+    <div id="modal-container" class="fixed inset-0 z-50 flex items-center justify-center hidden bg-black bg-opacity-50 backdrop-blur-sm transition-opacity">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col transform transition-all scale-95" id="modal-content-wrapper">
+            <div class="px-6 py-4 border-b flex justify-between items-center bg-gray-50 rounded-t-xl">
+                <h3 class="text-lg font-bold text-gray-800" id="modal-title">Título do Modal</h3>
+                <button onclick="closeModal()" class="text-gray-400 hover:text-red-500 transition-colors">
+                    <i data-lucide="x"></i>
+                </button>
+            </div>
+            <div class="p-6 overflow-y-auto custom-scrollbar" id="modal-body"></div>
+            <div class="px-6 py-4 border-t bg-gray-50 rounded-b-xl flex justify-end space-x-3" id="modal-footer"></div>
+        </div>
+    </div>
+
+    <!-- Script Global -->
+    <script>
+        // --- CONFIGURAÇÃO FIREBASE ---
+        const firebaseConfig = {
+            apiKey: "AIzaSyBqV0KOQMAYR4z6P_RKnrQPDfkAR2CsXBI",
+            authDomain: "gestao-de-pessoas-49200.firebaseapp.com",
+            projectId: "gestao-de-pessoas-49200",
+            storageBucket: "gestao-de-pessoas-49200.firebasestorage.app",
+            messagingSenderId: "615097388185",
+            appId: "1:615097388185:web:ef87969b64f4a886f23c08"
+        };
+        
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+        }
+        
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+
+        // Forçar polling para evitar bloqueios de rede em discos locais
+        db.settings({ experimentalForceLongPolling: true, merge: true });
+
+        const appId = 'gestao-de-pessoas-49200';
+        let currentUser = null;
+
+        // --- 1. STATE MANAGEMENT ---
+        const defaultData = {
+            roles: [],
+            employees: [],
+            skills: [],
+            employeeSkills: [],
+            trainings: [],
+            attendanceLists: [],
+            effectivenessEvaluations: [],
+            performanceReviews: [],
+            logs: []
+        };
+        
+        let state = JSON.parse(JSON.stringify(defaultData));
+
+        function loadDataFromFirestore() {
+            if (!currentUser) return;
+            
+            const docRef = db.doc(`artifacts/${appId}/public/data/sgq_system/main_state`);
+            
+            docRef.onSnapshot((docSnap) => {
+                if (docSnap.exists) {
+                    const data = docSnap.data();
+                    state = {
+                        roles: data.roles || [], employees: data.employees || [], skills: data.skills || [],
+                        employeeSkills: data.employeeSkills || [], trainings: data.trainings || [],
+                        attendanceLists: data.attendanceLists || [], effectivenessEvaluations: data.effectivenessEvaluations || [],
+                        performanceReviews: data.performanceReviews || [], logs: data.logs || []
+                    };
+                } else {
+                    state = JSON.parse(JSON.stringify(defaultData));
+                    saveDataToFirestore();
+                }
+                
+                document.getElementById('status-dot').className = "w-2 h-2 bg-green-500 rounded-full mr-2";
+                document.getElementById('status-text').innerText = "Sistema Ativo";
+
+                if(!currentPage) currentPage = 'dashboard';
+                navigate(currentPage);
+                
+            }, (error) => {
+                console.error("Erro ao ler dados:", error);
+                if(error.code === 'permission-denied') {
+                    Swal.fire('Erro de Acesso', 'Verifique as regras do Firebase. Acesso negado.', 'error');
+                }
+            });
+        }
+
+        async function saveDataToFirestore() {
+            if (!currentUser) return;
+            const docRef = db.doc(`artifacts/${appId}/public/data/sgq_system/main_state`);
+            try {
+                await docRef.set(state);
+            } catch(e) {
+                console.error("Erro ao guardar:", e);
+            }
+        }
+
+        const generateId = (array) => array.length > 0 ? Math.max(...array.map(i => i.id)) + 1 : 1;
+        const formatDate = (dateStr) => {
+            if(!dateStr) return '-';
+            const [y, m, d] = dateStr.split('-');
+            return `${d}/${m}/${y}`;
+        };
+        const getEmpName = (id) => {
+            const e = state.employees.find(e => e.id == id);
+            return e ? e.name : 'Desconhecido';
+        };
+        const getTrainingName = (id) => {
+            const t = state.trainings.find(t => t.id == id);
+            return t ? t.title : 'Desconhecido';
+        };
+
+        function addLog(moduleName, action, details) {
+            state.logs.unshift({
+                id: generateId(state.logs), module: moduleName, action: action,
+                details: details, timestamp: new Date().toISOString(),
+                user: 'Aplicativo Integrado'
+            });
+            if (state.logs.length > 500) state.logs.pop();
+        }
+
+        function openLogModal(moduleName) {
+            const moduleLogs = state.logs.filter(l => l.module === moduleName);
+            let bodyHtml = moduleLogs.length === 0 
+                ? '<p class="text-gray-500 text-center py-6">Nenhum registo encontrado.</p>' 
+                : '<ul class="space-y-4">' + moduleLogs.map(log => `
+                    <li class="border-l-4 border-blue-500 bg-gray-50 p-3 rounded-r-lg shadow-sm">
+                        <div class="flex justify-between items-start">
+                            <p class="text-sm font-semibold text-gray-800">${log.action}</p>
+                            <span class="text-xs font-medium text-gray-500 whitespace-nowrap ml-2">${new Date(log.timestamp).toLocaleString('pt-PT')}</span>
+                        </div>
+                        <p class="text-sm text-gray-600 mt-1">${log.details}</p>
+                    </li>`).join('') + '</ul>';
+            openModal(`Histórico - ${moduleName}`, bodyHtml, `<button onclick="closeModal()" class="px-4 py-2 bg-gray-200 text-gray-800 rounded-lg">Fechar</button>`);
+        }
+
+        // --- 2. UI HELPERS & NAVIGATION ---
+        let currentPage = '';
+
+        function toggleMobileMenu() { document.getElementById('mobile-menu').classList.toggle('hidden'); }
+
+        function navigate(page) {
+            currentPage = page;
+            document.querySelectorAll('.menu-item').forEach(el => {
+                el.classList.remove('border-blue-600', 'text-blue-700', 'bg-blue-50');
+                if (el.classList.contains('block')) el.classList.add('border-transparent', 'text-gray-600');
+                else el.classList.add('border-transparent', 'text-gray-500');
+            });
+            document.querySelectorAll(`.nav-${page}`).forEach(el => {
+                el.classList.remove('border-transparent', 'text-gray-500', 'text-gray-600');
+                el.classList.add('border-blue-600', 'text-blue-700');
+                if (el.classList.contains('block')) el.classList.add('bg-blue-50');
+            });
+            const mobileMenu = document.getElementById('mobile-menu');
+            if(mobileMenu && !mobileMenu.classList.contains('hidden')) mobileMenu.classList.add('hidden');
+
+            const contentDiv = document.getElementById('app-content');
+            const titleEl = document.getElementById('page-title');
+            
+            switch(page) {
+                case 'dashboard': titleEl.innerText = 'Dashboard SGQ'; renderDashboard(contentDiv); break;
+                case 'cargos': titleEl.innerText = 'Gestão de Cargos e Descrições'; renderCargos(contentDiv); break;
+                case 'colaboradores': titleEl.innerText = 'Gestão de Colaboradores'; renderColaboradores(contentDiv); break;
+                case 'habilidades': titleEl.innerText = 'Matriz de Habilidades'; renderHabilidades(contentDiv); break;
+                case 'treinamentos': titleEl.innerText = 'Catálogo de Treinamentos'; renderTreinamentos(contentDiv); break;
+                case 'presenca': titleEl.innerText = 'Listas de Presença'; renderPresenca(contentDiv); break;
+                case 'eficacia': titleEl.innerText = 'Avaliação da Eficácia'; renderEficacia(contentDiv); break;
+                case 'desempenho': titleEl.innerText = 'Avaliação de Desempenho'; renderDesempenho(contentDiv); break;
+            }
+            if(window.lucide) window.lucide.createIcons();
+        }
+
+        function openModal(title, bodyHtml, footerHtml) {
+            document.getElementById('modal-title').innerText = title;
+            document.getElementById('modal-body').innerHTML = bodyHtml;
+            document.getElementById('modal-footer').innerHTML = footerHtml;
+            const modal = document.getElementById('modal-container');
+            const wrapper = document.getElementById('modal-content-wrapper');
+            modal.classList.remove('hidden');
+            setTimeout(() => { wrapper.classList.remove('scale-95'); wrapper.classList.add('scale-100'); }, 10);
+            document.body.classList.add('modal-open');
+            if(window.lucide) window.lucide.createIcons();
+        }
+
+        function closeModal() {
+            const modal = document.getElementById('modal-container');
+            const wrapper = document.getElementById('modal-content-wrapper');
+            wrapper.classList.remove('scale-100'); wrapper.classList.add('scale-95');
+            setTimeout(() => { modal.classList.add('hidden'); document.body.classList.remove('modal-open'); }, 200);
+        }
+
+        // --- 3. RENDER FUNCTIONS ---
+        function renderDashboard(container) {
+            const ativos = state.employees.filter(e => e.status === 'Ativo').length;
+            let pendentesEficacia = 0;
+            state.attendanceLists.forEach(list => {
+                list.attendees.forEach(empId => {
+                    const evalRecord = state.effectivenessEvaluations.find(e => e.recordId === list.id && e.empId === empId);
+                    if(!evalRecord || evalRecord.status === 'Pendente') pendentesEficacia++;
+                });
+            });
+
+            let skillGaps = 0;
+            state.employeeSkills.forEach(es => { if(es.actual < es.req) skillGaps++; });
+
+            let pendenciasDetalhadas = [];
+            state.employees.filter(e => e.status === 'Ativo').forEach(emp => {
+                const role = state.roles.find(r => r.name === emp.role);
+                if(role && role.trainingIds && role.trainingIds.length > 0) {
+                    role.trainingIds.forEach(tId => {
+                        const training = state.trainings.find(t => t.id === tId);
+                        if(!training) return;
+                        const participacoes = state.attendanceLists
+                            .filter(list => list.trainingId === tId && list.attendees.includes(emp.id))
+                            .sort((a, b) => new Date(b.date) - new Date(a.date));
+
+                        let isPendente = false, motivo = '', color = '';
+                        if(participacoes.length === 0) {
+                            isPendente = true; motivo = 'Não realizado'; color = 'bg-red-100 text-red-800';
+                        } else {
+                            if(training.periodicityMonths > 0) {
+                                const [y, m, d] = participacoes[0].date.split('-');
+                                const ultimaData = new Date(y, m - 1, d);
+                                const validade = new Date(ultimaData);
+                                validade.setMonth(validade.getMonth() + training.periodicityMonths);
+                                const hoje = new Date(); hoje.setHours(0,0,0,0);
+                                if(hoje > validade) {
+                                    isPendente = true; motivo = 'Vencido'; color = 'bg-orange-100 text-orange-800';
+                                }
+                            }
+                        }
+                        if(isPendente) pendenciasDetalhadas.push({ empName: emp.name, trainingName: training.title, motivo, color, empId: emp.id, trainingId: training.id });
+                    });
+                }
+            });
+
+            container.innerHTML = `
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                    <div onclick="navigate('colaboradores')" class="bg-white rounded-xl shadow-sm p-6 border border-gray-100 border-l-4 border-l-blue-500 cursor-pointer hover:-translate-y-1 transition-all">
+                        <div class="flex items-center justify-between"><div><p class="text-sm font-medium text-gray-500">Colaboradores Ativos</p><h3 class="text-2xl font-bold text-gray-800 mt-1">${ativos}</h3></div><div class="p-3 bg-blue-50 rounded-full text-blue-600"><i data-lucide="users"></i></div></div>
+                    </div>
+                    <div onclick="navigate('eficacia')" class="bg-white rounded-xl shadow-sm p-6 border border-gray-100 border-l-4 border-l-amber-500 cursor-pointer hover:-translate-y-1 transition-all">
+                        <div class="flex items-center justify-between"><div><p class="text-sm font-medium text-gray-500">Eficácia Pendente</p><h3 class="text-2xl font-bold text-gray-800 mt-1">${pendentesEficacia}</h3></div><div class="p-3 bg-amber-50 rounded-full text-amber-600"><i data-lucide="target"></i></div></div>
+                    </div>
+                    <div onclick="navigate('habilidades')" class="bg-white rounded-xl shadow-sm p-6 border border-gray-100 border-l-4 border-l-red-500 cursor-pointer hover:-translate-y-1 transition-all">
+                        <div class="flex items-center justify-between"><div><p class="text-sm font-medium text-gray-500">Gaps de Competência</p><h3 class="text-2xl font-bold text-gray-800 mt-1">${skillGaps}</h3></div><div class="p-3 bg-red-50 rounded-full text-red-600"><i data-lucide="alert-triangle"></i></div></div>
+                    </div>
+                    <div onclick="document.getElementById('pendencias-section').scrollIntoView({behavior: 'smooth'})" class="bg-white rounded-xl shadow-sm p-6 border border-gray-100 border-l-4 border-l-purple-500 cursor-pointer hover:-translate-y-1 transition-all">
+                        <div class="flex items-center justify-between"><div><p class="text-sm font-medium text-gray-500">Treinamentos Pendentes</p><h3 class="text-2xl font-bold text-gray-800 mt-1">${pendenciasDetalhadas.length}</h3></div><div class="p-3 bg-purple-50 rounded-full text-purple-600"><i data-lucide="clock"></i></div></div>
+                    </div>
+                </div>
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
+                        <h4 class="text-lg font-semibold text-gray-800 mb-4 flex items-center"><i data-lucide="bell" class="w-5 h-5 mr-2 text-blue-500"></i> Últimos Registros de Presença</h4>
+                        <div class="space-y-4">
+                            ${state.attendanceLists.slice(-4).reverse().map(list => `
+                                <div class="flex items-center justify-between border-b pb-3 last:border-0 last:pb-0">
+                                    <div><p class="font-medium text-gray-800">${getTrainingName(list.trainingId)}</p><p class="text-sm text-gray-500">${formatDate(list.date)} - ${list.instructor}</p></div>
+                                    <span class="bg-blue-100 text-blue-800 text-xs font-semibold px-2.5 py-0.5 rounded">${list.attendees.length} partic.</span>
+                                </div>
+                            `).join('') || '<p class="text-gray-500 text-sm">Nenhum treinamento registrado.</p>'}
+                        </div>
+                    </div>
+                    <div id="pendencias-section" class="bg-white rounded-xl shadow-sm p-6 border border-gray-100 flex flex-col">
+                        <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 gap-2">
+                            <h4 class="text-lg font-semibold text-gray-800 flex items-center"><i data-lucide="alert-circle" class="w-5 h-5 mr-2 text-red-500"></i> Pendências</h4>
+                            <button onclick="printPendingList()" class="bg-blue-50 text-blue-700 hover:bg-blue-100 border border-blue-200 px-3 py-1.5 rounded flex items-center text-xs font-semibold"><i data-lucide="printer" class="w-4 h-4 mr-1"></i> Imprimir</button>
+                        </div>
+                        <div class="space-y-4 max-h-64 overflow-y-auto custom-scrollbar pr-2">
+                            ${pendenciasDetalhadas.length > 0 ? pendenciasDetalhadas.map(pend => `
+                                <div class="flex flex-col border-b border-gray-100 pb-3 last:border-0 last:pb-0">
+                                    <div class="flex justify-between items-start mb-1"><p class="font-medium text-gray-800 text-sm">${pend.empName}</p><span class="px-2 py-0.5 rounded text-[10px] font-semibold ${pend.color}">${pend.motivo}</span></div>
+                                    <div class="flex justify-between items-center mt-1"><p class="text-xs text-gray-500">${pend.trainingName}</p><button onclick="printSinglePendingItem(${pend.empId}, ${pend.trainingId})" class="text-blue-500 hover:text-blue-700"><i data-lucide="printer" class="w-4 h-4"></i></button></div>
+                                </div>
+                            `).join('') : '<p class="text-gray-500 text-sm">Todos em dia!</p>'}
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Funções de Impressão
+        function printPendingList() {
+            let pendencias = [];
+            state.employees.filter(e => e.status === 'Ativo').forEach(emp => {
+                const role = state.roles.find(r => r.name === emp.role);
+                if(role && role.trainingIds) {
+                    role.trainingIds.forEach(tId => {
+                        const tr = state.trainings.find(t => t.id === tId);
+                        if(!tr) return;
+                        const parts = state.attendanceLists.filter(l => l.trainingId === tId && l.attendees.includes(emp.id)).sort((a, b) => new Date(b.date) - new Date(a.date));
+                        let pend = false;
+                        if(parts.length === 0) pend = true;
+                        else if(tr.periodicityMonths > 0) {
+                            const [y,m,d] = parts[0].date.split('-');
+                            const val = new Date(y, m-1, d); val.setMonth(val.getMonth() + tr.periodicityMonths);
+                            const hoje = new Date(); hoje.setHours(0,0,0,0);
+                            if(hoje > val) pend = true;
+                        }
+                        if(pend) pendencias.push({ emp, tr });
+                    });
+                }
+            });
+            if(pendencias.length === 0) { Swal.fire('Tudo em dia', 'Não há pendências.', 'info'); return; }
+            let porTr = {};
+            pendencias.forEach(p => {
+                if(!porTr[p.tr.id]) porTr[p.tr.id] = { t: p.tr, emps: [] };
+                porTr[p.tr.id].emps.push(p.emp);
+            });
+            let w = window.open('','_blank');
+            if(!w) { Swal.fire('Aviso','Bloqueador de pop-ups ativo.','warning'); return; }
+            let h = `<html><head><title>Impressão</title><style>body{font-family:Arial;padding:20px}table{width:100%;border-collapse:collapse}th,td{border:1px solid #000;padding:8px;text-align:left}</style></head><body>`;
+            Object.values(porTr).forEach((i) => {
+                h += `<h2>Lista de Presença (Pendências): ${i.t.title}</h2><table><thead><tr><th>Colaborador</th><th>Cargo</th><th>Assinatura</th></tr></thead><tbody>`;
+                i.emps.forEach(e => { h += `<tr><td>${e.name}</td><td>${e.role}</td><td></td></tr>`; });
+                h += `</tbody></table><br><br><br>`;
+            });
+            h += `<script>setTimeout(()=>window.print(),500);<\/script></body></html>`;
+            w.document.write(h); w.document.close();
+        }
+
+        function printSinglePendingItem(empId, tId) {
+            const emp = state.employees.find(e => e.id === empId); const t = state.trainings.find(x => x.id === tId);
+            if(!emp || !t) return;
+            let w = window.open('','_blank');
+            let h = `<html><head><title>Impressão</title><style>body{font-family:Arial;padding:20px}table{width:100%;border-collapse:collapse}th,td{border:1px solid #000;padding:8px}</style></head><body>`;
+            h += `<h2>Lista de Presença: ${t.title}</h2><table><thead><tr><th>Colaborador</th><th>Cargo</th><th>Assinatura</th></tr></thead><tbody>`;
+            h += `<tr><td>${emp.name}</td><td>${emp.role}</td><td></td></tr><tr><td></td><td></td><td></td></tr></tbody></table>`;
+            h += `<script>setTimeout(()=>window.print(),500);<\/script></body></html>`;
+            w.document.write(h); w.document.close();
+        }
+
+        function printSingleAttendanceList(lId) {
+            const l = state.attendanceLists.find(x => x.id === lId);
+            const t = state.trainings.find(x => x.id === l.trainingId);
+            if(!l || !t) return;
+            const emps = l.attendees.map(id => state.employees.find(e => e.id === id)).filter(e=>e);
+            let w = window.open('','_blank');
+            let h = `<html><head><title>Impressão</title><style>body{font-family:Arial;padding:20px}table{width:100%;border-collapse:collapse}th,td{border:1px solid #000;padding:8px}</style></head><body>`;
+            h += `<h2>Lista de Presença: ${t.title}</h2><p>Data: ${formatDate(l.date)} | Instrutor: ${l.instructor}</p><table><thead><tr><th>Colaborador</th><th>Cargo</th><th>Assinatura</th></tr></thead><tbody>`;
+            emps.forEach(e => { h += `<tr><td>${e.name}</td><td>${e.role}</td><td></td></tr>`; });
+            h += `</tbody></table><script>setTimeout(()=>window.print(),500);<\/script></body></html>`;
+            w.document.write(h); w.document.close();
+        }
+
+        // ================= CADASTROS GERAIS =================
+        function renderCargos(container) {
+            let html = `
+                <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                    <div class="p-6 border-b flex flex-col md:flex-row justify-between items-start md:items-center bg-gray-50 gap-4">
+                        <div>
+                            <h3 class="text-lg font-semibold text-gray-800">Descrições de Cargo</h3>
+                        </div>
+                        <div class="flex space-x-2">
+                            <button onclick="openLogModal('Cargos')" class="bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center">
+                                <i data-lucide="history" class="w-4 h-4 mr-2"></i> Histórico
+                            </button>
+                            <button onclick="openRoleModal()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center">
+                                <i data-lucide="plus" class="w-4 h-4 mr-2"></i> Novo Cargo
+                            </button>
+                        </div>
+                    </div>
+                    <div class="overflow-x-auto custom-scrollbar">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="bg-white text-gray-500 text-xs uppercase tracking-wider border-b">
+                                    <th class="p-4 font-medium">Nome do Cargo</th>
+                                    <th class="p-4 font-medium">Descrição Resumida</th>
+                                    <th class="p-4 font-medium">Experiência Exigida</th>
+                                    <th class="p-4 font-medium text-center">Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-100 text-sm">
+                                ${state.roles.map(role => `
+                                    <tr class="hover:bg-gray-50 transition-colors">
+                                        <td class="p-4 font-medium text-gray-800">${role.name}</td>
+                                        <td class="p-4 text-gray-600 truncate max-w-xs" title="${role.desc}">${role.desc || '-'}</td>
+                                        <td class="p-4 text-gray-600">${role.experience || '-'}</td>
+                                        <td class="p-4 text-center">
+                                            <button onclick="openRoleModal(${role.id})" class="text-blue-600 hover:text-blue-800 mx-1" title="Editar"><i data-lucide="edit" class="w-4 h-4"></i></button>
+                                            <button onclick="deleteRole(${role.id})" class="text-red-600 hover:text-red-800 mx-1" title="Excluir"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                                        </td>
+                                    </tr>
+                                `).join('') || '<tr><td colspan="4" class="p-4 text-center text-gray-500">Nenhum cargo cadastrado.</td></tr>'}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            `;
+            container.innerHTML = html;
+        }
+
+        function openRoleModal(id = null) {
+            const role = id ? state.roles.find(r => r.id === id) : { name: '', desc: '', responsibilities: '', competencies: '', skillIds: [], trainingIds: [], experience: '' };
+            const isEdit = !!id;
+            const bodyHtml = `
+                <form id="roleForm" class="space-y-4">
+                    <input type="hidden" id="roleId" value="${id || ''}">
+                    <div><label class="block text-sm font-medium text-gray-700 mb-1">Nome do Cargo *</label><input type="text" id="roleName" value="${role.name}" required class="w-full border border-gray-300 rounded-lg px-3 py-2 outline-none"></div>
+                    <div><label class="block text-sm font-medium text-gray-700 mb-1">Missão do Cargo</label><textarea id="roleDesc" rows="2" class="w-full border border-gray-300 rounded-lg px-3 py-2 outline-none">${role.desc || ''}</textarea></div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div><label class="block text-sm font-medium text-gray-700 mb-1">Atividades</label><textarea id="roleResp" rows="2" class="w-full border border-gray-300 rounded-lg px-3 py-2 outline-none">${role.responsibilities || ''}</textarea></div>
+                        <div><label class="block text-sm font-medium text-gray-700 mb-1">Experiência</label><textarea id="roleExp" rows="2" class="w-full border border-gray-300 rounded-lg px-3 py-2 outline-none">${role.experience || ''}</textarea></div>
+                    </div>
+                </form>`;
+            openModal(isEdit ? 'Editar Cargo' : 'Novo Cargo', bodyHtml, `<button onclick="closeModal()" class="px-4 py-2">Cancelar</button><button onclick="saveRole()" class="px-4 py-2 bg-blue-600 text-white rounded-lg">Salvar</button>`);
+        }
+
+        function saveRole() {
+            const id = document.getElementById('roleId').value;
+            const name = document.getElementById('roleName').value;
+            const desc = document.getElementById('roleDesc').value;
+            const responsibilities = document.getElementById('roleResp').value;
+            const experience = document.getElementById('roleExp').value;
+            if(!name) return;
+            if(id) {
+                const i = state.roles.findIndex(r=>r.id==id);
+                state.roles[i] = { id:parseInt(id), name, desc, responsibilities, experience, skillIds:state.roles[i].skillIds||[], trainingIds:state.roles[i].trainingIds||[] };
+            } else { state.roles.push({ id:generateId(state.roles), name, desc, responsibilities, experience, skillIds:[], trainingIds:[] }); }
+            saveDataToFirestore(); closeModal(); navigate('cargos');
+        }
+
+        function deleteRole(id) {
+            if(state.employees.some(e=>e.role === state.roles.find(r=>r.id===id).name)) { Swal.fire('Erro','Cargo em uso.','error'); return; }
+            state.roles = state.roles.filter(r=>r.id!==id); saveDataToFirestore(); navigate('cargos');
+        }
+
+        function renderColaboradores(container) {
+            container.innerHTML = `<div class="bg-white rounded-xl shadow-sm border p-6 overflow-hidden">
+                <div class="flex justify-between items-center mb-4"><h3>Funcionários</h3><button onclick="openEmployeeModal()" class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm">+ Novo</button></div>
+                <div class="overflow-x-auto"><table class="w-full text-left text-sm"><thead><tr class="bg-gray-50 border-b"><th class="p-4">Nome</th><th class="p-4">Cargo</th><th class="p-4">Departamento</th><th class="p-4">Ações</th></tr></thead><tbody>
+                ${state.employees.map(e=>`<tr><td class="p-4 font-medium">${e.name}</td><td class="p-4">${e.role}</td><td class="p-4">${e.dept}</td><td class="p-4"><button onclick="openEmployeeModal(${e.id})" class="text-blue-600 mr-2"><i data-lucide="edit"></i></button><button onclick="deleteEmployee(${e.id})" class="text-red-600"><i data-lucide="trash-2"></i></button></td></tr>`).join('')}</tbody></table></div></div>`;
+        }
+
+        function openEmployeeModal(id = null) {
+            const e = id ? state.employees.find(x=>x.id===id) : { name:'', role:'', dept:'', admission:'' };
+            openModal(id?'Editar':'Novo', `<form id="ef" class="space-y-4">
+                <input type="hidden" id="eid" value="${id||''}">
+                <input type="text" id="ename" value="${e.name}" placeholder="Nome" class="w-full border p-2 rounded">
+                <select id="erole" class="w-full border p-2 rounded">${state.roles.map(r=>`<option value="${r.name}" ${e.role===r.name?'selected':''}>${r.name}</option>`).join('')}</select>
+                <input type="text" id="edept" value="${e.dept}" placeholder="Depto" class="w-full border p-2 rounded">
+                <input type="date" id="eadm" value="${e.admission}" class="w-full border p-2 rounded">
+            </form>`, `<button onclick="saveEmployee()" class="bg-blue-600 text-white px-4 py-2 rounded-lg">Salvar</button>`);
+        }
+
+        function saveEmployee() {
+            const id = document.getElementById('eid').value;
+            const data = { name:document.getElementById('ename').value, role:document.getElementById('erole').value, dept:document.getElementById('edept').value, admission:document.getElementById('eadm').value, status:'Ativo' };
+            if(!data.name) return;
+            if(id) { const i=state.employees.findIndex(x=>x.id==id); state.employees[i]={ ...state.employees[i], ...data }; }
+            else { state.employees.push({ id:generateId(state.employees), ...data }); }
+            saveDataToFirestore(); closeModal(); navigate('colaboradores');
+        }
+
+        function deleteEmployee(id) { state.employees=state.employees.filter(x=>x.id!==id); saveDataToFirestore(); navigate('colaboradores'); }
+
+        function renderHabilidades(container) {
+            container.innerHTML = `<div class="bg-white rounded-xl shadow-sm border p-6 overflow-hidden">
+                <div class="flex justify-between items-center mb-4"><h3>Matriz de Competências</h3><button onclick="openSkillModal()" class="bg-gray-800 text-white px-4 py-2 rounded-lg text-sm">+ Habilidade</button></div>
+                <div class="overflow-x-auto"><table class="w-full border-collapse text-xs"><thead><tr><th class="p-2 border">Nome</th>${state.skills.map(s=>`<th class="p-2 border bg-gray-50">${s.name}</th>`).join('')}</tr></thead><tbody>
+                ${state.employees.filter(e=>e.status==='Ativo').map(e=>`<tr><td class="p-2 border font-medium">${e.name}</td>${state.skills.map(s=>{const es=state.employeeSkills.find(x=>x.empId===e.id&&x.skillId===s.id)||{actual:0};return `<td onclick="openEvalSkillModal(${e.id},${s.id})" class="p-2 border text-center cursor-pointer hover:bg-blue-50">${es.actual||'-'}</td>`}).join('')}</tr>`).join('')}</tbody></table></div></div>`;
+        }
+
+        function openEvalSkillModal(eid, sid) {
+            const es = state.employeeSkills.find(x=>x.empId===eid&&x.skillId===sid)||{actual:0, req:0};
+            openModal('Avaliar', `<div class="grid grid-cols-2 gap-4">
+                <div><label>Exigido</label><input type="number" id="skr" value="${es.req}" class="w-full border p-2 rounded"></div>
+                <div><label>Atual</label><input type="number" id="ska" value="${es.actual}" class="w-full border p-2 rounded"></div>
+            </div>`, `<button onclick="saveEmployeeSkill(${eid},${sid})" class="bg-blue-600 text-white px-4 py-2 rounded">Salvar</button>`);
+        }
+
+        function saveEmployeeSkill(eid, sid) {
+            const req = parseInt(document.getElementById('skr').value); const actual = parseInt(document.getElementById('ska').value);
+            const i = state.employeeSkills.findIndex(x=>x.empId===eid&&x.skillId===sid);
+            if(i>-1) state.employeeSkills[i] = { empId:eid, skillId:sid, req, actual };
+            else state.employeeSkills.push({ empId:eid, skillId:sid, req, actual });
+            saveDataToFirestore(); closeModal(); navigate('habilidades');
+        }
+
+        function openSkillModal() {
+            openModal('Nova Habilidade', `<input type="text" id="nsn" placeholder="Nome" class="w-full border p-2 rounded">`, `<button onclick="saveNewSkill()" class="bg-blue-600 text-white px-4 py-2 rounded">Add</button>`);
+        }
+        function saveNewSkill() { const n=document.getElementById('nsn').value; if(!n) return; state.skills.push({id:generateId(state.skills), name:n}); saveDataToFirestore(); closeModal(); navigate('habilidades'); }
+
+        function renderTreinamentos(container) {
+            container.innerHTML = `<div class="bg-white rounded-xl shadow-sm border p-6 overflow-hidden">
+                <div class="flex justify-between items-center mb-4"><h3>Treinamentos</h3><button onclick="openTrainingModal()" class="bg-blue-600 text-white px-4 py-2 rounded">+ Novo</button></div>
+                <div class="overflow-x-auto"><table class="w-full text-sm"><thead><tr class="bg-gray-50 border-b"><th class="p-4">Título</th><th class="p-4">Validade</th><th class="p-4">Ações</th></tr></thead><tbody>
+                ${state.trainings.map(t=>`<tr class="border-b"><td class="p-4">${t.title}</td><td class="p-4">${t.periodicityMonths}m</td><td class="p-4"><button onclick="deleteTraining(${t.id})" class="text-red-500"><i data-lucide="trash-2"></i></button></td></tr>`).join('')}</tbody></table></div></div>`;
+        }
+
+        function openTrainingModal() {
+            openModal('Cadastrar', `<input type="text" id="tt" placeholder="Título" class="w-full border p-2 mb-2 rounded"><input type="number" id="tp" placeholder="Meses validade" class="w-full border p-2 rounded">`, `<button onclick="saveTraining()" class="bg-blue-600 text-white px-4 py-2 rounded">Salvar</button>`);
+        }
+        function saveTraining() { const t=document.getElementById('tt').value, p=parseInt(document.getElementById('tp').value)||0; if(!t) return; state.trainings.push({id:generateId(state.trainings), title:t, periodicityMonths:p}); saveDataToFirestore(); closeModal(); navigate('treinamentos'); }
+        function deleteTraining(id) { state.trainings=state.trainings.filter(x=>x.id!==id); saveDataToFirestore(); navigate('treinamentos'); }
+
+        function renderPresenca(container) {
+            container.innerHTML = `<div class="bg-white rounded-xl shadow-sm border p-6">
+                <div class="flex justify-between items-center mb-4"><h3>Listas de Presença</h3><button onclick="openAttendanceModal()" class="bg-blue-600 text-white px-4 py-2 rounded">+ Registrar</button></div>
+                <div class="overflow-x-auto"><table class="w-full text-sm"><thead><tr class="bg-gray-50 border-b"><th class="p-4">Data</th><th class="p-4">Treino</th><th class="p-4">Ações</th></tr></thead><tbody>
+                ${state.attendanceLists.map(l=>`<tr class="border-b"><td class="p-4">${formatDate(l.date)}</td><td class="p-4">${getTrainingName(l.trainingId)}</td><td class="p-4"><button onclick="viewAttendees(${l.id})" class="text-blue-600">Ver</button></td></tr>`).join('')}</tbody></table></div></div>`;
+        }
+
+        function openAttendanceModal() {
+            openModal('Presença', `<select id="at" class="w-full border p-2 mb-2 rounded">${state.trainings.map(t=>`<option value="${t.id}">${t.title}</option>`).join('')}</select><input type="date" id="ad" class="w-full border p-2 mb-2 rounded"><input type="text" id="ai" placeholder="Instrutor" class="w-full border p-2 mb-2 rounded">
+                <div class="border p-2 max-h-32 overflow-y-auto">${state.employees.map(e=>`<label class="block"><input type="checkbox" name="ae" value="${e.id}"> ${e.name}</label>`).join('')}</div>`, `<button onclick="saveAttendance()" class="bg-blue-600 text-white px-4 py-2 rounded">Salvar</button>`);
+        }
+        function saveAttendance() {
+            const tid=parseInt(document.getElementById('at').value), d=document.getElementById('ad').value, ins=document.getElementById('ai').value, emps=Array.from(document.querySelectorAll('input[name="ae"]:checked')).map(c=>parseInt(c.value));
+            if(!d || emps.length===0) return; const rid=generateId(state.attendanceLists); state.attendanceLists.push({id:rid, trainingId:tid, date:d, instructor:ins, attendees:emps});
+            emps.forEach(eid=>state.effectivenessEvaluations.push({recordId:rid, empId:eid, status:'Pendente', date:'', comments:''})); saveDataToFirestore(); closeModal(); navigate('presenca');
+        }
+
+        function renderEficacia(container) {
+            let items = []; state.attendanceLists.forEach(l=>l.attendees.forEach(eid=>items.push({...state.effectivenessEvaluations.find(x=>x.recordId===l.id&&x.empId===eid), tname:getTrainingName(l.trainingId), ename:getEmpName(eid)})));
+            container.innerHTML = `<div class="bg-white rounded-xl shadow-sm border p-6"><h3>Avaliações Eficácia</h3><div class="overflow-x-auto"><table class="w-full text-sm"><thead><tr class="bg-gray-50 border-b"><th class="p-4">Treino</th><th class="p-4">Colaborador</th><th class="p-4">Status</th><th class="p-4">Ação</th></tr></thead><tbody>
+                ${items.map(i=>`<tr><td class="p-4">${i.tname}</td><td class="p-4">${i.ename}</td><td class="p-4">${i.status}</td><td class="p-4"><button onclick="openEficaciaModal(${i.recordId},${i.empId})" class="text-blue-600">Avaliar</button></td></tr>`).join('')}</tbody></table></div></div>`;
+        }
+        function openEficaciaModal(rid, eid) {
+            openModal('Eficácia', `<div class="flex space-x-4"><label><input type="radio" name="st" value="Eficaz"> Eficaz</label><label><input type="radio" name="st" value="Ineficaz"> Ineficaz</label></div>`, `<button onclick="saveEficacia(${rid},${eid})" class="bg-blue-600 text-white px-4 py-2 rounded">Salvar</button>`);
+        }
+        function saveEficacia(rid, eid) {
+            const s=document.querySelector('input[name="st"]:checked'); if(!s) return;
+            const i=state.effectivenessEvaluations.findIndex(x=>x.recordId===rid&&x.empId===eid); state.effectivenessEvaluations[i].status=s.value; saveDataToFirestore(); closeModal(); navigate('eficacia');
+        }
+
+        function renderDesempenho(container) {
+            container.innerHTML = `<div class="bg-white rounded-xl shadow-sm border p-6"><h3>Desempenho</h3><button onclick="openDesempenhoModal()" class="bg-blue-600 text-white px-4 py-2 rounded mb-4">+ Nova</button><table class="w-full text-sm"><thead><tr class="bg-gray-50 border-b"><th class="p-4">Data</th><th class="p-4">Nome</th><th class="p-4">Nota</th></tr></thead><tbody>
+                ${state.performanceReviews.map(r=>`<tr><td class="p-4">${formatDate(r.date)}</td><td class="p-4">${getEmpName(r.empId)}</td><td class="p-4 font-bold">${r.score}</td></tr>`).join('')}</tbody></table></div>`;
+        }
+        function openDesempenhoModal() {
+            openModal('Nota', `<select id="de" class="w-full border p-2 mb-2 rounded">${state.employees.map(e=>`<option value="${e.id}">${e.name}</option>`).join('')}</select><input type="date" id="dd" class="w-full border p-2 mb-2 rounded"><input type="number" id="ds" placeholder="Nota 1-5" class="w-full border p-2 rounded">`, `<button onclick="saveDesempenho()" class="bg-blue-600 text-white px-4 py-2 rounded">Salvar</button>`);
+        }
+        function saveDesempenho() {
+            const eid=parseInt(document.getElementById('de').value), d=document.getElementById('dd').value, s=parseFloat(document.getElementById('ds').value); if(!s) return;
+            state.performanceReviews.push({id:generateId(state.performanceReviews), empId:eid, date:d, score:s}); saveDataToFirestore(); closeModal(); navigate('desempenho');
+        }
+
+        // --- SISTEMA DE AUTENTICAÇÃO AUTOMÁTICA ---
+        auth.onAuthStateChanged((user) => {
+            if (user) {
+                currentUser = user;
+                loadDataFromFirestore(); 
+            } else {
+                // Realiza login anônimo automático se não estiver logado
+                auth.signInAnonymously().catch(error => {
+                    console.error("Erro na conexão anônima:", error);
+                    Swal.fire('Conexão Offline', 'Não foi possível conectar à nuvem.', 'error');
+                });
+            }
+        });
+
+    </script>
+</body>
+</html>
