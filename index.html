@@ -39,20 +39,83 @@
   <script type="text/babel">
     const { useState, useEffect } = React;
 
-    // Utilitário para evitar esperas infinitas em conexões lentas
-    const fetchWithTimeout = async (promise, ms = 15000) => {
-      return Promise.race([
-        promise,
-        new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), ms))
-      ]);
-    };
+    const appId = 'gestao-de-pessoas-49200';
+
+    function PasswordChangeScreen({ onPasswordUpdated }) {
+      const [newPassword, setNewPassword] = useState('');
+      const [confirmPassword, setConfirmPassword] = useState('');
+      const [loading, setLoading] = useState(false);
+      const [error, setError] = useState('');
+
+      const handleUpdate = async (e) => {
+        e.preventDefault();
+        if (newPassword.length < 6) {
+          setError("A SENHA DEVE TER NO MÍNIMO 6 CARACTERES.");
+          return;
+        }
+        if (newPassword !== confirmPassword) {
+          setError("AS SENHAS NÃO COINCIDEM.");
+          return;
+        }
+
+        setLoading(true);
+        try {
+          const user = firebase.auth().currentUser;
+          const db = firebase.firestore();
+          
+          // 1. Atualiza no Firebase Auth
+          await user.updatePassword(newPassword);
+          
+          // 2. Busca o documento do funcionário para remover a flag
+          const snapshot = await db.collection(`artifacts/${appId}/public/data/employees`)
+                                  .where('email', '==', user.email)
+                                  .get();
+          
+          if (!snapshot.empty) {
+            await db.collection(`artifacts/${appId}/public/data/employees`)
+                    .doc(snapshot.docs[0].id)
+                    .update({ forcePasswordChange: false });
+          }
+
+          onPasswordUpdated();
+        } catch (err) {
+          console.error(err);
+          setError("ERRO AO ATUALIZAR. TENTE FAZER LOGIN NOVAMENTE.");
+        }
+        setLoading(false);
+      };
+
+      return (
+        <div className="min-h-screen flex items-center justify-center px-6 bg-slate-900">
+          <div className="bg-white rounded-[2.5rem] p-10 shadow-2xl w-full max-w-md animate-fade-in border-2 border-amber-200">
+            <div className="flex flex-col items-center mb-8 text-center">
+              <div className="bg-amber-500 p-4 rounded-2xl shadow-lg mb-4 text-white">
+                <i className="ph-bold ph-lock-key text-4xl"></i>
+              </div>
+              <h1 className="font-black text-xl tracking-widest text-slate-800">ALTERAR SENHA</h1>
+              <p className="text-[10px] text-amber-600 font-bold mt-2 leading-relaxed">VOCÊ ESTÁ USANDO UMA SENHA PROVISÓRIA.<br/>POR SEGURANÇA, DEFINA UMA SENHA PESSOAL.</p>
+            </div>
+
+            {error && <div className="bg-red-50 text-red-600 p-4 rounded-xl mb-6 text-[10px] font-bold text-center border border-red-200">{error}</div>}
+
+            <form onSubmit={handleUpdate} className="space-y-4">
+              <input type="password" required placeholder="NOVA SENHA" value={newPassword} onChange={e => setNewPassword(e.target.value)} className="w-full bg-slate-50 border border-slate-200 p-3.5 rounded-xl text-sm outline-none focus:ring-2 focus:ring-amber-500" />
+              <input type="password" required placeholder="CONFIRMAR NOVA SENHA" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} className="w-full bg-slate-50 border border-slate-200 p-3.5 rounded-xl text-sm outline-none focus:ring-2 focus:ring-amber-500" />
+              
+              <button type="submit" disabled={loading} className="w-full bg-amber-600 hover:bg-amber-700 text-white font-black py-4 rounded-xl text-xs tracking-widest transition-all shadow-md flex justify-center items-center">
+                {loading ? <i className="ph-bold ph-spinner animate-spin text-xl"></i> : 'ATUALIZAR SENHA'}
+              </button>
+            </form>
+          </div>
+        </div>
+      );
+    }
 
     function LoginScreen({ onLoginSuccess }) {
       const [isRegistering, setIsRegistering] = useState(false);
       const [isResettingPassword, setIsResettingPassword] = useState(false);
       const [email, setEmail] = useState('');
       const [password, setPassword] = useState('');
-      const [name, setName] = useState('');
       const [loading, setLoading] = useState(false);
       const [error, setError] = useState('');
       const [successMsg, setSuccessMsg] = useState('');
@@ -62,6 +125,7 @@
         setLoading(true);
         setError('');
         setSuccessMsg('');
+        
         try {
           const auth = firebase.auth();
           const db = firebase.firestore();
@@ -70,40 +134,36 @@
             await auth.sendPasswordResetEmail(email);
             setSuccessMsg('LINK ENVIADO! VERIFIQUE O SEU E-MAIL.');
             setIsResettingPassword(false);
-          } else if (isRegistering) {
-            const userCredential = await auth.createUserWithEmailAndPassword(email, password);
-            await userCredential.user.updateProfile({ displayName: name });
+          } 
+          else if (isRegistering) {
+            const employeeRef = db.collection(`artifacts/${appId}/public/data/employees`);
+            const snapshot = await employeeRef.where('email', '==', email.toLowerCase().trim()).get();
             
-            // Registra o utilizador com status pendente para aprovação do administrador
-            await fetchWithTimeout(db.collection('usuarios').doc(userCredential.user.uid).set({
-              nome: name,
-              email: email,
-              status: 'pendente',
-              dataCadastro: new Date().toISOString()
-            }));
-            
-            await auth.signOut();
-            setIsRegistering(false);
-            setSuccessMsg('CADASTRO CONCLUÍDO! AGUARDE APROVAÇÃO.');
-          } else {
-            const userCredential = await auth.signInWithEmailAndPassword(email, password);
-            const userDoc = await fetchWithTimeout(db.collection('usuarios').doc(userCredential.user.uid).get());
-            
-            if (userDoc.exists) {
-              if (userDoc.data().status === 'aprovado') {
-                onLoginSuccess({ name: userCredential.user.displayName, email: userCredential.user.email });
-              } else {
-                await auth.signOut();
-                setError('ACESSO PENDENTE DE APROVAÇÃO.');
-              }
-            } else {
-              // Se o documento não existe mas o login foi feito (migração), permite entrada
-              onLoginSuccess({ name: userCredential.user.displayName, email: userCredential.user.email });
+            if (snapshot.empty) {
+              setError("E-MAIL NÃO AUTORIZADO. CONTACTE O RH.");
+              setLoading(false);
+              return;
             }
+
+            const empData = snapshot.docs[0].data();
+            const userCredential = await auth.createUserWithEmailAndPassword(email, password);
+            await userCredential.user.updateProfile({ displayName: empData.name });
+            
+            await db.collection(`artifacts/${appId}/public/data/employees`).doc(snapshot.docs[0].id).update({
+              uid: userCredential.user.uid,
+              statusPortal: 'ativo'
+            });
+            
+            setSuccessMsg('CONTA ATIVADA COM SUCESSO! FAÇA LOGIN.');
+            setIsRegistering(false);
+          } 
+          else {
+            await auth.signInWithEmailAndPassword(email, password);
+            // O App() cuidará da verificação de senha no onAuthStateChanged
           }
         } catch (err) {
-          setError("ERRO: E-MAIL OU SENHA INVÁLIDOS.");
           console.error(err);
+          setError("ACESSO NEGADO: E-MAIL OU SENHA INCORRETOS.");
         }
         setLoading(false);
       };
@@ -123,24 +183,21 @@
             {successMsg && <div className="bg-green-50 text-green-700 p-4 rounded-xl mb-6 text-[10px] font-bold text-center border border-green-200">{successMsg}</div>}
 
             <form onSubmit={handleSubmit} className="space-y-4">
-              {isRegistering && (
-                <input type="text" required placeholder="NOME COMPLETO" value={name} onChange={e => setName(e.target.value)} className="w-full bg-slate-50 border border-slate-200 p-3.5 rounded-xl text-sm outline-none focus:ring-2 focus:ring-indigo-500" />
-              )}
               <input type="email" required placeholder="E-MAIL CORPORATIVO" value={email} onChange={e => setEmail(e.target.value)} className="w-full bg-slate-50 border border-slate-200 p-3.5 rounded-xl text-sm outline-none focus:ring-2 focus:ring-indigo-500" />
               {!isResettingPassword && (
                 <input type="password" required placeholder="SENHA" value={password} onChange={e => setPassword(e.target.value)} className="w-full bg-slate-50 border border-slate-200 p-3.5 rounded-xl text-sm outline-none focus:ring-2 focus:ring-indigo-500" />
               )}
               <button type="submit" disabled={loading} className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-black py-4 rounded-xl text-xs tracking-widest transition-all shadow-md flex justify-center items-center">
-                {loading ? <i className="ph-bold ph-spinner animate-spin text-xl"></i> : (isResettingPassword ? 'ENVIAR LINK' : isRegistering ? 'CRIAR CONTA' : 'ENTRAR NO SISTEMA')}
+                {loading ? <i className="ph-bold ph-spinner animate-spin text-xl"></i> : (isResettingPassword ? 'ENVIAR LINK' : isRegistering ? 'ATIVAR CONTA' : 'ENTRAR NO SISTEMA')}
               </button>
             </form>
 
             <div className="mt-8 pt-6 border-t border-slate-100 text-center text-[10px] text-slate-500 font-bold flex flex-col gap-2">
-              <button onClick={() => { setIsRegistering(!isRegistering); setIsResettingPassword(false); }} type="button" className="hover:text-indigo-600 transition-colors uppercase">
-                {isRegistering ? 'VOLTAR PARA O LOGIN' : 'PRIMEIRO ACESSO? SOLICITE AQUI'}
+              <button onClick={() => { setIsRegistering(!isRegistering); setIsResettingPassword(false); setError(''); }} type="button" className="hover:text-indigo-600 transition-colors uppercase">
+                {isRegistering ? 'VOLTAR PARA O LOGIN' : 'PRIMEIRO ACESSO? ATIVE AQUI'}
               </button>
               {!isRegistering && (
-                <button onClick={() => setIsResettingPassword(!isResettingPassword)} type="button" className="hover:text-indigo-600 transition-colors uppercase">
+                <button onClick={() => { setIsResettingPassword(!isResettingPassword); setError(''); }} type="button" className="hover:text-indigo-600 transition-colors uppercase">
                     {isResettingPassword ? 'VOLTAR' : 'ESQUECEU A SENHA?'}
                 </button>
               )}
@@ -188,7 +245,7 @@
               <div className="hidden md:flex items-center space-x-6 text-[10px] font-black">
                 <span className="text-slate-400 uppercase">{currentDate}</span>
                 <div className="bg-slate-800 p-2 px-4 rounded-lg flex items-center space-x-3 border border-slate-700">
-                    <span className="text-white uppercase">{portalUser.name}</span>
+                    <span className="text-white uppercase truncate max-w-[150px]">{portalUser.name}</span>
                     <button onClick={() => firebase.auth().signOut().then(onLogout)} className="text-red-400 hover:text-red-300 uppercase">SAIR</button>
                 </div>
               </div>
@@ -226,8 +283,8 @@
     function App() {
       const [ready, setReady] = useState(false);
       const [user, setUser] = useState(null);
+      const [mustChangePassword, setMustChangePassword] = useState(false);
 
-      // --- ATUALIZAÇÃO DO BANCO DE DADOS UNIFICADO ---
       const firebaseConfig = {
         apiKey: "AIzaSyBqV0KOQMAYR4z6P_RKnrQPDfkAR2CsXBI",
         authDomain: "gestao-de-pessoas-49200.firebaseapp.com",
@@ -238,13 +295,34 @@
       };
 
       useEffect(() => {
-        if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+            firebase.firestore().settings({ experimentalForceLongPolling: true });
+        }
         
-        const unsubscribe = firebase.auth().onAuthStateChanged(u => {
+        const unsubscribe = firebase.auth().onAuthStateChanged(async (u) => {
           if (u) {
+            // VERIFICAÇÃO DE SENHA OBRIGATÓRIA
+            try {
+              const db = firebase.firestore();
+              const snapshot = await db.collection(`artifacts/${appId}/public/data/employees`)
+                                      .where('email', '==', u.email)
+                                      .get();
+              
+              if (!snapshot.empty) {
+                const data = snapshot.docs[0].data();
+                if (data.forcePasswordChange === true) {
+                  setMustChangePassword(true);
+                } else {
+                  setMustChangePassword(false);
+                }
+              }
+            } catch (e) { console.error("Erro check pwd", e); }
+
             setUser({ name: u.displayName || u.email, email: u.email });
           } else {
             setUser(null);
+            setMustChangePassword(false);
           }
           setReady(true);
         });
@@ -261,7 +339,11 @@
         </div>
       );
 
-      return user ? <PortalDashboard portalUser={user} onLogout={() => setUser(null)} /> : <LoginScreen onLoginSuccess={setUser} />;
+      if (!user) return <LoginScreen onLoginSuccess={setUser} />;
+      
+      if (mustChangePassword) return <PasswordChangeScreen onPasswordUpdated={() => setMustChangePassword(false)} />;
+
+      return <PortalDashboard portalUser={user} onLogout={() => setUser(null)} />;
     }
 
     const root = ReactDOM.createRoot(document.getElementById('root'));
