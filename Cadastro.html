@@ -46,83 +46,62 @@
                         <a href="#" onclick="navigate('colaboradores')" class="nav-colaboradores menu-item inline-flex items-center px-1 pt-1 border-b-2 border-transparent text-sm font-medium text-gray-500 hover:text-gray-700 hover:border-gray-300 transition-colors">Colaboradores</a>
                         <a href="#" onclick="navigate('cargos')" class="nav-cargos menu-item inline-flex items-center px-1 pt-1 border-b-2 border-transparent text-sm font-medium text-gray-500 hover:text-gray-700 hover:border-gray-300 transition-colors">Cargos</a>
                         <a href="#" onclick="navigate('habilidades')" class="nav-habilidades menu-item inline-flex items-center px-1 pt-1 border-b-2 border-transparent text-sm font-medium text-gray-500 hover:text-gray-700 hover:border-gray-300 transition-colors">Habilidades</a>
-                        <a href="#" onclick="navigate('treinamentos')" class="nav-treinamentos menu-item inline-flex items-center px-1 pt-1 border-b-2 border-transparent text-sm font-medium text-gray-500 hover:text-gray-700 hover:border-gray-300 transition-colors">Catálogo de Treinamentos</a>
+                        <a href="#" onclick="navigate('treinamentos')" class="nav-treinamentos menu-item inline-flex items-center px-1 pt-1 border-b-2 border-transparent text-sm font-medium text-gray-500 hover:text-gray-700 hover:border-gray-300 transition-colors">Treinamento</a>
                     </nav>
                 </div>
-                <div class="flex items-center">
+                <div class="flex items-center space-x-4">
                     <!-- Botão PORTAL -->
-                    <a href="index.html" class="hidden md:inline-flex items-center px-4 py-2 border border-transparent text-sm font-bold rounded-md shadow-sm text-white bg-slate-800 hover:bg-slate-700 focus:outline-none transition-colors mr-4">
+                    <a href="index.html" class="hidden md:inline-flex items-center px-4 py-2 border border-transparent text-sm font-bold rounded-md shadow-sm text-white bg-slate-800 hover:bg-slate-700 focus:outline-none transition-colors">
                         <i data-lucide="arrow-left" class="w-4 h-4 mr-2"></i> PORTAL
                     </a>
-
-                    <!-- Botão Mágico para o Dashboard Operacional -->
-                    <a href="dashboard.html" class="hidden md:inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-blue-700 bg-blue-100 hover:bg-blue-200 focus:outline-none transition-colors mr-4">
-                        <i data-lucide="layout-dashboard" class="w-4 h-4 mr-2"></i> Ir para Operação (Dashboard) &rarr;
+                    
+                    <!-- Link para o outro módulo -->
+                    <a href="dashboard.html" class="hidden md:inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-blue-700 bg-blue-100 hover:bg-blue-200 focus:outline-none transition-colors">
+                        <i data-lucide="layout-dashboard" class="w-4 h-4 mr-2"></i> Ir para Dashboard & Avaliações
                     </a>
-                    <button class="text-gray-500 hover:text-blue-600 relative mr-4" onclick="showDevInfo()">
-                        <i data-lucide="info" class="w-5 h-5"></i>
-                    </button>
-                    <div class="h-8 w-8 rounded-full bg-blue-600 flex items-center justify-center text-white font-bold text-sm mr-4" id="user-avatar" title="Usuário logado">
-                        --
-                    </div>
+                    
+                    <button class="text-gray-500 hover:text-blue-600 relative" onclick="showDevInfo()"><i data-lucide="info" class="w-5 h-5"></i></button>
+                    <div class="h-8 w-8 rounded-full bg-blue-600 flex items-center justify-center text-white font-bold text-sm" id="user-avatar">--</div>
                     <!-- Mobile menu button -->
-                    <div class="flex items-center md:hidden ml-2">
-                        <button type="button" onclick="toggleMobileMenu()" class="inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 focus:outline-none">
-                            <i data-lucide="menu" class="w-6 h-6"></i>
-                        </button>
-                    </div>
+                    <button type="button" onclick="document.getElementById('mobile-menu').classList.toggle('hidden')" class="md:hidden p-2 rounded-md text-gray-400 hover:bg-gray-100">
+                        <i data-lucide="menu" class="w-6 h-6"></i>
+                    </button>
                 </div>
             </div>
         </div>
-
         <!-- Mobile Menu -->
-        <div class="md:hidden hidden border-t border-gray-200 shadow-lg absolute w-full bg-white z-50 top-16" id="mobile-menu">
+        <div class="hidden md:hidden absolute w-full bg-white z-50 border-t shadow-lg" id="mobile-menu">
             <div class="pt-2 pb-3 space-y-1">
-                <a href="#" onclick="navigate('colaboradores')" class="nav-colaboradores menu-item block pl-4 pr-4 py-3 border-l-4 border-transparent text-base font-medium text-gray-600 hover:bg-gray-50">Colaboradores</a>
-                <a href="#" onclick="navigate('cargos')" class="nav-cargos menu-item block pl-4 pr-4 py-3 border-l-4 border-transparent text-base font-medium text-gray-600 hover:bg-gray-50">Cargos</a>
-                <a href="#" onclick="navigate('habilidades')" class="nav-habilidades menu-item block pl-4 pr-4 py-3 border-l-4 border-transparent text-base font-medium text-gray-600 hover:bg-gray-50">Habilidades</a>
-                <a href="#" onclick="navigate('treinamentos')" class="nav-treinamentos menu-item block pl-4 pr-4 py-3 border-l-4 border-transparent text-base font-medium text-gray-600 hover:bg-gray-50">Catálogo de Treinamentos</a>
-                <a href="dashboard.html" class="block pl-4 pr-4 py-3 border-l-4 border-transparent text-base font-medium text-blue-700 bg-blue-50 hover:bg-blue-100 border-t border-gray-100 mt-1">
-                    <i data-lucide="layout-dashboard" class="w-5 h-5 inline mr-2"></i> Ir para Operação &rarr;
-                </a>
-                <a href="index.html" class="block pl-4 pr-4 py-3 border-l-4 border-transparent text-base font-bold text-white bg-slate-800 hover:bg-slate-700 border-t border-gray-200 mt-1">
+                <a href="#" onclick="navigate('colaboradores')" class="nav-colaboradores menu-item block pl-4 py-2 border-l-4 border-transparent text-gray-600">Colaboradores</a>
+                <a href="#" onclick="navigate('cargos')" class="nav-cargos menu-item block pl-4 py-2 border-l-4 border-transparent text-gray-600">Cargos</a>
+                <a href="#" onclick="navigate('habilidades')" class="nav-habilidades menu-item block pl-4 py-2 border-l-4 border-transparent text-gray-600">Habilidades</a>
+                <a href="#" onclick="navigate('treinamentos')" class="nav-treinamentos menu-item block pl-4 py-2 border-l-4 border-transparent text-gray-600">Treinamento</a>
+                <a href="dashboard.html" class="block pl-4 py-3 bg-blue-50 text-blue-700 font-bold border-t">Ir para Dashboard & Avaliações &rarr;</a>
+                <a href="index.html" class="block pl-4 py-3 text-white bg-slate-800 hover:bg-slate-700 font-bold border-t">
                     <i data-lucide="arrow-left" class="w-5 h-5 inline mr-2"></i> PORTAL
                 </a>
             </div>
         </div>
     </header>
 
-    <!-- Main Content -->
-    <main class="flex-1 overflow-auto bg-gray-50 p-4 md:p-6" id="main-container">
-        <div class="max-w-7xl mx-auto mb-4 flex justify-between items-center">
-             <h2 class="text-2xl font-semibold text-gray-800" id="page-title">Carregando...</h2>
-        </div>
-        
+    <main class="flex-1 overflow-auto bg-gray-50 p-4 md:p-6">
+        <div class="max-w-7xl mx-auto mb-4"><h2 class="text-2xl font-semibold text-gray-800" id="page-title">Carregando...</h2></div>
         <div class="max-w-7xl mx-auto" id="app-content">
-            <div class="flex h-64 w-full items-center justify-center">
-                <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600"></div>
-                <span class="ml-3 text-gray-500 font-medium">Conectando ao banco de dados...</span>
-            </div>
+            <div class="flex h-64 items-center justify-center"><div class="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600"></div></div>
         </div>
     </main>
 
-    <!-- Generic Modal Container -->
-    <div id="modal-container" class="fixed inset-0 z-50 flex items-center justify-center hidden bg-black bg-opacity-50 backdrop-blur-sm transition-opacity p-4">
-        <div class="bg-white rounded-xl shadow-2xl w-full max-w-[750px] max-h-[95vh] flex flex-col transform transition-all scale-95" id="modal-content-wrapper">
-            <div class="px-5 py-3 border-b border-gray-200 flex justify-between items-center bg-white rounded-t-xl flex-shrink-0">
-                <h3 class="text-xl font-bold text-[#1e293b]" id="modal-title">Título do Modal</h3>
-                <button onclick="closeModal()" class="text-gray-400 hover:text-gray-600 transition-colors">
-                    <i data-lucide="x" class="w-5 h-5" stroke-width="2.5"></i>
-                </button>
-            </div>
-            <div class="p-5 overflow-y-auto overflow-x-hidden custom-scrollbar flex-1 min-h-0" id="modal-body"></div>
-            <div class="px-5 py-3 border-t border-gray-100 bg-white rounded-b-xl flex justify-end items-center gap-3 flex-shrink-0" id="modal-footer"></div>
+    <!-- Modal Container -->
+    <div id="modal-container" class="fixed inset-0 z-50 flex items-center justify-center hidden bg-black bg-opacity-50 backdrop-blur-sm p-4">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-[750px] max-h-[95vh] flex flex-col" id="modal-content-wrapper">
+            <div class="px-5 py-3 border-b border-gray-200 flex justify-between items-center"><h3 class="text-xl font-bold" id="modal-title">Título</h3><button onclick="closeModal()" class="text-gray-400 hover:text-gray-600"><i data-lucide="x" class="w-5 h-5"></i></button></div>
+            <div class="p-5 overflow-y-auto custom-scrollbar flex-1" id="modal-body"></div>
+            <div class="px-5 py-3 border-t border-gray-100 bg-gray-50 rounded-b-xl flex justify-end gap-3" id="modal-footer"></div>
         </div>
     </div>
 
-    <!-- Script Global -->
     <script>
-        // --- FIREBASE CONFIG ---
+        // CONFIGURAÇÃO FIREBASE
         const firebaseConfig = {
             apiKey: "AIzaSyBqV0KOQMAYR4z6P_RKnrQPDfkAR2CsXBI",
             authDomain: "gestao-de-pessoas-49200.firebaseapp.com",
@@ -131,228 +110,172 @@
             messagingSenderId: "615097388185",
             appId: "1:615097388185:web:ef87969b64f4a886f23c08"
         };
-        
-        if (!firebase.apps.length) {
-            firebase.initializeApp(firebaseConfig);
-        }
-        
-        const auth = firebase.auth();
-        const db = firebase.firestore();
-        const storage = firebase.storage();
-
-        // CORREÇÃO CRÍTICA PARA DISCOS LOCAIS
+        if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth(); const db = firebase.firestore(); const storage = firebase.storage();
         db.settings({ experimentalForceLongPolling: true });
-
         const appId = 'gestao-de-pessoas-49200';
-        let currentUser = null;
-
-        // --- 1. STATE MANAGEMENT ---
-        const defaultData = {
-            roles: [],
-            employees: [],
-            skills: [],
-            employeeSkills: [],
-            trainings: [],
-            attendanceLists: [],
-            effectivenessEvaluations: [],
-            performanceReviews: [],
-            logs: []
-        };
         
-        let state = JSON.parse(JSON.stringify(defaultData));
+        let currentUser = null;
+        let currentEmp = null;
+        let userPermissions = {};
+
+        // ESTADO GLOBAL
+        let state = { roles: [], employees: [], skills: [], employeeSkills: [], trainings: [], attendanceLists: [], effectivenessEvaluations: [], performanceReviews: [], logs: [] };
 
         function loadDataFromFirestore() {
             if (!currentUser) return;
             
             const fallbackTimer = setTimeout(() => {
-                if(!currentPage) {
-                    currentPage = 'colaboradores';
-                    navigate(currentPage);
+                if(!currentPage) { 
+                    applyMenuVisibility();
+                    if (checkPerm('colaboradores', 'view')) navigate('colaboradores');
+                    else if (checkPerm('cargos', 'view')) navigate('cargos');
+                    else if (checkPerm('habilidades', 'view')) navigate('habilidades');
+                    else if (checkPerm('treinamentos', 'view')) navigate('treinamentos');
+                    else showAccessDenied();
                 }
             }, 3000);
 
-            // Carrega TODAS as coleções para manter a integridade dos dados (ex: não apagar colaborador com histórico)
             const collections = ['roles', 'employees', 'skills', 'employeeSkills', 'trainings', 'attendanceLists', 'effectivenessEvaluations', 'performanceReviews', 'logs'];
             let loadedCount = 0;
-
+            
             collections.forEach(col => {
                 db.collection(`artifacts/${appId}/public/data/${col}`).onSnapshot((snapshot) => {
                     state[col] = snapshot.docs.map(doc => doc.data());
-                    
                     if(col === 'logs') state.logs.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
                     if(col === 'attendanceLists') state.attendanceLists.sort((a, b) => new Date(a.date) - new Date(b.date));
                     
                     loadedCount++;
                     if(loadedCount >= collections.length) {
                         clearTimeout(fallbackTimer);
-                        if (!currentPage) {
-                            currentPage = 'colaboradores';
-                            navigate(currentPage);
+                        
+                        // Lógica de Permissões
+                        if (currentUser.email && currentUser.email !== 'Local') {
+                            currentEmp = state.employees.find(e => e.email === currentUser.email);
+                            if (currentEmp) {
+                                const roleObj = state.roles.find(r => r.name === currentEmp.role);
+                                if (roleObj && roleObj.permissions) userPermissions = roleObj.permissions;
+                            }
                         } else {
-                            navigate(currentPage);
+                            // Acesso Total (Admin/Local)
+                            userPermissions = {
+                                colaboradores: {view:true, create:true, edit:true, delete:true},
+                                cargos: {view:true, create:true, edit:true, delete:true},
+                                habilidades: {view:true, create:true, edit:true, delete:true},
+                                treinamentos: {view:true, create:true, edit:true, delete:true}
+                            };
+                        }
+
+                        applyMenuVisibility();
+
+                        if (!currentPage) {
+                            if (checkPerm('colaboradores', 'view')) navigate('colaboradores');
+                            else if (checkPerm('cargos', 'view')) navigate('cargos');
+                            else if (checkPerm('habilidades', 'view')) navigate('habilidades');
+                            else if (checkPerm('treinamentos', 'view')) navigate('treinamentos');
+                            else showAccessDenied();
+                        } else {
+                            if (checkPerm(currentPage, 'view')) navigate(currentPage);
+                            else { currentPage = ''; loadDataFromFirestore(); } // Reinicia caso perca a permissão
                         }
                     }
-                }, (error) => {
-                    console.error(`Erro ao ler coleção ${col}:`, error);
                 });
             });
         }
 
-        async function dbSave(collection, docId, data) {
-            if(!currentUser) return;
-            try { await db.collection(`artifacts/${appId}/public/data/${collection}`).doc(docId.toString()).set(data); } 
-            catch(e) { console.error(`Erro ao salvar em ${collection}:`, e); }
+        // Funções Auxiliares de Permissão
+        function checkPerm(module, action) {
+            if (currentUser && currentUser.email === 'Local') return true; 
+            if (!userPermissions[module]) return false;
+            return userPermissions[module][action] === true;
         }
 
-        async function dbDelete(collection, docId) {
-            if(!currentUser) return;
-            try { await db.collection(`artifacts/${appId}/public/data/${collection}`).doc(docId.toString()).delete(); } 
-            catch(e) { console.error(`Erro ao excluir de ${collection}:`, e); }
+        function applyMenuVisibility() {
+            document.querySelectorAll('.nav-colaboradores').forEach(el => el.style.display = checkPerm('colaboradores', 'view') ? '' : 'none');
+            document.querySelectorAll('.nav-cargos').forEach(el => el.style.display = checkPerm('cargos', 'view') ? '' : 'none');
+            document.querySelectorAll('.nav-habilidades').forEach(el => el.style.display = checkPerm('habilidades', 'view') ? '' : 'none');
+            document.querySelectorAll('.nav-treinamentos').forEach(el => el.style.display = checkPerm('treinamentos', 'view') ? '' : 'none');
         }
 
-        const generateId = (array) => array.length > 0 ? Math.max(...array.map(i => i.id)) + 1 : 1;
-        const formatDate = (dateStr) => {
-            if(!dateStr) return '-';
-            const [y, m, d] = dateStr.split('-');
-            return `${d}/${m}/${y}`;
-        };
-
-        function addLog(moduleName, action, details) {
-            const newLog = {
-                id: Date.now() + Math.floor(Math.random() * 1000),
-                module: moduleName, action: action,
-                details: details, timestamp: new Date().toISOString(),
-                user: currentUser ? (currentUser.email || 'Visitante') : 'Sistema'
-            };
-            dbSave('logs', newLog.id, newLog);
-        }
-
-        function openLogModal(moduleName) {
-            const moduleLogs = state.logs.filter(l => l.module === moduleName);
-            let bodyHtml = moduleLogs.length === 0 
-                ? '<p class="text-gray-500 text-center py-6">Nenhum registo encontrado.</p>' 
-                : '<ul class="space-y-4">' + moduleLogs.map(log => `
-                    <li class="border-l-4 border-blue-500 bg-gray-50 p-3 rounded-r-lg shadow-sm">
-                        <div class="flex justify-between items-start">
-                            <p class="text-sm font-semibold text-gray-800">${log.action}</p>
-                            <span class="text-xs font-medium text-gray-500 whitespace-nowrap ml-2">${new Date(log.timestamp).toLocaleString('pt-PT')}</span>
-                        </div>
-                        <p class="text-sm text-gray-600 mt-1">${log.details}</p>
-                        <p class="text-[10px] text-gray-400 mt-2">Utilizador: ${log.user}</p>
-                    </li>`).join('') + '</ul>';
-            openModal(`Histórico - ${moduleName}`, bodyHtml, `<button onclick="closeModal()" class="px-4 py-2 bg-gray-200 text-gray-800 rounded-lg">Fechar</button>`);
-        }
-
-        // --- 2. UI HELPERS & NAVIGATION ---
-        let currentPage = '';
-        let currentMatrixRole = '';
-
-        function toggleMobileMenu() { document.getElementById('mobile-menu').classList.toggle('hidden'); }
-
-        function navigate(page) {
-            currentPage = page;
-            document.querySelectorAll('.menu-item').forEach(el => {
-                el.classList.remove('border-blue-600', 'text-blue-700', 'bg-blue-50');
-                if (el.classList.contains('block')) el.classList.add('border-transparent', 'text-gray-600');
-                else el.classList.add('border-transparent', 'text-gray-500');
-            });
-            document.querySelectorAll(`.nav-${page}`).forEach(el => {
-                el.classList.remove('border-transparent', 'text-gray-500', 'text-gray-600');
-                el.classList.add('border-blue-600', 'text-blue-700');
-                if (el.classList.contains('block')) el.classList.add('bg-blue-50');
-            });
-            const mobileMenu = document.getElementById('mobile-menu');
-            if(mobileMenu && !mobileMenu.classList.contains('hidden')) mobileMenu.classList.add('hidden');
-
-            const contentDiv = document.getElementById('app-content');
-            const titleEl = document.getElementById('page-title');
-            
-            switch(page) {
-                case 'cargos': titleEl.innerText = 'Gestão de Cargos e Descrições'; renderCargos(contentDiv); break;
-                case 'colaboradores': titleEl.innerText = 'Gestão de Colaboradores'; renderColaboradores(contentDiv); break;
-                case 'habilidades': titleEl.innerText = 'Matriz de Habilidades'; renderHabilidades(contentDiv); break;
-                case 'treinamentos': titleEl.innerText = 'Catálogo de Treinamentos'; renderTreinamentos(contentDiv); break;
-            }
+        function showAccessDenied() {
+            document.getElementById('page-title').innerText = "Acesso Restrito";
+            document.getElementById('app-content').innerHTML = `
+                <div class="flex flex-col items-center justify-center h-64 text-center">
+                    <div class="text-red-500 mb-4"><i data-lucide="shield-alert" class="w-16 h-16 mx-auto"></i></div>
+                    <h3 class="text-2xl font-bold text-gray-800">Acesso Restrito</h3>
+                    <p class="text-gray-500 mt-2">O seu cargo não possui permissão para visualizar os cadastros deste módulo.</p>
+                </div>
+            `;
             if(window.lucide) window.lucide.createIcons();
         }
 
-        function showDevInfo() { 
-            Swal.fire({ 
-                title: 'SGQ Cadastros', 
-                html: `
-                    <p class="mb-5 text-gray-600">Módulo de Cadastros conectado ao Firebase.</p>
-                    <div class="border-t border-gray-200 pt-4 mt-2">
-                        <p class="text-xs text-red-600 font-bold mb-2 uppercase tracking-wider">Zona de Perigo (Admin)</p>
-                        <button onclick="confirmFactoryReset()" class="bg-red-50 text-red-700 border border-red-200 hover:bg-red-100 px-4 py-2.5 rounded-lg text-sm font-bold w-full flex items-center justify-center">
-                            <i data-lucide="alert-triangle" class="w-4 h-4 mr-2"></i> Limpar Todo o Banco de Dados
-                        </button>
-                    </div>
-                `, 
-                icon: 'info',
-                showConfirmButton: false,
-                showCloseButton: true,
-                didOpen: () => { if(window.lucide) window.lucide.createIcons(); }
-            }); 
-        }
-
-        function confirmFactoryReset() {
-            requirePasswordForAction(async () => {
-                Swal.fire({ title: 'Limpando...', allowOutsideClick: false, didOpen: () => { Swal.showLoading(); } });
-                const collections = ['roles', 'employees', 'skills', 'employeeSkills', 'trainings', 'attendanceLists', 'effectivenessEvaluations', 'performanceReviews', 'logs'];
-                try {
-                    for (const col of collections) {
-                        const snapshot = await db.collection(`artifacts/${appId}/public/data/${col}`).get();
-                        const batch = db.batch();
-                        snapshot.docs.forEach((doc) => batch.delete(doc.ref));
-                        await batch.commit();
-                    }
-                    state = JSON.parse(JSON.stringify(defaultData));
-                    Swal.fire('Zerado!', 'O banco de dados foi completamente limpo.', 'success').then(() => navigate('colaboradores'));
-                } catch (e) { Swal.fire('Erro', 'Ocorreu um erro ao limpar o banco de dados.', 'error'); }
-            });
+        async function dbSave(collection, docId, data) { await db.collection(`artifacts/${appId}/public/data/${collection}`).doc(docId.toString()).set(data); }
+        async function dbDelete(collection, docId) { await db.collection(`artifacts/${appId}/public/data/${collection}`).doc(docId.toString()).delete(); }
+        
+        const generateId = (array) => array.length > 0 ? Math.max(...array.map(i => i.id)) + 1 : 1;
+        const formatDate = (dateStr) => { if(!dateStr) return '-'; const [y, m, d] = dateStr.split('-'); return `${d}/${m}/${y}`; };
+        
+        function addLog(moduleName, action, details) {
+            const newLog = { id: Date.now() + Math.floor(Math.random() * 1000), module: moduleName, action: action, details: details, timestamp: new Date().toISOString(), user: currentUser ? (currentUser.email || 'Visitante') : 'Sistema' };
+            dbSave('logs', newLog.id, newLog);
         }
 
         async function requirePasswordForAction(actionCallback) {
             const user = firebase.auth().currentUser;
             if (!user || user.isAnonymous) {
-                Swal.fire({
-                    title: 'Autenticação (Teste)', text: 'Digite a senha mestre "admin":', input: 'password', showCancelButton: true
-                }).then((result) => {
-                    if (result.value === 'admin') actionCallback();
-                    else if (result.isConfirmed) Swal.fire('Erro', 'Senha incorreta.', 'error');
-                });
-                return;
+                Swal.fire({ title: 'Modo Local', text: 'Digite a senha mestre "admin" para excluir:', input: 'password', showCancelButton: true }).then((result) => {
+                    if (result.value === 'admin') actionCallback(); else if (result.isConfirmed) Swal.fire('Erro', 'Senha incorreta.', 'error');
+                }); return;
             }
-            const { value: password } = await Swal.fire({ title: 'Segurança', text: 'Confirme sua senha:', input: 'password', showCancelButton: true });
+            const { value: password } = await Swal.fire({ title: 'Autenticação', text: 'Confirme sua senha para excluir:', input: 'password', showCancelButton: true });
             if (password) {
                 try { Swal.showLoading(); await firebase.auth().signInWithEmailAndPassword(user.email, password); actionCallback(); } 
-                catch (error) { Swal.fire('Negado', 'Senha incorreta.', 'error'); }
+                catch (error) { Swal.fire('Acesso Negado', 'Senha incorreta.', 'error'); }
             }
         }
 
         function openModal(title, bodyHtml, footerHtml) {
-            document.getElementById('modal-title').innerText = title;
-            document.getElementById('modal-body').innerHTML = bodyHtml;
-            document.getElementById('modal-footer').innerHTML = footerHtml;
-            const modal = document.getElementById('modal-container');
-            const wrapper = document.getElementById('modal-content-wrapper');
-            modal.classList.remove('hidden');
-            setTimeout(() => { wrapper.classList.remove('scale-95'); wrapper.classList.add('scale-100'); }, 10);
-            document.body.classList.add('modal-open');
+            document.getElementById('modal-title').innerText = title; document.getElementById('modal-body').innerHTML = bodyHtml; document.getElementById('modal-footer').innerHTML = footerHtml;
+            document.getElementById('modal-container').classList.remove('hidden'); document.body.classList.add('modal-open');
             if(window.lucide) window.lucide.createIcons();
         }
-
-        function closeModal() {
+        function closeModal() { 
             const modal = document.getElementById('modal-container');
             const wrapper = document.getElementById('modal-content-wrapper');
             wrapper.classList.remove('scale-100'); wrapper.classList.add('scale-95');
             setTimeout(() => { modal.classList.add('hidden'); document.body.classList.remove('modal-open'); }, 200);
         }
+        
+        function openLogModal(moduleName) {
+            const moduleLogs = state.logs.filter(l => l.module === moduleName);
+            let bodyHtml = moduleLogs.length === 0 ? '<p class="text-gray-500 text-center py-6">Nenhum registo encontrado.</p>' : '<ul class="space-y-4">' + moduleLogs.map(log => `<li class="border-l-4 border-blue-500 bg-gray-50 p-3 rounded shadow-sm"><p class="text-sm font-semibold">${log.action} <span class="text-xs text-gray-500 float-right">${new Date(log.timestamp).toLocaleString('pt-PT')}</span></p><p class="text-sm text-gray-600 mt-1">${log.details}</p></li>`).join('') + '</ul>';
+            openModal(`Histórico - ${moduleName}`, bodyHtml, `<button onclick="closeModal()" class="px-4 py-2 bg-gray-200 rounded">Fechar</button>`);
+        }
+        function showDevInfo() { Swal.fire({ title: 'SGQ Cadastros', text: 'Conectado ao Firebase com Controle de Acesso.', icon: 'info' }); }
 
-        // ================= COLABORADORES (COMPLETO) =================
-        let tempEmpAttachments = []; // Variável global para gerir múltiplos arquivos no modal
+        let currentPage = ''; let currentMatrixRole = '';
+        function navigate(page) {
+            currentPage = page;
+            document.querySelectorAll('.menu-item').forEach(el => { el.classList.remove('border-blue-600', 'text-blue-700', 'bg-blue-50'); el.classList.add('border-transparent', 'text-gray-500'); });
+            document.querySelectorAll(`.nav-${page}`).forEach(el => { el.classList.remove('border-transparent', 'text-gray-500'); el.classList.add('border-blue-600', 'text-blue-700'); });
+            document.getElementById('mobile-menu').classList.add('hidden');
+            
+            const contentDiv = document.getElementById('app-content'); const titleEl = document.getElementById('page-title');
+            switch(page) {
+                case 'colaboradores': titleEl.innerText = 'Gestão de Colaboradores'; renderColaboradores(contentDiv); break;
+                case 'cargos': titleEl.innerText = 'Cargos e Funções'; renderCargos(contentDiv); break;
+                case 'habilidades': titleEl.innerText = 'Matriz de Habilidades'; renderHabilidades(contentDiv); break;
+                case 'treinamentos': titleEl.innerText = 'Treinamento'; renderTreinamentos(contentDiv); break;
+            }
+            if(window.lucide) window.lucide.createIcons();
+        }
+
+        // ================= 1. GESTÃO DE COLABORADORES (COMPLETO) =================
+        let tempEmpAttachments = [];
 
         function renderColaboradores(container) {
+            if(!checkPerm('colaboradores', 'view')) return;
+
             let html = `
                 <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
                     <div class="p-6 border-b flex flex-col md:flex-row justify-between items-start md:items-center bg-gray-50 gap-4">
@@ -361,9 +284,10 @@
                             <button onclick="openLogModal('Colaboradores')" class="bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center">
                                 <i data-lucide="history" class="w-4 h-4 mr-2"></i> Histórico
                             </button>
+                            ${checkPerm('colaboradores', 'create') ? `
                             <button onclick="openEmployeeModal()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center">
                                 <i data-lucide="plus" class="w-4 h-4 mr-2"></i> Novo Colaborador
-                            </button>
+                            </button>` : ''}
                         </div>
                     </div>
                     <div class="overflow-x-auto custom-scrollbar">
@@ -402,8 +326,8 @@
                                         </td>
                                         <td class="p-4 text-center whitespace-nowrap">
                                             <button onclick="openEmployeeDossier(${emp.id})" class="text-emerald-600 hover:text-emerald-800 mx-1" title="Dossiê de Treinamentos"><i data-lucide="book-open" class="w-4 h-4"></i></button>
-                                            <button onclick="openEmployeeModal(${emp.id})" class="text-blue-600 hover:text-blue-800 mx-1" title="Editar"><i data-lucide="edit" class="w-4 h-4"></i></button>
-                                            <button onclick="deleteEmployee(${emp.id})" class="text-red-600 hover:text-red-800 mx-1" title="Excluir (Requer Senha)"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                                            ${checkPerm('colaboradores', 'edit') ? `<button onclick="openEmployeeModal(${emp.id})" class="text-blue-600 hover:text-blue-800 mx-1" title="Editar"><i data-lucide="edit" class="w-4 h-4"></i></button>` : ''}
+                                            ${checkPerm('colaboradores', 'delete') ? `<button onclick="deleteEmployee(${emp.id})" class="text-red-600 hover:text-red-800 mx-1" title="Excluir (Requer Senha)"><i data-lucide="trash-2" class="w-4 h-4"></i></button>` : ''}
                                         </td>
                                     </tr>
                                 `).join('') || '<tr><td colspan="6" class="p-4 text-center text-gray-500">Nenhum colaborador cadastrado.</td></tr>'}
@@ -470,19 +394,17 @@
             const a = atts[index];
             if (!a) return;
 
-            if (a.url) {
-                window.open(a.url, '_blank');
-            } else if (a.data) {
-                const link = document.createElement('a');
-                link.href = a.data;
-                link.download = a.fileName || 'documento';
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
+            if (a.url) window.open(a.url, '_blank');
+            else if (a.data) {
+                const link = document.createElement('a'); link.href = a.data; link.download = a.fileName || 'documento';
+                document.body.appendChild(link); link.click(); document.body.removeChild(link);
             }
         }
 
         function openEmployeeModal(id = null) {
+            if (id && !checkPerm('colaboradores', 'edit')) return Swal.fire('Acesso Negado', 'Sem permissão para editar colaboradores.', 'error');
+            if (!id && !checkPerm('colaboradores', 'create')) return Swal.fire('Acesso Negado', 'Sem permissão para criar colaboradores.', 'error');
+
             const emp = id ? state.employees.find(e => e.id === id) : { 
                 name: '', role: '', dept: '', admission: '', status: 'Ativo', 
                 email: '', forcePasswordChange: false, 
@@ -497,11 +419,7 @@
                 tempEmpAttachments = [...emp.attachments];
             } else if (emp.attachment) {
                 tempEmpAttachments.push({
-                    docName: 'Documento Principal',
-                    expirationDate: '',
-                    data: emp.attachment.data,
-                    url: emp.attachment.url,
-                    fileName: emp.attachment.name || 'documento'
+                    docName: 'Documento Principal', expirationDate: '', data: emp.attachment.data, url: emp.attachment.url, fileName: emp.attachment.name || 'documento'
                 });
             }
 
@@ -556,7 +474,7 @@
                         <div class="bg-white p-3 border border-gray-200 rounded-lg">
                             <div class="grid grid-cols-1 md:grid-cols-3 gap-2 mb-2">
                                 <div class="md:col-span-2">
-                                    <label class="block text-xs font-bold text-gray-700 mb-1">Nome do Documento (Ex: CNH, ASO, Certificado)</label>
+                                    <label class="block text-xs font-bold text-gray-700 mb-1">Nome do Documento (Ex: CNH, ASO)</label>
                                     <input type="text" id="newAttName" class="w-full text-xs border border-gray-300 p-1.5 rounded focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Digite o nome do documento...">
                                 </div>
                                 <div>
@@ -642,51 +560,25 @@
             const expDate = document.getElementById('newAttDate').value;
             const fileInput = document.getElementById('newAttFile');
 
-            if (!docName) return Swal.fire('Aviso', 'Preencha o Nome do Documento (Ex: CNH, ASO).', 'warning');
-            if (fileInput.files.length === 0) return Swal.fire('Aviso', 'Selecione um arquivo no seu computador para anexar.', 'warning');
-
+            if (!docName) return Swal.fire('Aviso', 'Preencha o Nome do Documento.', 'warning');
+            if (fileInput.files.length === 0) return Swal.fire('Aviso', 'Selecione um arquivo.', 'warning');
             const file = fileInput.files[0];
             if (file.size > 5 * 1024 * 1024) return Swal.fire('Erro', 'O limite é de 5MB por arquivo.', 'error');
 
-            tempEmpAttachments.push({
-                docName: docName,
-                expirationDate: expDate,
-                fileName: file.name,
-                isNew: true,
-                fileObj: file
-            });
+            tempEmpAttachments.push({ docName: docName, expirationDate: expDate, fileName: file.name, isNew: true, fileObj: file });
 
-            // Limpa os campos para o próximo
-            document.getElementById('newAttName').value = '';
-            document.getElementById('newAttDate').value = '';
-            fileInput.value = '';
-
+            document.getElementById('newAttName').value = ''; document.getElementById('newAttDate').value = ''; fileInput.value = '';
             renderEmpAttachmentsList();
         }
 
-        function removeEmpAttachment(index) {
-            tempEmpAttachments.splice(index, 1);
-            renderEmpAttachmentsList();
-        }
+        function removeEmpAttachment(index) { tempEmpAttachments.splice(index, 1); renderEmpAttachmentsList(); }
 
         const processSingleEmpFile = (att) => {
             return new Promise((resolve, reject) => {
-                if (!att.isNew) {
-                    // Mantém o que já estava lá, remove só a flag local se houver
-                    resolve({
-                        docName: att.docName,
-                        expirationDate: att.expirationDate,
-                        fileName: att.fileName,
-                        data: att.data,
-                        url: att.url
-                    });
-                    return;
-                }
-
+                if (!att.isNew) { resolve({ docName: att.docName, expirationDate: att.expirationDate, fileName: att.fileName, data: att.data, url: att.url }); return; }
                 const file = att.fileObj;
                 if (file.type.startsWith('image/')) {
-                    const reader = new FileReader();
-                    reader.readAsDataURL(file);
+                    const reader = new FileReader(); reader.readAsDataURL(file);
                     reader.onload = (e) => {
                         const img = new Image(); img.src = e.target.result;
                         img.onload = () => {
@@ -694,25 +586,13 @@
                             if(w>1200){h=Math.round(h*1200/w);w=1200;} if(h>1200){w=Math.round(w*1200/h);h=1200;}
                             canvas.width=w; canvas.height=h; canvas.getContext('2d').drawImage(img,0,0,w,h);
                             let dataUrl = canvas.toDataURL('image/jpeg', 0.8);
-
-                            if(dataUrl.length <= 950*1024) {
-                                resolve({ docName: att.docName, expirationDate: att.expirationDate, fileName: file.name, data: dataUrl });
-                            } else {
-                                uploadToStorageAsPromise(file, att).then(resolve).catch(reject);
-                            }
+                            if(dataUrl.length <= 950*1024) resolve({ docName: att.docName, expirationDate: att.expirationDate, fileName: file.name, data: dataUrl });
+                            else uploadToStorageAsPromise(file, att).then(resolve).catch(reject);
                         };
-                        img.onerror = () => reject(new Error('Erro ao processar a imagem: ' + file.name));
                     };
-                    reader.onerror = () => reject(new Error('Erro no leitor de arquivo: ' + file.name));
                 } else {
-                    if (file.size <= 750*1024) {
-                        const r = new FileReader();
-                        r.onload = (e) => resolve({ docName: att.docName, expirationDate: att.expirationDate, fileName: file.name, data: e.target.result });
-                        r.readAsDataURL(file);
-                        r.onerror = () => reject(new Error('Erro no leitor de arquivo: ' + file.name));
-                    } else {
-                        uploadToStorageAsPromise(file, att).then(resolve).catch(reject);
-                    }
+                    if (file.size <= 750*1024) { const r = new FileReader(); r.onload = (e) => resolve({ docName: att.docName, expirationDate: att.expirationDate, fileName: file.name, data: e.target.result }); r.readAsDataURL(file); } 
+                    else uploadToStorageAsPromise(file, att).then(resolve).catch(reject);
                 }
             });
         };
@@ -720,39 +600,33 @@
         const uploadToStorageAsPromise = (file, att) => {
             return new Promise((resolve, reject) => {
                 let timeoutFired = false;
-                const fallbackTimer = setTimeout(() => { timeoutFired = true; reject(new Error(`O arquivo ${file.name} é muito grande e excedeu o tempo (Plano Grátis).`)); }, 15000);
-
+                const fallbackTimer = setTimeout(() => { timeoutFired = true; reject(new Error(`O arquivo ${file.name} excedeu o tempo (Plano Grátis).`)); }, 15000);
                 const storageRef = storage.ref(`funcionarios/documentos/${Date.now()}_${file.name.replace(/[^a-zA-Z0-9.]/g, '_')}`);
                 const uploadTask = storageRef.put(file);
-
                 uploadTask.on('state_changed',
                     (s) => { if(s.bytesTransferred > 0) clearTimeout(fallbackTimer); if(timeoutFired) uploadTask.cancel(); },
                     (e) => { clearTimeout(fallbackTimer); reject(new Error('Falha no upload para a Nuvem.')); },
-                    () => {
-                        clearTimeout(fallbackTimer);
-                        if(timeoutFired) return;
-                        uploadTask.snapshot.ref.getDownloadURL().then(url => {
-                            resolve({ docName: att.docName, expirationDate: att.expirationDate, fileName: file.name, url: url });
-                        }).catch(reject);
-                    }
+                    () => { clearTimeout(fallbackTimer); if(timeoutFired) return; uploadTask.snapshot.ref.getDownloadURL().then(url => { resolve({ docName: att.docName, expirationDate: att.expirationDate, fileName: file.name, url: url }); }).catch(reject); }
                 );
             });
         };
 
         async function saveEmployee() {
             const id = document.getElementById('empId').value;
+            const isEdit = !!id;
+
+            if (isEdit && !checkPerm('colaboradores', 'edit')) return;
+            if (!isEdit && !checkPerm('colaboradores', 'create')) return;
+
             const name = document.getElementById('empName').value;
             const role = document.getElementById('empRole').value;
             const admission = document.getElementById('empAdm').value;
             
             if(!name || !role || !admission) return Swal.fire('Aviso', 'Preencha Nome, Cargo e Admissão (*).', 'warning');
 
-            const isEdit = !!id;
-
-            Swal.fire({title: 'Processando Dados e Anexos...', html: 'Por favor, aguarde.', allowOutsideClick: false, didOpen: () => Swal.showLoading()});
+            Swal.fire({title: 'A Processar Dados...', html: 'Por favor, aguarde.', allowOutsideClick: false, didOpen: () => Swal.showLoading()});
 
             try {
-                // Processa todos os arquivos adicionados (Upload/Conversão) de forma paralela
                 const processedAttachments = await Promise.all(tempEmpAttachments.map(att => processSingleEmpFile(att)));
 
                 const empObj = { 
@@ -778,26 +652,23 @@
                     attachments: processedAttachments
                 };
                 
-                // Limpeza do antigo "attachment" para quem já possuía e foi migrado
-                delete empObj.attachment;
-                
                 await dbSave('employees', empObj.id, empObj);
-                addLog('Colaboradores', isEdit ? 'Edição' : 'Criação', `Perfil de "${name}" salvo com ${processedAttachments.length} anexo(s).`);
+                addLog('Colaboradores', isEdit ? 'Edição' : 'Criação', `Perfil de "${name}" salvo.`);
                 
                 closeModal(); 
                 renderColaboradores(document.getElementById('app-content'));
-                Swal.fire('Sucesso!', 'Dados e anexos salvos com sucesso.', 'success');
+                Swal.fire('Sucesso!', 'Dados guardados com sucesso.', 'success');
             } catch (error) {
                 console.error(error);
-                Swal.fire('Erro no Processamento', error.message || 'Ocorreu um problema ao salvar os arquivos.', 'error');
+                Swal.fire('Erro no Processamento', error.message || 'Ocorreu um problema ao salvar.', 'error');
             }
         }
 
         function deleteEmployee(id) {
+            if (!checkPerm('colaboradores', 'delete')) return Swal.fire('Acesso Negado', 'Sem permissão para excluir.', 'error');
             const emp = state.employees.find(e => e.id === id);
             if (!emp) return;
 
-            // Verificação de Integridade Relacional (Regra ISO 9001)
             const hasAttendance = state.attendanceLists.some(l => l.attendees && l.attendees.includes(id));
             const hasEffectiveness = state.effectivenessEvaluations.some(e => e.empId === id);
             const hasSkills = state.employeeSkills.some(e => e.empId === id && (e.req > 0 || e.actual > 0));
@@ -805,13 +676,11 @@
 
             if (hasAttendance || hasEffectiveness || hasSkills || hasPerformance) {
                 Swal.fire({
-                    title: 'Ação Restrita (ISO 9001)',
-                    html: `O colaborador <strong>${emp.name}</strong> possui históricos no sistema.<br>Para manter a integridade, ele não pode ser excluído.<br><br>Deseja alterá-lo para <strong>INATIVO</strong>?`,
-                    icon: 'warning', showCancelButton: true, confirmButtonColor: '#f59e0b', confirmButtonText: 'Sim, Inativar'
+                    title: 'Ação Restrita', html: `Possui históricos no sistema. Deseja alterá-lo para <strong>INATIVO</strong>?`, icon: 'warning', showCancelButton: true, confirmButtonColor: '#f59e0b', confirmButtonText: 'Sim, Inativar'
                 }).then((result) => {
                     if (result.isConfirmed) {
                         emp.status = 'Inativo'; dbSave('employees', emp.id, emp);
-                        addLog('Colaboradores', 'Inativação', `"${emp.name}" inativado para preservação de histórico.`);
+                        addLog('Colaboradores', 'Inativação', `"${emp.name}" inativado.`);
                         renderColaboradores(document.getElementById('app-content'));
                     }
                 });
@@ -819,93 +688,48 @@
             }
 
             requirePasswordForAction(() => {
-                dbDelete('employees', id);
-                addLog('Colaboradores', 'Exclusão', `O colaborador "${emp.name}" foi removido.`);
-                renderColaboradores(document.getElementById('app-content'));
-                Swal.fire('Excluído!', '', 'success');
+                dbDelete('employees', id); addLog('Colaboradores', 'Exclusão', `O colaborador "${emp.name}" foi removido.`); renderColaboradores(document.getElementById('app-content')); Swal.fire('Excluído!', '', 'success');
             });
         }
 
-        // --- DOSSIÊ DE TREINAMENTOS (Leitura do Histórico) ---
+        // --- DOSSIÊ DE TREINAMENTOS ---
         function viewAttachment(listId) {
             const list = state.attendanceLists.find(l => l.id === listId);
             if (!list || !list.attachment) return;
             if (list.attachment.url) window.open(list.attachment.url, '_blank');
-            else if (list.attachment.data) {
-                const link = document.createElement('a'); link.href = list.attachment.data; link.download = list.attachment.name; document.body.appendChild(link); link.click(); document.body.removeChild(link);
-            }
+            else if (list.attachment.data) { const link = document.createElement('a'); link.href = list.attachment.data; link.download = list.attachment.name; document.body.appendChild(link); link.click(); document.body.removeChild(link); }
         }
 
         function viewTrainingHistory(empId, trainingId) {
             const emp = state.employees.find(e => e.id === empId); const tr = state.trainings.find(t => t.id === trainingId);
             if(!emp || !tr) return;
-
             const parts = state.attendanceLists.filter(l => l.trainingId === trainingId && l.attendees.includes(empId)).sort((a, b) => new Date(b.date) - new Date(a.date));
             if (parts.length === 0) return;
 
-            let html = `
-                <div class="mb-4 text-left"><p class="text-sm text-gray-500">Colaborador: <strong class="text-gray-800">${emp.name}</strong></p></div>
-                <div class="overflow-x-auto text-left border border-gray-200 rounded-lg custom-scrollbar max-h-64">
-                <table class="w-full text-sm border-collapse min-w-[500px]">
-                    <thead><tr class="bg-gray-50 border-b text-xs text-gray-500 uppercase tracking-wider">
-                        <th class="p-3 font-medium">Data Realização</th><th class="p-3 font-medium">Instrutor</th><th class="p-3 font-medium text-center">Eficácia</th><th class="p-3 font-medium text-center">Evidência</th>
-                    </tr></thead><tbody class="divide-y divide-gray-100">`;
+            let html = `<div class="mb-4 text-left"><p class="text-sm text-gray-500">Colaborador: <strong class="text-gray-800">${emp.name}</strong></p></div><div class="overflow-x-auto text-left border rounded-lg custom-scrollbar max-h-64"><table class="w-full text-sm border-collapse min-w-[500px]"><thead><tr class="bg-gray-50 border-b text-xs text-gray-500 uppercase tracking-wider"><th class="p-3">Data Realização</th><th class="p-3">Instrutor</th><th class="p-3 text-center">Eficácia</th><th class="p-3 text-center">Evidência</th></tr></thead><tbody class="divide-y divide-gray-100">`;
 
             parts.forEach((p, index) => {
-                const isLatest = index === 0;
-                const evalRecord = state.effectivenessEvaluations.find(e => e.recordId === p.id && e.empId === empId);
+                const isLatest = index === 0; const evalRecord = state.effectivenessEvaluations.find(e => e.recordId === p.id && e.empId === empId);
                 let efStatus = 'Pendente'; let efClass = 'bg-amber-100 text-amber-700';
-                if (evalRecord) {
-                    if (evalRecord.status === 'Eficaz') { efStatus = 'Eficaz'; efClass = 'bg-green-100 text-green-700'; }
-                    else if (evalRecord.status === 'Ineficaz') { efStatus = 'Não Eficaz'; efClass = 'bg-red-100 text-red-700'; }
-                }
-                
+                if (evalRecord) { if (evalRecord.status === 'Eficaz') { efStatus = 'Eficaz'; efClass = 'bg-green-100 text-green-700'; } else if (evalRecord.status === 'Ineficaz') { efStatus = 'Não Eficaz'; efClass = 'bg-red-100 text-red-700'; } }
                 let anexoBtn = p.attachment ? `<button onclick="viewAttachment(${p.id})" class="text-blue-600 hover:text-blue-800"><i data-lucide="paperclip" class="w-4 h-4 inline"></i></button>` : '-';
-
-                html += `<tr class="hover:bg-gray-50 ${isLatest ? 'bg-blue-50/40' : ''}">
-                    <td class="p-3 text-gray-800 font-medium">${formatDate(p.date)} ${isLatest ? '<span class="ml-2 px-1 py-0.5 bg-blue-100 text-blue-700 text-[9px] rounded uppercase">Atual</span>' : ''}</td>
-                    <td class="p-3 text-gray-600">${p.instructor || '-'}</td>
-                    <td class="p-3 text-center"><span class="px-2 py-0.5 rounded-full text-[10px] font-bold ${efClass}">${efStatus}</span></td>
-                    <td class="p-3 text-center">${anexoBtn}</td>
-                </tr>`;
+                html += `<tr class="hover:bg-gray-50 ${isLatest ? 'bg-blue-50/40' : ''}"><td class="p-3 text-gray-800 font-medium">${formatDate(p.date)} ${isLatest ? '<span class="ml-2 px-1 py-0.5 bg-blue-100 text-blue-700 text-[9px] rounded uppercase">Atual</span>' : ''}</td><td class="p-3 text-gray-600">${p.instructor || '-'}</td><td class="p-3 text-center"><span class="px-2 py-0.5 rounded-full text-[10px] font-bold ${efClass}">${efStatus}</span></td><td class="p-3 text-center">${anexoBtn}</td></tr>`;
             });
-            html += `</tbody></table></div>`;
-
-            Swal.fire({ title: `<h3 class="text-lg font-bold text-gray-800 border-b pb-3"><i data-lucide="history" class="w-5 h-5 inline mr-2 text-blue-600"></i> Histórico de Renovação</h3>`, html: html, width: '700px', showCloseButton: true, showConfirmButton: false, didOpen: () => { if(window.lucide) window.lucide.createIcons(); } });
+            Swal.fire({ title: `<h3 class="text-lg font-bold text-gray-800 border-b pb-3"><i data-lucide="history" class="w-5 h-5 inline mr-2 text-blue-600"></i> Histórico de Renovação</h3>`, html: html + `</tbody></table></div>`, width: '700px', showCloseButton: true, showConfirmButton: false, didOpen: () => { if(window.lucide) window.lucide.createIcons(); } });
         }
 
         function viewPerformanceHistory(empId) {
             const emp = state.employees.find(e => e.id === empId); if(!emp) return;
             const reviews = state.performanceReviews.filter(r => r.empId === empId).sort((a, b) => new Date(b.date) - new Date(a.date));
             if (reviews.length === 0) return Swal.fire('Aviso', 'Sem avaliações de desempenho.', 'info');
+            let allSkillsMap = new Map(); reviews.forEach(r => { if(r.skills) r.skills.forEach(s => allSkillsMap.set(s.skillId, s.skillName)); });
 
-            let allSkillsMap = new Map();
-            reviews.forEach(r => { if(r.skills) r.skills.forEach(s => allSkillsMap.set(s.skillId, s.skillName)); });
-
-            let html = `
-                <div class="text-left mb-4"><p class="text-sm text-gray-500">Acompanhamento: <strong class="text-gray-800">${emp.name}</strong></p></div>
-                <div class="overflow-x-auto border border-gray-200 rounded-lg custom-scrollbar">
-                    <table class="w-full text-left border-collapse text-sm">
-                        <thead><tr class="bg-gray-50 border-b text-xs text-gray-500 uppercase"><th class="p-3">Competência Avaliada</th>${reviews.map((r, index) => `<th class="p-3 text-center border-l bg-white">${formatDate(r.date)}${index===0?' <br><span class="text-[9px] bg-emerald-100 text-emerald-700 px-1 rounded">Atual</span>':''}</th>`).join('')}</tr></thead>
-                        <tbody class="divide-y divide-gray-100">`;
+            let html = `<div class="text-left mb-4"><p class="text-sm text-gray-500">Acompanhamento: <strong class="text-gray-800">${emp.name}</strong></p></div><div class="overflow-x-auto border border-gray-200 rounded-lg custom-scrollbar"><table class="w-full text-left border-collapse text-sm"><thead><tr class="bg-gray-50 border-b text-xs text-gray-500 uppercase"><th class="p-3">Competência Avaliada</th>${reviews.map((r, index) => `<th class="p-3 text-center border-l bg-white">${formatDate(r.date)}${index===0?' <br><span class="text-[9px] bg-emerald-100 text-emerald-700 px-1 rounded">Atual</span>':''}</th>`).join('')}</tr></thead><tbody class="divide-y divide-gray-100">`;
 
             if(allSkillsMap.size > 0) {
-                allSkillsMap.forEach((skillName, skillId) => {
-                    html += `<tr><td class="p-3 font-medium">${skillName}</td>`;
-                    reviews.forEach(r => { const sk = r.skills ? r.skills.find(x => x.skillId === skillId) : null; const score = sk && sk.score > 0 ? sk.score : '-'; html += `<td class="p-3 text-center border-l font-bold ${score !== '-' ? 'text-blue-600' : 'text-gray-300'}">${score}</td>`; });
-                    html += `</tr>`;
-                });
+                allSkillsMap.forEach((skillName, skillId) => { html += `<tr><td class="p-3 font-medium">${skillName}</td>`; reviews.forEach(r => { const sk = r.skills ? r.skills.find(x => x.skillId === skillId) : null; const score = sk && sk.score > 0 ? sk.score : '-'; html += `<td class="p-3 text-center border-l font-bold ${score !== '-' ? 'text-blue-600' : 'text-gray-300'}">${score}</td>`; }); html += `</tr>`; });
             }
-
-            html += `
-                        <tr class="bg-gray-100/60 border-t-2">
-                            <td class="p-3 font-bold text-right text-xs uppercase">Média Global:</td>
-                            ${reviews.map(r => `<td class="p-3 text-center border-l font-black text-base ${!r.minScore ? 'text-blue-700' : (r.score >= r.minScore ? 'text-green-600' : 'text-red-600')}">${r.score}</td>`).join('')}
-                        </tr>
-                    </tbody>
-                </table>
-            </div>`;
-
+            html += `<tr class="bg-gray-100/60 border-t-2"><td class="p-3 font-bold text-right text-xs uppercase">Média Global:</td>${reviews.map(r => `<td class="p-3 text-center border-l font-black text-base ${!r.minScore ? 'text-blue-700' : (r.score >= r.minScore ? 'text-green-600' : 'text-red-600')}">${r.score}</td>`).join('')}</tr></tbody></table></div>`;
             Swal.fire({ title: `<h3 class="text-lg font-bold border-b pb-3"><i data-lucide="bar-chart-2" class="w-5 h-5 inline mr-2 text-emerald-600"></i> Evolução Anual</h3>`, html: html, width: '850px', showCloseButton: true, showConfirmButton: false, didOpen: () => { if(window.lucide) window.lucide.createIcons(); } });
         }
 
@@ -917,7 +741,6 @@
             const processTraining = (tId, isMandatory) => {
                 if (processedIds.includes(tId)) return; processedIds.push(tId);
                 const tr = state.trainings.find(t => t.id === tId); if(!tr) return;
-                
                 const parts = state.attendanceLists.filter(l => l.trainingId === tId && l.attendees.includes(empId)).sort((a, b) => new Date(b.date) - new Date(a.date));
                 
                 let status = isMandatory ? 'Não realizado' : 'Realizado'; let statusClass = isMandatory ? 'bg-red-100 text-red-800' : 'bg-blue-100 text-blue-800';
@@ -941,7 +764,6 @@
                         if(new Date() > val) { status = 'Vencido'; statusClass = 'bg-orange-100 text-orange-800'; } else { status = 'Em dia'; statusClass = 'bg-green-100 text-green-800'; }
                     } else { status = 'Em dia'; statusClass = 'bg-green-100 text-green-800'; valDate = 'Indeterminado'; }
                 } else if (!isMandatory) return;
-
                 dossierTrainings.push({ tId, empId, trName: tr.title, isMandatory, status, statusClass, lastDate, valDate, listId, hasAttachment, efStatus, efClass, historyCount });
             };
 
@@ -979,18 +801,34 @@
 
         // ================= 2. CARGOS =================
         function renderCargos(container) {
+            if (!checkPerm('cargos', 'view')) {
+                container.innerHTML = '<div class="text-center py-10 text-red-600 font-bold"><i data-lucide="shield-alert" class="w-12 h-12 mx-auto mb-2"></i> Acesso Negado ao módulo de Cargos.</div>';
+                if(window.lucide) window.lucide.createIcons();
+                return;
+            }
+
             container.innerHTML = `
                 <div class="bg-white rounded-xl shadow border p-6">
-                    <div class="flex justify-between items-center mb-4"><h3 class="text-lg font-semibold">Descrições de Cargo</h3><button onclick="openRoleModal()" class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm"><i data-lucide="plus" class="w-4 h-4 inline mr-1"></i> Novo Cargo</button></div>
+                    <div class="flex justify-between items-center mb-4"><h3 class="text-lg font-semibold">Descrições de Cargo</h3>
+                    ${checkPerm('cargos', 'create') ? `<button onclick="openRoleModal()" class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm"><i data-lucide="plus" class="w-4 h-4 inline mr-1"></i> Novo Cargo</button>` : ''}
+                    </div>
                     <div class="overflow-x-auto">
                         <table class="w-full text-left text-sm"><tr class="bg-gray-50 border-b"><th class="p-3">Cargo</th><th class="p-3">Missão</th><th class="p-3 text-center">Ações</th></tr>
-                        ${state.roles.map(r => `<tr class="border-b hover:bg-gray-50"><td class="p-3 font-medium">${r.name}</td><td class="p-3 text-gray-500">${r.desc||'-'}</td><td class="p-3 text-center"><button onclick="openRoleModal(${r.id})" class="text-blue-500 mx-1"><i data-lucide="edit" class="w-4 h-4"></i></button><button onclick="deleteRole(${r.id})" class="text-red-500 mx-1"><i data-lucide="trash-2" class="w-4 h-4"></i></button></td></tr>`).join('')}
+                        ${state.roles.map(r => `<tr class="border-b hover:bg-gray-50"><td class="p-3 font-medium">${r.name}</td><td class="p-3 text-gray-500">${r.desc||'-'}</td>
+                        <td class="p-3 text-center">
+                            ${checkPerm('cargos', 'edit') ? `<button onclick="openRoleModal(${r.id})" class="text-blue-500 mx-1"><i data-lucide="edit" class="w-4 h-4"></i></button>` : ''}
+                            ${checkPerm('cargos', 'delete') ? `<button onclick="deleteRole(${r.id})" class="text-red-500 mx-1"><i data-lucide="trash-2" class="w-4 h-4"></i></button>` : ''}
+                        </td></tr>`).join('') || '<tr><td colspan="3" class="p-4 text-center text-gray-500">Nenhum cargo.</td></tr>'}
                         </table>
                     </div>
                 </div>`;
+            if(window.lucide) window.lucide.createIcons();
         }
 
         function openRoleModal(id = null) {
+            if (id && !checkPerm('cargos', 'edit')) return Swal.fire('Acesso Negado', 'Sem permissão para editar cargos.', 'error');
+            if (!id && !checkPerm('cargos', 'create')) return Swal.fire('Acesso Negado', 'Sem permissão para criar cargos.', 'error');
+
             const role = id ? state.roles.find(r => r.id === id) : { name: '', desc: '', skillIds: [], trainingIds: [] };
             openModal(id?'Editar Cargo':'Novo Cargo', `
                 <input type="hidden" id="roleId" value="${id||''}">
@@ -1000,34 +838,53 @@
                     
                     <div class="border-t pt-3"><label class="block text-sm font-bold mb-1 text-blue-700">Habilidades Exigidas</label>
                         <div class="flex gap-2 mb-2"><select id="roleSkillSelect" class="flex-1 border p-2 rounded"><option value="">Adicionar...</option>${state.skills.filter(s => !(role.skillIds || []).includes(s.id)).map(s => `<option value="${s.id}">${s.name}</option>`).join('')}</select><button type="button" onclick="addSkillToRole()" class="bg-gray-100 px-3 rounded">Add</button></div>
-                        <div id="roleSkillsContainer" class="flex flex-wrap gap-1">${(role.skillIds||[]).map(sId => { const s = state.skills.find(x=>x.id===sId); return s ? `<span class="bg-blue-50 border text-blue-800 px-2 py-0.5 rounded text-xs sk-badge" data-id="${s.id}">${s.name} <button onclick="this.parentElement.remove()" class="text-blue-500 ml-1">&times;</button></span>` : ''; }).join('')}</div>
+                        <div id="roleSkillsContainer" class="flex flex-wrap gap-1">${(role.skillIds||[]).map(sId => { const s = state.skills.find(x=>x.id===sId); return s ? `<span class="bg-blue-50 border text-blue-800 px-2 py-0.5 rounded text-xs sk-badge" data-id="${s.id}">${s.name} <button type="button" onclick="removeSkillFromRole(this)" class="text-blue-500 ml-1">&times;</button></span>` : ''; }).join('')}</div>
                     </div>
 
                     <div class="border-t pt-3"><label class="block text-sm font-bold mb-1 text-purple-700">Treinamentos Obrigatórios</label>
                         <div class="flex gap-2 mb-2"><select id="roleTrSelect" class="flex-1 border p-2 rounded"><option value="">Adicionar...</option>${state.trainings.filter(t => !(role.trainingIds || []).includes(t.id)).map(t => `<option value="${t.id}">${t.title}</option>`).join('')}</select><button type="button" onclick="addTrToRole()" class="bg-gray-100 px-3 rounded">Add</button></div>
-                        <div id="roleTrContainer" class="flex flex-wrap gap-1">${(role.trainingIds||[]).map(tId => { const t = state.trainings.find(x=>x.id===tId); return t ? `<span class="bg-purple-50 border text-purple-800 px-2 py-0.5 rounded text-xs tr-badge" data-id="${t.id}">${t.title} <button onclick="this.parentElement.remove()" class="text-purple-500 ml-1">&times;</button></span>` : ''; }).join('')}</div>
+                        <div id="roleTrContainer" class="flex flex-wrap gap-1">${(role.trainingIds||[]).map(tId => { const t = state.trainings.find(x=>x.id===tId); return t ? `<span class="bg-purple-50 border text-purple-800 px-2 py-0.5 rounded text-xs tr-badge" data-id="${t.id}">${t.title} <button type="button" onclick="removeTrainingFromRole(this)" class="text-purple-500 ml-1">&times;</button></span>` : ''; }).join('')}</div>
                     </div>
                 </div>
             `, `<button onclick="saveRole()" class="bg-blue-600 text-white px-4 py-2 rounded">Salvar</button>`);
         }
 
-        function addSkillToRole() { const sel = document.getElementById('roleSkillSelect'); if(!sel.value) return; document.getElementById('roleSkillsContainer').insertAdjacentHTML('beforeend', `<span class="bg-blue-50 border text-blue-800 px-2 py-0.5 rounded text-xs sk-badge" data-id="${sel.value}">${sel.options[sel.selectedIndex].text} <button onclick="this.parentElement.remove()" class="text-blue-500 ml-1">&times;</button></span>`); sel.options[sel.selectedIndex].remove(); }
-        function addTrToRole() { const sel = document.getElementById('roleTrSelect'); if(!sel.value) return; document.getElementById('roleTrContainer').insertAdjacentHTML('beforeend', `<span class="bg-purple-50 border text-purple-800 px-2 py-0.5 rounded text-xs tr-badge" data-id="${sel.value}">${sel.options[sel.selectedIndex].text} <button onclick="this.parentElement.remove()" class="text-purple-500 ml-1">&times;</button></span>`); sel.options[sel.selectedIndex].remove(); }
+        function addSkillToRole() { const sel = document.getElementById('roleSkillSelect'); if(!sel.value) return; document.getElementById('roleSkillsContainer').insertAdjacentHTML('beforeend', `<span class="bg-blue-50 border text-blue-800 px-2 py-0.5 rounded text-xs sk-badge" data-id="${sel.value}">${sel.options[sel.selectedIndex].text} <button type="button" onclick="removeSkillFromRole(this)" class="text-blue-500 ml-1">&times;</button></span>`); sel.options[sel.selectedIndex].remove(); }
+        function removeSkillFromRole(btn) { const badge = btn.parentElement; const id = parseInt(badge.getAttribute('data-id')); badge.remove(); const s = state.skills.find(x=>x.id===id); if(s) document.getElementById('roleSkillSelect').insertAdjacentHTML('beforeend', `<option value="${s.id}">${s.name}</option>`); }
+        function addTrToRole() { const sel = document.getElementById('roleTrSelect'); if(!sel.value) return; document.getElementById('roleTrContainer').insertAdjacentHTML('beforeend', `<span class="bg-purple-50 border text-purple-800 px-2 py-0.5 rounded text-xs tr-badge" data-id="${sel.value}">${sel.options[sel.selectedIndex].text} <button type="button" onclick="removeTrainingFromRole(this)" class="text-purple-500 ml-1">&times;</button></span>`); sel.options[sel.selectedIndex].remove(); }
+        function removeTrainingFromRole(btn) { const badge = btn.parentElement; const id = parseInt(badge.getAttribute('data-id')); badge.remove(); const t = state.trainings.find(x=>x.id===id); if(t) document.getElementById('roleTrSelect').insertAdjacentHTML('beforeend', `<option value="${t.id}">${t.title}</option>`); }
 
         function saveRole() {
-            const id = document.getElementById('roleId').value; const name = document.getElementById('roleName').value; if(!name) return;
+            const id = document.getElementById('roleId').value; 
+            if (id && !checkPerm('cargos', 'edit')) return;
+            if (!id && !checkPerm('cargos', 'create')) return;
+
+            const name = document.getElementById('roleName').value; if(!name) return;
             const skillIds = Array.from(document.querySelectorAll('#roleSkillsContainer .sk-badge')).map(b => parseInt(b.getAttribute('data-id')));
             const trainingIds = Array.from(document.querySelectorAll('#roleTrContainer .tr-badge')).map(b => parseInt(b.getAttribute('data-id')));
             const obj = { id: id ? parseInt(id) : generateId(state.roles), name, desc: document.getElementById('roleDesc').value, skillIds, trainingIds };
             dbSave('roles', obj.id, obj); closeModal(); renderCargos(document.getElementById('app-content')); Swal.fire('Salvo!', '', 'success');
         }
 
-        function deleteRole(id) { if(state.employees.some(e => e.role === state.roles.find(r=>r.id===id).name)) return Swal.fire('Erro', 'Cargo em uso.', 'error'); requirePasswordForAction(() => { dbDelete('roles', id); renderCargos(document.getElementById('app-content')); }); }
+        function deleteRole(id) { 
+            if (!checkPerm('cargos', 'delete')) return Swal.fire('Acesso Negado', 'Sem permissão para excluir.', 'error');
+            if(state.employees.some(e => e.role === state.roles.find(r=>r.id===id).name)) return Swal.fire('Erro', 'Cargo em uso.', 'error'); 
+            requirePasswordForAction(() => { dbDelete('roles', id); renderCargos(document.getElementById('app-content')); }); 
+        }
 
         // ================= 3. HABILIDADES =================
         function renderHabilidades(container) {
-            container.innerHTML = `<div class="bg-white rounded-xl shadow border p-6 mb-6"><div class="flex justify-between items-center mb-6"><h3 class="text-lg font-semibold">Matriz de Competências por Cargo</h3><div><button onclick="openManageSkillsModal()" class="bg-gray-100 px-4 py-2 rounded mr-2 text-sm"><i data-lucide="list" class="w-4 h-4 inline"></i> Catálogo</button><button onclick="openSkillModal()" class="bg-blue-600 text-white px-4 py-2 rounded text-sm"><i data-lucide="plus" class="w-4 h-4 inline"></i> Nova Habilidade Base</button></div></div><div class="mb-6 bg-blue-50 p-4 rounded-lg"><select id="matrixRoleFilter" onchange="updateMatrixView()" class="w-full md:w-1/3 border p-2 rounded"><option value="">-- Selecione o Cargo --</option>${state.roles.map(r => `<option value="${r.name}" ${currentMatrixRole === r.name ? 'selected' : ''}>${r.name}</option>`).join('')}</select></div><div id="matrixTableContainer" class="overflow-x-auto hidden border rounded-lg"></div><div id="matrixEmptyState" class="text-center py-10 bg-gray-50 text-gray-500 rounded">Selecione um cargo acima.</div></div>`;
+            if (!checkPerm('habilidades', 'view')) {
+                container.innerHTML = '<div class="text-center py-10 text-red-600 font-bold"><i data-lucide="shield-alert" class="w-12 h-12 mx-auto mb-2"></i> Acesso Negado ao módulo de Habilidades.</div>';
+                if(window.lucide) window.lucide.createIcons();
+                return;
+            }
+
+            container.innerHTML = `<div class="bg-white rounded-xl shadow border p-6 mb-6"><div class="flex justify-between items-center mb-6"><h3 class="text-lg font-semibold">Matriz de Competências por Cargo</h3><div><button onclick="openManageSkillsModal()" class="bg-gray-100 px-4 py-2 rounded mr-2 text-sm"><i data-lucide="list" class="w-4 h-4 inline"></i> Catálogo</button>
+            ${checkPerm('habilidades', 'create') ? `<button onclick="openSkillModal()" class="bg-blue-600 text-white px-4 py-2 rounded text-sm"><i data-lucide="plus" class="w-4 h-4 inline"></i> Nova Habilidade Base</button>` : ''}
+            </div></div><div class="mb-6 bg-blue-50 p-4 rounded-lg"><select id="matrixRoleFilter" onchange="updateMatrixView()" class="w-full md:w-1/3 border p-2 rounded"><option value="">-- Selecione o Cargo --</option>${state.roles.map(r => `<option value="${r.name}" ${currentMatrixRole === r.name ? 'selected' : ''}>${r.name}</option>`).join('')}</select></div><div id="matrixTableContainer" class="overflow-x-auto hidden border rounded-lg"></div><div id="matrixEmptyState" class="text-center py-10 bg-gray-50 text-gray-500 rounded">Selecione um cargo acima.</div></div>`;
             if(currentMatrixRole) updateMatrixView();
+            if(window.lucide) window.lucide.createIcons();
         }
 
         function updateMatrixView() {
@@ -1043,30 +900,150 @@
         }
 
         function openEvalSkillModal(empId, skillId) {
+            if (!checkPerm('habilidades', 'edit')) return Swal.fire('Acesso Negado', 'Sem permissão para alterar metas na matriz.', 'error');
             const es = state.employeeSkills.find(x=>x.empId===empId && x.skillId===skillId) || {req:0, actual:0};
             openModal('Ajustar Meta da Função', `<div class="mb-3 text-sm text-blue-700 bg-blue-50 p-3 rounded">A Nota Atual só é modificada pelo Módulo de Avaliação de Desempenho. Aqui define-se a META para a função.</div><div class="grid grid-cols-2 gap-4"><div><label class="block text-sm font-bold mb-1">Nota Exigida (Meta)</label><input type="number" id="skReq" value="${es.req}" class="w-full border p-2 rounded" step="0.5" min="0" max="5"></div><div><label class="block text-sm font-bold mb-1 text-gray-400">Nota Atual</label><input type="number" value="${es.actual}" class="w-full border p-2 rounded bg-gray-100 text-gray-500" disabled></div></div>`, `<button onclick="dbSave('employeeSkills', '${empId}_${skillId}', {empId:${empId}, skillId:${skillId}, req:parseFloat(document.getElementById('skReq').value)||0, actual:${es.actual}}); closeModal(); setTimeout(updateMatrixView, 200);" class="bg-blue-600 text-white px-4 py-2 rounded">Salvar Meta</button>`);
         }
 
-        function openManageSkillsModal() { openModal('Catálogo de Habilidades Base', `<table class="w-full text-left text-sm border-collapse"><tr class="bg-gray-50 border-b"><th class="p-3">Habilidade</th><th class="p-3 text-center">Ações</th></tr>${state.skills.map(s=>`<tr class="border-b"><td class="p-3 font-medium">${s.name}</td><td class="p-3 text-center"><button onclick="openSkillModal(${s.id})" class="text-blue-500 mx-1"><i data-lucide="edit" class="w-4 h-4"></i></button><button onclick="deleteSkill(${s.id})" class="text-red-500 mx-1"><i data-lucide="trash-2" class="w-4 h-4"></i></button></td></tr>`).join('')}</table>`, `<button onclick="closeModal()" class="px-4 py-2 bg-gray-100 rounded">Fechar</button>`); }
-        function openSkillModal(id=null) { const s = id ? state.skills.find(x=>x.id===id) : {name:'', desc:''}; openModal(id?'Editar Habilidade':'Nova Habilidade', `<input type="hidden" id="skId" value="${id||''}"><div class="mb-3"><label class="block text-sm font-bold">Nome *</label><input type="text" id="skName" value="${s.name}" class="w-full border p-2 rounded"></div><div><label class="block text-sm font-bold">Critérios</label><textarea id="skDesc" class="w-full border p-2 rounded" rows="3">${s.desc||''}</textarea></div>`, `<button onclick="saveSkill()" class="bg-blue-600 text-white px-4 py-2 rounded">Salvar</button>`); }
-        function saveSkill() { const id = document.getElementById('skId').value; const name = document.getElementById('skName').value; if(!name) return; const obj = {id:id?parseInt(id):generateId(state.skills), name, desc:document.getElementById('skDesc').value}; dbSave('skills', obj.id, obj); closeModal(); renderHabilidades(document.getElementById('app-content')); if(document.getElementById('modal-title').innerText.includes('Catálogo')) openManageSkillsModal(); }
-        function deleteSkill(id) { if(state.roles.some(r=>r.skillIds&&r.skillIds.includes(id))) return Swal.fire('Erro', 'Habilidade vinculada a cargo.', 'error'); requirePasswordForAction(() => { dbDelete('skills', id); openManageSkillsModal(); renderHabilidades(document.getElementById('app-content')); }); }
+        function openManageSkillsModal() { 
+            openModal('Catálogo de Habilidades Base', `<table class="w-full text-left text-sm border-collapse"><tr class="bg-gray-50 border-b"><th class="p-3">Habilidade</th><th class="p-3 text-center">Ações</th></tr>${state.skills.map(s=>`<tr class="border-b"><td class="p-3 font-medium">${s.name}</td><td class="p-3 text-center">
+                ${checkPerm('habilidades', 'edit') ? `<button onclick="openSkillModal(${s.id})" class="text-blue-500 mx-1"><i data-lucide="edit" class="w-4 h-4"></i></button>` : ''}
+                ${checkPerm('habilidades', 'delete') ? `<button onclick="deleteSkill(${s.id})" class="text-red-500 mx-1"><i data-lucide="trash-2" class="w-4 h-4"></i></button>` : ''}
+            </td></tr>`).join('')}</table>`, `<button onclick="closeModal()" class="px-4 py-2 bg-gray-100 rounded">Fechar</button>`); 
+        }
+        
+        function openSkillModal(id=null) { 
+            if (id && !checkPerm('habilidades', 'edit')) return Swal.fire('Acesso Negado', 'Sem permissão para editar.', 'error');
+            if (!id && !checkPerm('habilidades', 'create')) return Swal.fire('Acesso Negado', 'Sem permissão para criar.', 'error');
+            const s = id ? state.skills.find(x=>x.id===id) : {name:'', desc:''}; openModal(id?'Editar Habilidade':'Nova Habilidade', `<input type="hidden" id="skId" value="${id||''}"><div class="mb-3"><label class="block text-sm font-bold">Nome *</label><input type="text" id="skName" value="${s.name}" class="w-full border p-2 rounded"></div><div><label class="block text-sm font-bold">Critérios</label><textarea id="skDesc" class="w-full border p-2 rounded" rows="3">${s.desc||''}</textarea></div>`, `<button onclick="saveSkill()" class="bg-blue-600 text-white px-4 py-2 rounded">Salvar</button>`); 
+        }
+        
+        function saveSkill() { 
+            const id = document.getElementById('skId').value; 
+            if (id && !checkPerm('habilidades', 'edit')) return;
+            if (!id && !checkPerm('habilidades', 'create')) return;
+            const name = document.getElementById('skName').value; if(!name) return; const obj = {id:id?parseInt(id):generateId(state.skills), name, desc:document.getElementById('skDesc').value}; dbSave('skills', obj.id, obj); closeModal(); renderHabilidades(document.getElementById('app-content')); if(document.getElementById('modal-title').innerText.includes('Catálogo')) openManageSkillsModal(); 
+        }
+        
+        function deleteSkill(id) { 
+            if (!checkPerm('habilidades', 'delete')) return Swal.fire('Acesso Negado', 'Sem permissão para excluir.', 'error');
+            if(state.roles.some(r=>r.skillIds&&r.skillIds.includes(id))) return Swal.fire('Erro', 'Habilidade vinculada a cargo.', 'error'); requirePasswordForAction(() => { dbDelete('skills', id); openManageSkillsModal(); renderHabilidades(document.getElementById('app-content')); }); 
+        }
 
         // ================= 4. TREINAMENTOS (CATÁLOGO) =================
         function renderTreinamentos(container) {
-            container.innerHTML = `<div class="bg-white rounded-xl shadow border p-6"><div class="flex justify-between items-center mb-4"><h3 class="text-lg font-semibold">Catálogo de Treinamentos</h3><button onclick="openTrainingModal()" class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm"><i data-lucide="plus" class="w-4 h-4 inline mr-1"></i> Novo Treinamento</button></div><table class="w-full text-left text-sm"><tr class="bg-gray-50 border-b"><th class="p-3">Título</th><th class="p-3">Validade (Meses)</th><th class="p-3 text-center">Ações</th></tr>${state.trainings.map(t=>`<tr class="border-b hover:bg-gray-50"><td class="p-3 font-medium">${t.title}</td><td class="p-3">${t.periodicityMonths||'Indeterminado'}</td><td class="p-3 text-center"><button onclick="openTrainingModal(${t.id})" class="text-blue-500 mx-1"><i data-lucide="edit" class="w-4 h-4"></i></button><button onclick="deleteTraining(${t.id})" class="text-red-500 mx-1"><i data-lucide="trash-2" class="w-4 h-4"></i></button></td></tr>`).join('')}</table></div>`;
+            if (!checkPerm('treinamentos', 'view')) {
+                container.innerHTML = '<div class="text-center py-10 text-red-600 font-bold"><i data-lucide="shield-alert" class="w-12 h-12 mx-auto mb-2"></i> Acesso Negado ao módulo de Treinamentos.</div>';
+                if(window.lucide) window.lucide.createIcons();
+                return;
+            }
+
+            container.innerHTML = `<div class="bg-white rounded-xl shadow border p-6"><div class="flex justify-between items-center mb-4"><h3 class="text-lg font-semibold">Treinamento</h3>
+            ${checkPerm('treinamentos', 'create') ? `<button onclick="openTrainingModal()" class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm"><i data-lucide="plus" class="w-4 h-4 inline mr-1"></i> Novo Treinamento</button>` : ''}
+            </div><table class="w-full text-left text-sm"><tr class="bg-gray-50 border-b"><th class="p-3">Título</th><th class="p-3">Validade (Meses)</th><th class="p-3 text-center">Ações</th></tr>${state.trainings.map(t=>`<tr class="border-b hover:bg-gray-50"><td class="p-3 font-medium">${t.title}</td><td class="p-3">${t.periodicityMonths||'Indeterminado'}</td><td class="p-3 text-center">
+            ${checkPerm('treinamentos', 'edit') ? `<button onclick="openTrainingModal(${t.id})" class="text-blue-500 mx-1"><i data-lucide="edit" class="w-4 h-4"></i></button>` : ''}
+            ${checkPerm('treinamentos', 'delete') ? `<button onclick="deleteTraining(${t.id})" class="text-red-500 mx-1"><i data-lucide="trash-2" class="w-4 h-4"></i></button>` : ''}
+            </td></tr>`).join('')}</table></div>`;
+            if(window.lucide) window.lucide.createIcons();
         }
 
         function openTrainingModal(id=null) {
-            const tr = id ? state.trainings.find(t=>t.id===id) : {title:'', periodicityMonths:0, content:''};
-            openModal(id?'Editar Treinamento':'Novo Treinamento', `<input type="hidden" id="trId" value="${id||''}"><div class="space-y-3 text-left"><div><label class="block text-sm font-bold">Título *</label><input type="text" id="trTitle" value="${tr.title}" class="w-full border p-2 rounded"></div><div><label class="block text-sm font-bold">Meses de Validade (0 = Sem validade)</label><input type="number" id="trPeriod" value="${tr.periodicityMonths}" class="w-full border p-2 rounded"></div><div><label class="block text-sm font-bold">Conteúdo / Ementa</label><textarea id="trContent" class="w-full border p-2 rounded" rows="3">${tr.content||''}</textarea></div></div>`, `<button onclick="saveTraining()" class="bg-blue-600 text-white px-4 py-2 rounded">Salvar</button>`);
+            if (id && !checkPerm('treinamentos', 'edit')) return Swal.fire('Acesso Negado', 'Sem permissão para editar.', 'error');
+            if (!id && !checkPerm('treinamentos', 'create')) return Swal.fire('Acesso Negado', 'Sem permissão para criar.', 'error');
+            
+            const tr = id ? state.trainings.find(t=>t.id===id) : {title:'', periodicityMonths:0, content:'', roleIds: [], criteria: []};
+            openModal(id?'Editar Treinamento':'Novo Treinamento', `
+                <input type="hidden" id="trId" value="${id||''}">
+                <div class="space-y-3 text-left">
+                    <div><label class="block text-sm font-bold">Título *</label><input type="text" id="trTitle" value="${tr.title}" class="w-full border p-2 rounded"></div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div><label class="block text-sm font-bold">Tipo</label><select id="trType" class="w-full border p-2 rounded"><option value="Interno" ${tr.type === 'Interno' ? 'selected' : ''}>Interno</option><option value="Externo" ${tr.type === 'Externo' ? 'selected' : ''}>Externo</option></select></div>
+                        <div><label class="block text-sm font-bold">Meses de Validade (0 = Sem validade)</label><input type="number" id="trPeriod" value="${tr.periodicityMonths}" class="w-full border p-2 rounded"></div>
+                    </div>
+                    <div><label class="block text-sm font-bold">Conteúdo / Ementa</label><textarea id="trContent" class="w-full border p-2 rounded" rows="2">${tr.content||''}</textarea></div>
+                    
+                    <div class="border-t pt-3"><label class="block font-bold text-blue-700 mb-1">Cargos Associados</label>
+                        <div class="flex gap-2"><select id="trModalRoleSelect" class="flex-1 border p-1.5 rounded"><option value="">Vincular cargo...</option>${state.roles.filter(r => !(tr.roleIds || []).includes(r.id)).map(r => `<option value="${r.id}">${r.name}</option>`).join('')}</select><button type="button" onclick="addRoleToTrainingModal()" class="bg-gray-100 px-3 rounded">Add</button></div>
+                        <div id="trModalRolesContainer" class="flex flex-wrap gap-1 mt-1">${(tr.roleIds || []).map(rId => { const role = state.roles.find(r => r.id === rId); return role ? `<span class="bg-blue-50 text-blue-800 border px-2 py-0.5 rounded text-xs tr-role-badge" data-id="${role.id}">${role.name} <button type="button" onclick="removeRoleFromTrainingModal(this)" class="text-blue-500 ml-1">&times;</button></span>` : ''; }).join('')}</div>
+                    </div>
+                </div>
+            `, `<button onclick="saveTraining()" class="bg-blue-600 text-white px-4 py-2 rounded">Salvar</button>`);
         }
 
-        function saveTraining() { const id = document.getElementById('trId').value; const title = document.getElementById('trTitle').value; if(!title) return; const obj = {id:id?parseInt(id):generateId(state.trainings), title, periodicityMonths:parseInt(document.getElementById('trPeriod').value)||0, content:document.getElementById('trContent').value}; dbSave('trainings', obj.id, obj); closeModal(); renderTreinamentos(document.getElementById('app-content')); Swal.fire('Salvo!', '', 'success'); }
-        function deleteTraining(id) { requirePasswordForAction(()=>{ dbDelete('trainings', id); renderTreinamentos(document.getElementById('app-content')); }); }
+        function addRoleToTrainingModal() { 
+            const s = document.getElementById('trModalRoleSelect'); 
+            if(!s.value) return; 
+            document.getElementById('trModalRolesContainer').insertAdjacentHTML('beforeend', `<span class="bg-blue-50 text-blue-800 border px-2 py-0.5 rounded text-xs tr-role-badge" data-id="${s.value}">${s.options[s.selectedIndex].text} <button type="button" onclick="removeRoleFromTrainingModal(this)" class="text-blue-500 ml-1">&times;</button></span>`); 
+            s.options[s.selectedIndex].remove(); 
+        }
 
-        // Inicializa o sistema após a autenticação
-        auth.onAuthStateChanged((user) => { if (user) { currentUser = user; document.getElementById('user-avatar').innerText = user.email ? user.email.charAt(0).toUpperCase() : 'U'; loadDataFromFirestore(); } else auth.signInAnonymously(); });
+        function removeRoleFromTrainingModal(btn) { 
+            const badge = btn.parentElement; 
+            const id = parseInt(badge.getAttribute('data-id')); 
+            badge.remove(); 
+            const r = state.roles.find(x => x.id === id); 
+            if(r) document.getElementById('trModalRoleSelect').insertAdjacentHTML('beforeend', `<option value="${r.id}">${r.name}</option>`); 
+        }
+
+        function saveTraining() { 
+            const idStr = document.getElementById('trId').value;
+            if (idStr && !checkPerm('treinamentos', 'edit')) return;
+            if (!idStr && !checkPerm('treinamentos', 'create')) return;
+
+            const title = document.getElementById('trTitle').value; if(!title) return; 
+            
+            const roleIds = Array.from(document.querySelectorAll('#trModalRolesContainer .tr-role-badge')).map(b => parseInt(b.getAttribute('data-id')));
+            const id = idStr ? parseInt(idStr) : generateId(state.trainings);
+            
+            const obj = { 
+                id: id, 
+                title, 
+                type: document.getElementById('trType').value, 
+                periodicityMonths: parseInt(document.getElementById('trPeriod').value)||0, 
+                content: document.getElementById('trContent').value, 
+                roleIds 
+            }; 
+            
+            dbSave('trainings', obj.id, obj); 
+            
+            state.roles.forEach(r => {
+                let mod = false; 
+                if(!r.trainingIds) r.trainingIds = [];
+                
+                if(roleIds.includes(r.id) && !r.trainingIds.includes(obj.id)) { 
+                    r.trainingIds.push(obj.id); 
+                    mod = true; 
+                } else if(!roleIds.includes(r.id) && r.trainingIds.includes(obj.id)) { 
+                    r.trainingIds.splice(r.trainingIds.indexOf(obj.id), 1); 
+                    mod = true; 
+                }
+                
+                if(mod) dbSave('roles', r.id, r);
+            });
+
+            closeModal(); 
+            renderTreinamentos(document.getElementById('app-content')); 
+            Swal.fire('Salvo!', '', 'success'); 
+        }
+        
+        function deleteTraining(id) { 
+            if (!checkPerm('treinamentos', 'delete')) return Swal.fire('Acesso Negado', 'Sem permissão para excluir.', 'error');
+            requirePasswordForAction(()=>{ dbDelete('trainings', id); renderTreinamentos(document.getElementById('app-content')); }); 
+        }
+
+        // INICIALIZAÇÃO
+        auth.onAuthStateChanged((user) => { 
+            if (user) { 
+                currentUser = user; 
+                document.getElementById('user-avatar').innerText = user.email ? user.email.charAt(0).toUpperCase() : 'U'; 
+                loadDataFromFirestore(); 
+            } else {
+                auth.signInAnonymously().then(() => {
+                    currentUser = { email: 'Local' };
+                    loadDataFromFirestore();
+                }); 
+            }
+        });
     </script>
 </body>
 </html>
