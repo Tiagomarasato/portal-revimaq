@@ -140,6 +140,15 @@
         const db = firebase.firestore();
         db.settings({ experimentalForceLongPolling: true });
 
+        // ================= CONFIGURAÇÃO DO LOGO PARA IMPRESSÃO =================
+        const LOGO_IMG = "Logo.jpg"; 
+        const getLogoHtml = () => {
+            // Isto garante que o sistema puxa o caminho completo da sua pasta no computador (ex: file:///C:/...)
+            const basePath = window.location.href.substring(0, window.location.href.lastIndexOf('/') + 1);
+            return `<img src="${basePath}${LOGO_IMG}" alt="Revimaq" style="max-width: 140px; max-height: 60px; object-fit: contain;">`;
+        };
+        // =======================================================================
+
         const appId = 'gestao-de-pessoas-49200';
         let currentUser = null;
         let calendarInstance = null; // Instância do FullCalendar
@@ -533,7 +542,7 @@
 
             let h = `<html><head><title>Lista de Presença Agendada</title>${getPrintStyles()}</head><body>
             <div class="doc-header">
-                <div class="logo">LOGOTIPO</div><div class="title-box"><h1>Lista de Presença / Reg. Treinamento</h1></div>
+                <div class="logo">${getLogoHtml()}</div><div class="title-box"><h1>Lista de Presença / Reg. Treinamento</h1></div>
                 <div class="info-box"><div>DOC: SGQ-FOR-001</div><div>DATA: ${formatDate(pt.date)}</div></div>
             </div>
             <table class="info-table">
@@ -562,7 +571,10 @@
                 document.getElementById('user-avatar').innerText = user.email ? user.email.charAt(0).toUpperCase() : 'U'; 
                 loadDataFromFirestore(); 
             } else {
-                auth.signInAnonymously(); 
+                auth.signInAnonymously().then(() => {
+                    currentUser = { email: 'Local' };
+                    loadDataFromFirestore();
+                }); 
             }
         });
     </script>
