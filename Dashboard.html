@@ -14,7 +14,7 @@
     <!-- SweetAlert2 para Modais e Mensagens -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
-    <!-- FIREBASE V8 (A versão blindada) -->
+    <!-- FIREBASE V8 -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
@@ -59,7 +59,10 @@
                     </nav>
                 </div>
                 <div class="flex items-center">
-                    <!-- Link para o Módulo de Cadastros -->
+                    <a href="index.html" class="hidden md:inline-flex items-center px-4 py-2 border border-transparent text-sm font-bold rounded-md shadow-sm text-white bg-slate-800 hover:bg-slate-700 focus:outline-none transition-colors mr-4">
+                        <i data-lucide="arrow-left" class="w-4 h-4 mr-2"></i> PORTAL
+                    </a>
+                    
                     <a href="cadastro.html" class="hidden md:inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-gray-700 bg-gray-100 hover:bg-gray-200 focus:outline-none transition-colors mr-4">
                         <i data-lucide="users" class="w-4 h-4 mr-2"></i> Ir para Cadastros (RH) &rarr;
                     </a>
@@ -70,7 +73,6 @@
                     <div class="h-8 w-8 rounded-full bg-amber-600 flex items-center justify-center text-white font-bold text-sm mr-4" id="user-avatar" title="Usuário logado">
                         --
                     </div>
-                    <!-- Mobile menu button -->
                     <div class="flex items-center md:hidden ml-2">
                         <button type="button" onclick="toggleMobileMenu()" class="inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 focus:outline-none">
                             <i data-lucide="menu" class="w-6 h-6"></i>
@@ -90,6 +92,9 @@
                 <a href="cadastro.html" class="block pl-4 pr-4 py-3 border-l-4 border-transparent text-base font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 border-t border-gray-200 mt-1">
                     <i data-lucide="users" class="w-5 h-5 inline mr-2"></i> Ir para Cadastros &rarr;
                 </a>
+                <a href="index.html" class="block pl-4 pr-4 py-3 border-l-4 border-transparent text-base font-bold text-white bg-slate-800 hover:bg-slate-700 mt-1">
+                    <i data-lucide="arrow-left" class="w-5 h-5 inline mr-2"></i> PORTAL
+                </a>
             </div>
         </div>
     </header>
@@ -103,7 +108,7 @@
         <div class="max-w-7xl mx-auto" id="app-content">
             <div class="flex h-64 w-full items-center justify-center">
                 <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-amber-600"></div>
-                <span class="ml-3 text-gray-500 font-medium">Conectando ao banco de dados...</span>
+                <span class="ml-3 text-gray-500 font-medium">A carregar dados...</span>
             </div>
         </div>
     </main>
@@ -142,7 +147,6 @@
         const db = firebase.firestore();
         const storage = firebase.storage(); 
 
-        // Força a comunicação por polling (Prevenção de bloqueio em C:)
         db.settings({ experimentalForceLongPolling: true });
 
         const appId = 'gestao-de-pessoas-49200';
@@ -162,7 +166,6 @@
                 if(!currentPage) { currentPage = 'dashboard'; navigate(currentPage); }
             }, 3000);
 
-            // Lê cada coleção para construir a inteligência do Dashboard
             const collections = ['roles', 'employees', 'skills', 'employeeSkills', 'trainings', 'attendanceLists', 'effectivenessEvaluations', 'performanceReviews', 'logs'];
             let loadedCount = 0;
 
@@ -202,11 +205,6 @@
         const getEmpName = (id) => { const e = state.employees.find(e => e.id == id); return e ? e.name : 'Desconhecido'; };
         const getTrainingName = (id) => { const t = state.trainings.find(t => t.id == id); return t ? t.title : 'Desconhecido'; };
 
-        function addLog(moduleName, action, details) {
-            const newLog = { id: Date.now() + Math.floor(Math.random() * 1000), module: moduleName, action: action, details: details, timestamp: new Date().toISOString(), user: currentUser ? (currentUser.email || 'Visitante') : 'Sistema' };
-            dbSave('logs', newLog.id, newLog);
-        }
-
         // --- 2. UI HELPERS & NAVIGATION ---
         let currentPage = '';
 
@@ -240,22 +238,20 @@
         }
 
         function showDevInfo() { 
-            Swal.fire({ title: 'Módulo de Operação', text: 'Conectado ao Firebase. Leitura e Escrita Sincronizadas com o Módulo de Cadastros.', icon: 'info' }); 
+            Swal.fire({ title: 'Módulo de Operação', text: 'Conectado ao Firebase. Leitura e Escrita Sincronizadas.', icon: 'info' }); 
         }
 
-        // --- FUNÇÃO GLOBAL DE SEGURANÇA ---
         async function requirePasswordForAction(actionCallback) {
             const user = firebase.auth().currentUser;
             if (!user || user.isAnonymous) {
                 Swal.fire({
-                    title: 'Autenticação (Teste Local)', text: 'Digite a senha mestre "admin" para excluir:', input: 'password', showCancelButton: true, confirmButtonText: 'Excluir', confirmButtonColor: '#d33'
+                    title: 'Autenticação (Teste)', text: 'Digite a senha mestre "admin" para excluir:', input: 'password', showCancelButton: true, confirmButtonText: 'Excluir', confirmButtonColor: '#d33'
                 }).then((result) => {
                     if (result.value === 'admin') actionCallback(); else if (result.isConfirmed) Swal.fire('Erro', 'Senha incorreta.', 'error');
                 });
                 return;
             }
-
-            const { value: password } = await Swal.fire({ title: 'Autenticação de Segurança', text: 'Confirme sua senha:', input: 'password', showCancelButton: true, confirmButtonColor: '#d33', confirmButtonText: 'Confirmar' });
+            const { value: password } = await Swal.fire({ title: 'Segurança', text: 'Confirme sua senha:', input: 'password', showCancelButton: true, confirmButtonColor: '#d33', confirmButtonText: 'Confirmar' });
             if (password) {
                 try { Swal.showLoading(); await firebase.auth().signInWithEmailAndPassword(user.email, password); actionCallback(); } 
                 catch (error) { Swal.fire('Acesso Negado', 'Senha incorreta.', 'error'); }
@@ -275,7 +271,7 @@
             setTimeout(() => { modal.classList.add('hidden'); document.body.classList.remove('modal-open'); }, 200);
         }
 
-        // ================= 3. RENDER FUNCTIONS =================
+        // ================= 3. RENDER FUNCTIONS (DASHBOARD) =================
         function renderDashboard(container) {
             const ativos = state.employees.filter(e => e.status === 'Ativo').length;
             
@@ -291,8 +287,10 @@
             state.employeeSkills.forEach(es => { if(es.actual < es.req) skillGaps++; });
 
             let pendenciasDetalhadas = [];
+            
             state.employees.filter(e => e.status === 'Ativo').forEach(emp => {
-                // 1. Checagem de Treinamentos (Matriz de Habilidades)
+                
+                // 1. CHECAGEM DE TREINAMENTOS (Matriz)
                 const role = state.roles.find(r => r.name === emp.role);
                 if(role && role.trainingIds && role.trainingIds.length > 0) {
                     role.trainingIds.forEach(tId => {
@@ -313,11 +311,67 @@
                                 if(hoje > val) { isPendente = true; motivo = 'Vencido'; color = 'bg-orange-100 text-orange-800'; }
                             }
                         }
-                        if(isPendente) pendenciasDetalhadas.push({ empName: emp.name, trainingName: training.title, motivo, color, empId: emp.id, trainingId: training.id, isDoc: false });
+                        if(isPendente) pendenciasDetalhadas.push({ empName: emp.name, itemName: training.title, motivo, color, empId: emp.id, trainingId: training.id, type: 'treinamento' });
                     });
                 }
 
-                // 2. NOVO: Checagem de Documentos/Anexos (CNH, ASO, Certificados) vencendo em 30 dias ou menos
+                // 2. CHECAGEM DE AVALIAÇÃO DE DESEMPENHO (Com Regra de 30 dias e Período de Experiência)
+                const empReviews = state.performanceReviews.filter(r => r.empId === emp.id).sort((a, b) => new Date(b.date) - new Date(a.date));
+                const today = new Date(); today.setHours(0,0,0,0);
+                const thirtyDaysFromNow = new Date(today); thirtyDaysFromNow.setDate(thirtyDaysFromNow.getDate() + 30);
+                
+                let manualDate = emp.nextReviewDate ? new Date(emp.nextReviewDate + 'T00:00:00') : null;
+                let lastReviewDate = empReviews.length > 0 ? new Date(empReviews[0].date + 'T00:00:00') : null;
+                
+                let isPendente = false;
+                let motivo = '';
+                let color = '';
+
+                if (empReviews.length === 0) {
+                    if (manualDate) {
+                        // Novo Colaborador com data de experiência definida
+                        if (manualDate < today) {
+                            isPendente = true; motivo = 'Experiência Vencida'; color = 'bg-red-100 text-red-800';
+                        } else if (manualDate <= thirtyDaysFromNow) {
+                            const diff = Math.ceil((manualDate - today) / (1000 * 60 * 60 * 24));
+                            isPendente = true; motivo = `Exp. em ${diff} dias`; color = 'bg-amber-100 text-amber-800';
+                        }
+                    } else {
+                        // Sem data e nunca avaliado
+                        isPendente = true; motivo = 'Não realizada'; color = 'bg-red-100 text-red-800';
+                    }
+                } else {
+                    // Já avaliado: Define se usa a data automática (1 ano) ou a data manual se o RH tiver definido uma nova meta.
+                    let targetDate = new Date(lastReviewDate);
+                    targetDate.setFullYear(targetDate.getFullYear() + 1); // Regra anual automática
+                    let isManual = false;
+
+                    if (manualDate && manualDate > lastReviewDate) {
+                        targetDate = manualDate;
+                        isManual = true;
+                    }
+
+                    if (targetDate < today) {
+                        isPendente = true; 
+                        motivo = isManual ? 'Avaliação Vencida' : 'Vencida (> 1 ano)'; 
+                        color = 'bg-red-100 text-red-800';
+                    } else if (targetDate <= thirtyDaysFromNow) {
+                        const diff = Math.ceil((targetDate - today) / (1000 * 60 * 60 * 24));
+                        isPendente = true; 
+                        motivo = `Vence em ${diff} dias`; 
+                        color = 'bg-amber-100 text-amber-800';
+                    }
+                }
+
+                if (isPendente) {
+                    pendenciasDetalhadas.push({ 
+                        empName: emp.name, itemName: 'Avaliação de Desempenho', 
+                        motivo: motivo, color: color, 
+                        empId: emp.id, type: 'desempenho' 
+                    });
+                }
+
+                // 3. CHECAGEM DE DOCUMENTOS (Regra: Apenas vencidos ou a vencer em <= 30 dias)
                 let atts = [];
                 if (emp.attachments) atts = emp.attachments;
                 else if (emp.attachment && emp.attachment.expirationDate) atts = [{docName: 'Documento Principal', expirationDate: emp.attachment.expirationDate, ...emp.attachment}];
@@ -325,21 +379,21 @@
                 atts.forEach(att => {
                     if (att.expirationDate) {
                         const valDate = new Date(att.expirationDate + 'T00:00:00');
-                        const today = new Date(); today.setHours(0,0,0,0);
-                        const thirtyDaysFromNow = new Date(today); thirtyDaysFromNow.setDate(thirtyDaysFromNow.getDate() + 30);
-
+                        
+                        // Aparece apenas se vencido (menor que hoje) OU se vencer nos próximos 30 dias
                         if (valDate < today) {
                             pendenciasDetalhadas.push({ 
-                                empName: emp.name, trainingName: `Doc: ${att.docName || 'Anexo'}`, 
-                                motivo: 'Doc. Vencido', color: 'bg-red-100 text-red-800', 
-                                empId: emp.id, isDoc: true 
+                                empName: emp.name, itemName: `Doc: ${att.docName || 'Anexo'}`, 
+                                motivo: 'Documento Vencido', color: 'bg-red-100 text-red-800', 
+                                empId: emp.id, type: 'documento' 
                             });
                         } else if (valDate <= thirtyDaysFromNow) {
-                            const diffDays = Math.ceil(Math.abs(valDate - today) / (1000 * 60 * 60 * 24));
+                            const diffTime = Math.abs(valDate - today);
+                            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
                             pendenciasDetalhadas.push({ 
-                                empName: emp.name, trainingName: `Doc: ${att.docName || 'Anexo'}`, 
+                                empName: emp.name, itemName: `Doc: ${att.docName || 'Anexo'}`, 
                                 motivo: `Vence em ${diffDays} dias`, color: 'bg-amber-100 text-amber-800', 
-                                empId: emp.id, isDoc: true 
+                                empId: emp.id, type: 'documento' 
                             });
                         }
                     }
@@ -363,14 +417,14 @@
                 </div>
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
-                        <h4 class="text-lg font-semibold text-gray-800 mb-4 flex items-center"><i data-lucide="history" class="w-5 h-5 mr-2 text-blue-500"></i> Últimos Registros</h4>
+                        <h4 class="text-lg font-semibold text-gray-800 mb-4 flex items-center"><i data-lucide="history" class="w-5 h-5 mr-2 text-blue-500"></i> Últimas Atividades</h4>
                         <div class="space-y-4">
                             ${state.attendanceLists.slice(-4).reverse().map(list => `
                                 <div class="flex items-center justify-between border-b pb-3 last:border-0 last:pb-0">
                                     <div><p class="font-medium text-gray-800">${getTrainingName(list.trainingId)}</p><p class="text-sm text-gray-500">${formatDate(list.date)} - ${list.instructor}</p></div>
                                     <span class="bg-blue-100 text-blue-800 text-xs font-semibold px-2.5 py-0.5 rounded">${list.attendees.length} partic.</span>
                                 </div>
-                            `).join('') || '<p class="text-gray-500 text-sm">Nenhum treinamento registrado.</p>'}
+                            `).join('') || '<p class="text-gray-500 text-sm">Nenhum registro recente.</p>'}
                         </div>
                     </div>
                     <div id="pendencias-section" class="bg-white rounded-xl shadow-sm p-6 border border-gray-100 flex flex-col">
@@ -383,14 +437,16 @@
                                 <div class="flex flex-col border-b border-gray-100 pb-3 last:border-0 last:pb-0">
                                     <div class="flex justify-between items-start mb-1"><p class="font-medium text-gray-800 text-sm">${pend.empName}</p><span class="px-2 py-0.5 rounded text-[10px] font-semibold ${pend.color}">${pend.motivo}</span></div>
                                     <div class="flex justify-between items-center mt-1">
-                                        <p class="text-xs text-gray-500">${pend.trainingName}</p>
-                                        ${pend.isDoc 
-                                            ? `<button onclick="Swal.fire('Atualizar Documento', 'Para anexar a nova versão, acesse o Módulo de Cadastros (RH) e edite a ficha de ${pend.empName}.', 'info')" class="text-amber-500 hover:text-amber-700" title="Informação de Renovação"><i data-lucide="info" class="w-4 h-4"></i></button>`
+                                        <p class="text-xs text-gray-500">${pend.itemName}</p>
+                                        ${pend.type === 'documento' 
+                                            ? `<button onclick="Swal.fire('Atualizar Documento', 'Para anexar a nova versão, acesse o Módulo de Cadastros (RH) e edite a ficha de ${pend.empName}.', 'info')" class="text-amber-500 hover:text-amber-700" title="Informação"><i data-lucide="info" class="w-4 h-4"></i></button>`
+                                            : pend.type === 'desempenho'
+                                            ? `<button onclick="navigate('desempenho')" class="text-emerald-600 hover:text-emerald-800" title="Ir para Avaliações"><i data-lucide="external-link" class="w-4 h-4"></i></button>`
                                             : `<button onclick="printSinglePendingItem(${pend.empId}, ${pend.trainingId})" class="text-blue-500 hover:text-blue-700" title="Imprimir Lista de Presença Vazia"><i data-lucide="printer" class="w-4 h-4"></i></button>`
                                         }
                                     </div>
                                 </div>
-                            `).join('') : '<p class="text-gray-500 text-sm">Todos em dia!</p>'}
+                            `).join('') : '<p class="text-gray-500 text-sm">Tudo em dia!</p>'}
                         </div>
                     </div>
                 </div>
@@ -450,7 +506,7 @@
                 }
             });
             
-            if(pendencias.length === 0) { Swal.fire('Tudo em dia', 'Não há pendências na matriz.', 'info'); return; }
+            if(pendencias.length === 0) { Swal.fire('Sem Pendências', 'Não há pendências de treinamentos da matriz para imprimir.', 'info'); return; }
             
             const { value: formValues } = await Swal.fire({
                 title: 'Gerar Plano de Treinamento',
@@ -512,7 +568,6 @@
             const emp = state.employees.find(e => e.id === empId); const t = state.trainings.find(x => x.id === tId);
             if(!emp || !t) return;
             
-            // Verificação de outros pendentes para agrupar na mesma lista
             let allPending = [];
             state.employees.filter(e => e.status === 'Ativo').forEach(e => {
                 const role = state.roles.find(r => r.name === e.role);
@@ -697,7 +752,6 @@
             const reqRoles = state.roles.filter(r=>r.trainingIds&&r.trainingIds.includes(tId)).map(r=>r.name);
             const tr = state.trainings.find(t=>t.id===tId);
             
-            // Lógica de Pendentes
             currentAttEmps = state.employees.filter(e => e.status==='Ativo' && reqRoles.includes(e.role) && (!state.attendanceLists.some(l=>l.trainingId===tId&&l.attendees.includes(e.id)) || (tr.periodicityMonths>0 && new Date() > new Date(new Date(state.attendanceLists.filter(l=>l.trainingId===tId&&l.attendees.includes(e.id)).sort((a,b)=>new Date(b.date)-new Date(a.date))[0].date).setMonth(new Date(state.attendanceLists.filter(l=>l.trainingId===tId&&l.attendees.includes(e.id)).sort((a,b)=>new Date(b.date)-new Date(a.date))[0].date).getMonth()+tr.periodicityMonths)))));
             renderAttendanceEmpList();
         }
@@ -730,14 +784,12 @@
                 
                 dbSave('attendanceLists', id, obj);
                 
-                // Tratar eficácias (criar pendências pros novos)
                 if (editAttId) { const oldAtt = state.attendanceLists.find(x=>x.id===editAttId); if(oldAtt) { const removed = oldAtt.attendees.filter(a=>!attendees.includes(a)); removed.forEach(empId=>dbDelete('effectivenessEvaluations', `${id}_${empId}`)); } }
                 attendees.forEach(empId => { if(!state.effectivenessEvaluations.some(e=>e.recordId===id&&e.empId===empId)) dbSave('effectivenessEvaluations', `${id}_${empId}`, {recordId:id, empId:empId, status:'Pendente', comments:''}); });
                 
                 closeModal(); renderPresenca(document.getElementById('app-content')); Swal.fire('Sucesso','Turma e presenças registradas!','success');
             };
 
-            // Processamento de Upload (Compressão Híbrida)
             if(fileInput.files.length > 0) {
                 const file = fileInput.files[0];
                 
@@ -751,49 +803,35 @@
                             if(w>1200){h=Math.round(h*1200/w);w=1200;} if(h>1200){w=Math.round(w*1200/h);h=1200;}
                             canvas.width=w; canvas.height=h; canvas.getContext('2d').drawImage(img,0,0,w,h);
                             let dataUrl = canvas.toDataURL('image/jpeg', 0.8);
-                            if(dataUrl.length <= 950*1024) performSave({name:file.name, data:dataUrl}); else uploadToStorage(file);
+                            if(dataUrl.length <= 950*1024) performSave({name:file.name, data:dataUrl}); else uploadToStorage(file, performSave);
                         };
                     };
                 } else {
                     if (file.size <= 750*1024) { Swal.fire({title:'Processando...', allowOutsideClick:false, didOpen:()=>Swal.showLoading()}); const r = new FileReader(); r.onload=(e)=>performSave({name:file.name, data:e.target.result}); r.readAsDataURL(file); } 
-                    else uploadToStorage(file);
+                    else uploadToStorage(file, performSave);
                 }
             } else performSave(null);
         }
 
-        function uploadToStorage(rawFile) {
+        function uploadToStorage(rawFile, performSave) {
             if (rawFile.size > 5*1024*1024) return Swal.fire('Erro', 'Tamanho máximo de 5MB excedido.', 'error');
             Swal.fire({title:'A enviar para a Nuvem...', allowOutsideClick:false, didOpen:()=>Swal.showLoading()});
             
             let timeoutFired = false;
-            const fallbackTimer = setTimeout(() => { timeoutFired = true; Swal.fire('Bloqueio Firebase', 'O arquivo é muito grande e o plano grátis do Firebase bloqueou.', 'error'); }, 15000);
+            const fallbackTimer = setTimeout(() => { timeoutFired = true; Swal.fire('Bloqueio Firebase', 'O arquivo é muito grande e a nuvem bloqueou.', 'error'); }, 15000);
             
             const storageRef = storage.ref(`evidencias/${Date.now()}_${rawFile.name}`);
             const uploadTask = storageRef.put(rawFile);
             uploadTask.on('state_changed', 
                 (s) => { if(s.bytesTransferred > 0) clearTimeout(fallbackTimer); if(timeoutFired) uploadTask.cancel(); }, 
                 (e) => { clearTimeout(fallbackTimer); Swal.fire('Erro Nuvem', 'Falha no Storage.', 'error'); }, 
-                () => { clearTimeout(fallbackTimer); if(timeoutFired) return; uploadTask.snapshot.ref.getDownloadURL().then(url => saveAttendanceFinal({name:rawFile.name, url:url})); }
+                () => { clearTimeout(fallbackTimer); if(timeoutFired) return; uploadTask.snapshot.ref.getDownloadURL().then(url => performSave({name:rawFile.name, url:url})); }
             );
         }
-        function saveAttendanceFinal(fileObj) { /* Callback auxiliar se precisar */ }
 
         function confirmDeleteAttendance(id) { requirePasswordForAction(()=>{ dbDelete('attendanceLists', id); state.effectivenessEvaluations.filter(e=>e.recordId===id).forEach(e=>dbDelete('effectivenessEvaluations',`${id}_${e.empId}`)); renderPresenca(document.getElementById('app-content')); Swal.fire('Deletado','A lista foi removida.','success'); }); }
         
         function viewAttachment(id) { const l = state.attendanceLists.find(x=>x.id===id); if(l&&l.attachment) { if(l.attachment.url) window.open(l.attachment.url); else { const a=document.createElement('a'); a.href=l.attachment.data; a.download=l.attachment.name; a.click(); } } }
-
-        function viewTrainingHistory(empId, tId) {
-            const emp = state.employees.find(e=>e.id===empId); const tr = state.trainings.find(t=>t.id===tId); if(!emp||!tr) return;
-            const parts = state.attendanceLists.filter(l=>l.trainingId===tId&&l.attendees.includes(empId)).sort((a,b)=>new Date(b.date)-new Date(a.date));
-            if(parts.length===0) return;
-            let h = `<div class="mb-4 text-left"><p class="text-sm">Colaborador: <strong>${emp.name}</strong></p></div><table class="w-full text-left text-sm border-collapse"><tr class="bg-gray-50 border-b"><th class="p-2">Data</th><th class="p-2">Eficácia</th><th class="p-2">Evidência</th></tr>`;
-            parts.forEach((p,i) => {
-                const isLatest = i===0; const ev = state.effectivenessEvaluations.find(e=>e.recordId===p.id&&e.empId===empId);
-                const st = ev ? ev.status : 'Pendente'; const cls = st==='Eficaz'?'text-green-600':st==='Ineficaz'?'text-red-600':'text-amber-600';
-                h += `<tr class="border-b ${isLatest?'bg-blue-50/30':''}"><td class="p-2">${formatDate(p.date)} ${isLatest?'<span class="text-[9px] bg-blue-100 px-1 rounded">Atual</span>':''}</td><td class="p-2 font-bold ${cls}">${st}</td><td class="p-2">${p.attachment?`<button onclick="viewAttachment(${p.id})" class="text-blue-600">Abrir</button>`:'-'}</td></tr>`;
-            });
-            Swal.fire({title:`Histórico: ${tr.title}`, html:h+'</table>', width:'600px', showConfirmButton:false, showCloseButton:true});
-        }
 
         // ================= 3. EFICÁCIA =================
         function renderEficacia(container) {
@@ -913,7 +951,6 @@
                 const val = parseFloat(i.value)||0; const sId = parseInt(i.getAttribute('data-id'));
                 if(val>0){
                     total+=val; count++; skills.push({skillId:sId, skillName:i.getAttribute('data-name'), score:val});
-                    // ATUALIZAÇÃO MÁGICA DA MATRIZ
                     const es = state.employeeSkills.find(x=>x.empId===empId&&x.skillId===sId)||{req:0};
                     dbSave('employeeSkills', `${empId}_${sId}`, {empId, skillId:sId, req:es.req, actual:val});
                 }

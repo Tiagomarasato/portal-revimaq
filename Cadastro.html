@@ -50,6 +50,11 @@
                     </nav>
                 </div>
                 <div class="flex items-center">
+                    <!-- Botão PORTAL -->
+                    <a href="index.html" class="hidden md:inline-flex items-center px-4 py-2 border border-transparent text-sm font-bold rounded-md shadow-sm text-white bg-slate-800 hover:bg-slate-700 focus:outline-none transition-colors mr-4">
+                        <i data-lucide="arrow-left" class="w-4 h-4 mr-2"></i> PORTAL
+                    </a>
+
                     <!-- Botão Mágico para o Dashboard Operacional -->
                     <a href="dashboard.html" class="hidden md:inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-blue-700 bg-blue-100 hover:bg-blue-200 focus:outline-none transition-colors mr-4">
                         <i data-lucide="layout-dashboard" class="w-4 h-4 mr-2"></i> Ir para Operação (Dashboard) &rarr;
@@ -79,6 +84,9 @@
                 <a href="#" onclick="navigate('treinamentos')" class="nav-treinamentos menu-item block pl-4 pr-4 py-3 border-l-4 border-transparent text-base font-medium text-gray-600 hover:bg-gray-50">Catálogo de Treinamentos</a>
                 <a href="dashboard.html" class="block pl-4 pr-4 py-3 border-l-4 border-transparent text-base font-medium text-blue-700 bg-blue-50 hover:bg-blue-100 border-t border-gray-100 mt-1">
                     <i data-lucide="layout-dashboard" class="w-5 h-5 inline mr-2"></i> Ir para Operação &rarr;
+                </a>
+                <a href="index.html" class="block pl-4 pr-4 py-3 border-l-4 border-transparent text-base font-bold text-white bg-slate-800 hover:bg-slate-700 border-t border-gray-200 mt-1">
+                    <i data-lucide="arrow-left" class="w-5 h-5 inline mr-2"></i> PORTAL
                 </a>
             </div>
         </div>
@@ -479,11 +487,11 @@
                 name: '', role: '', dept: '', admission: '', status: 'Ativo', 
                 email: '', forcePasswordChange: false, 
                 cpf: '', rg: '', dataNasc: '', telefone: '', 
-                cep: '', logradouro: '', numero: '', complemento: '', bairro: '', cidade: '', uf: '' 
+                cep: '', logradouro: '', numero: '', complemento: '', bairro: '', cidade: '', uf: '',
+                nextReviewDate: '' 
             };
             const isEdit = !!id;
 
-            // Inicializar array temporário de anexos para esta tela
             tempEmpAttachments = [];
             if (emp.attachments) {
                 tempEmpAttachments = [...emp.attachments];
@@ -509,6 +517,7 @@
                             <div><label class="block text-xs font-bold mb-1 text-gray-700">Cargo *</label><select id="empRole" required class="w-full border border-gray-300 p-2 rounded text-sm focus:ring-2 focus:ring-blue-500 outline-none"><option value="" disabled ${!emp.role ? 'selected' : ''}>Selecione...</option>${state.roles.map(r => `<option value="${r.name}" ${emp.role === r.name ? 'selected' : ''}>${r.name}</option>`).join('')}</select></div>
                             <div><label class="block text-xs font-bold mb-1 text-gray-700">Departamento</label><input type="text" id="empDept" value="${emp.dept || ''}" class="w-full border border-gray-300 p-2 rounded text-sm focus:ring-2 focus:ring-blue-500 outline-none"></div>
                             <div><label class="block text-xs font-bold mb-1 text-gray-700">Data de Admissão *</label><input type="date" id="empAdm" value="${emp.admission || ''}" required class="w-full border border-gray-300 p-2 rounded text-sm focus:ring-2 focus:ring-blue-500 outline-none"></div>
+                            <div><label class="block text-xs font-bold mb-1 text-blue-700">Data Próx. Avaliação</label><input type="date" id="empNextReview" value="${emp.nextReviewDate || ''}" title="Deixe em branco para o cálculo automático de 1 ano" class="w-full border border-blue-200 bg-blue-50 p-2 rounded text-sm focus:ring-2 focus:ring-blue-500 outline-none"></div>
                             <div><label class="block text-xs font-bold mb-1 text-gray-700">Status</label><select id="empStatus" class="w-full border border-gray-300 p-2 rounded text-sm focus:ring-2 focus:ring-blue-500 outline-none"><option value="Ativo" ${emp.status === 'Ativo' ? 'selected' : ''}>Ativo</option><option value="Inativo" ${emp.status === 'Inativo' ? 'selected' : ''}>Inativo</option></select></div>
                         </div>
                     </div>
@@ -765,6 +774,7 @@
                     bairro: document.getElementById('empBairro').value, 
                     cidade: document.getElementById('empCidade').value,
                     uf: document.getElementById('empUf').value,
+                    nextReviewDate: document.getElementById('empNextReview').value,
                     attachments: processedAttachments
                 };
                 
@@ -816,7 +826,7 @@
             });
         }
 
-        // --- DOSSIÊ DE TREINAMENTOS INDIVIDUAL ---
+        // --- DOSSIÊ DE TREINAMENTOS (Leitura do Histórico) ---
         function viewAttachment(listId) {
             const list = state.attendanceLists.find(l => l.id === listId);
             if (!list || !list.attachment) return;
@@ -967,187 +977,95 @@
             openModal('Dossiê de Treinamentos', bodyHtml, `<button onclick="closeModal()" class="px-5 py-2 bg-gray-100 text-gray-700 rounded-lg font-medium shadow-sm">Fechar</button>`);
         }
 
-        // ================= CARGOS =================
+        // ================= 2. CARGOS =================
         function renderCargos(container) {
             container.innerHTML = `
-                <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-                    <div class="p-6 border-b flex justify-between items-center bg-gray-50">
-                        <h3 class="text-lg font-semibold text-gray-800">Descrições de Cargo</h3>
-                        <div>
-                            <button onclick="openLogModal('Cargos')" class="bg-white border px-4 py-2 rounded-lg text-sm mr-2"><i data-lucide="history" class="w-4 h-4 inline"></i></button>
-                            <button onclick="openRoleModal()" class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm"><i data-lucide="plus" class="w-4 h-4 inline mr-1"></i> Novo Cargo</button>
-                        </div>
-                    </div>
+                <div class="bg-white rounded-xl shadow border p-6">
+                    <div class="flex justify-between items-center mb-4"><h3 class="text-lg font-semibold">Descrições de Cargo</h3><button onclick="openRoleModal()" class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm"><i data-lucide="plus" class="w-4 h-4 inline mr-1"></i> Novo Cargo</button></div>
                     <div class="overflow-x-auto">
-                        <table class="w-full text-left border-collapse text-sm">
-                            <thead><tr class="bg-white text-gray-500 text-xs uppercase border-b"><th class="p-4">Cargo</th><th class="p-4">Missão / Descrição</th><th class="p-4">Experiência Exigida</th><th class="p-4 text-center">Ações</th></tr></thead>
-                            <tbody class="divide-y divide-gray-100">
-                                ${state.roles.map(role => `
-                                    <tr class="hover:bg-gray-50">
-                                        <td class="p-4 font-medium text-gray-800">${role.name}</td><td class="p-4 text-gray-600 truncate max-w-xs">${role.desc || '-'}</td><td class="p-4 text-gray-600">${role.experience || '-'}</td>
-                                        <td class="p-4 text-center whitespace-nowrap"><button onclick="openRoleModal(${role.id})" class="text-blue-600 mx-1"><i data-lucide="edit" class="w-4 h-4"></i></button><button onclick="deleteRole(${role.id})" class="text-red-600 mx-1"><i data-lucide="trash-2" class="w-4 h-4"></i></button></td>
-                                    </tr>
-                                `).join('') || '<tr><td colspan="4" class="p-4 text-center text-gray-500">Nenhum cargo.</td></tr>'}
-                            </tbody>
+                        <table class="w-full text-left text-sm"><tr class="bg-gray-50 border-b"><th class="p-3">Cargo</th><th class="p-3">Missão</th><th class="p-3 text-center">Ações</th></tr>
+                        ${state.roles.map(r => `<tr class="border-b hover:bg-gray-50"><td class="p-3 font-medium">${r.name}</td><td class="p-3 text-gray-500">${r.desc||'-'}</td><td class="p-3 text-center"><button onclick="openRoleModal(${r.id})" class="text-blue-500 mx-1"><i data-lucide="edit" class="w-4 h-4"></i></button><button onclick="deleteRole(${r.id})" class="text-red-500 mx-1"><i data-lucide="trash-2" class="w-4 h-4"></i></button></td></tr>`).join('')}
                         </table>
                     </div>
                 </div>`;
         }
 
         function openRoleModal(id = null) {
-            const role = id ? state.roles.find(r => r.id === id) : { name: '', desc: '', responsibilities: '', competencies: '', skillIds: [], trainingIds: [], experience: '' };
-            const bodyHtml = `
-                <form id="roleForm" class="space-y-3 text-left">
-                    <input type="hidden" id="roleId" value="${id || ''}">
-                    <div><label class="text-sm font-semibold">Nome do Cargo *</label><input type="text" id="roleName" value="${role.name}" required class="w-full border p-2 rounded"></div>
-                    <div><label class="text-sm font-semibold">Missão</label><textarea id="roleDesc" rows="2" class="w-full border p-2 rounded">${role.desc || ''}</textarea></div>
-                    <div class="grid grid-cols-2 gap-4">
-                        <div><label class="text-sm font-semibold">Atividades</label><textarea id="roleResp" rows="2" class="w-full border p-2 rounded">${role.responsibilities || ''}</textarea></div>
-                        <div><label class="text-sm font-semibold">Experiência</label><textarea id="roleExp" rows="2" class="w-full border p-2 rounded">${role.experience || ''}</textarea></div>
+            const role = id ? state.roles.find(r => r.id === id) : { name: '', desc: '', skillIds: [], trainingIds: [] };
+            openModal(id?'Editar Cargo':'Novo Cargo', `
+                <input type="hidden" id="roleId" value="${id||''}">
+                <div class="space-y-3 text-left">
+                    <div><label class="block text-sm font-bold mb-1">Nome *</label><input type="text" id="roleName" value="${role.name}" class="w-full border p-2 rounded outline-none focus:ring-2 focus:ring-blue-500"></div>
+                    <div><label class="block text-sm font-bold mb-1">Missão</label><textarea id="roleDesc" rows="2" class="w-full border p-2 rounded">${role.desc||''}</textarea></div>
+                    
+                    <div class="border-t pt-3"><label class="block text-sm font-bold mb-1 text-blue-700">Habilidades Exigidas</label>
+                        <div class="flex gap-2 mb-2"><select id="roleSkillSelect" class="flex-1 border p-2 rounded"><option value="">Adicionar...</option>${state.skills.filter(s => !(role.skillIds || []).includes(s.id)).map(s => `<option value="${s.id}">${s.name}</option>`).join('')}</select><button type="button" onclick="addSkillToRole()" class="bg-gray-100 px-3 rounded">Add</button></div>
+                        <div id="roleSkillsContainer" class="flex flex-wrap gap-1">${(role.skillIds||[]).map(sId => { const s = state.skills.find(x=>x.id===sId); return s ? `<span class="bg-blue-50 border text-blue-800 px-2 py-0.5 rounded text-xs sk-badge" data-id="${s.id}">${s.name} <button onclick="this.parentElement.remove()" class="text-blue-500 ml-1">&times;</button></span>` : ''; }).join('')}</div>
                     </div>
-                    <div class="grid grid-cols-2 gap-4">
-                        <div><label class="text-sm font-semibold">Comp. Comportamentais</label><textarea id="roleCompetencies" rows="2" class="w-full border p-2 rounded">${role.competencies || ''}</textarea></div>
-                        <div>
-                            <label class="text-sm font-semibold">Habilidades Técnicas</label>
-                            <div class="flex gap-2"><select id="roleSkillSelect" class="flex-1 border p-1.5 rounded text-sm"><option value="">Selecionar...</option>${state.skills.filter(s => !(role.skillIds || []).includes(s.id)).map(s => `<option value="${s.id}">${s.name}</option>`).join('')}</select><button type="button" onclick="addSkillToRole()" class="bg-gray-100 px-3 rounded">Add</button></div>
-                            <div id="roleSkillsContainer" class="flex flex-wrap gap-1 mt-1">${(role.skillIds || []).map(sId => { const s = state.skills.find(x => x.id === sId); return s ? `<span class="bg-blue-50 text-blue-800 border border-blue-200 rounded-full px-2 py-0.5 text-xs sk-badge" data-id="${s.id}">${s.name} <button onclick="removeSkillFromRole(this)" class="text-blue-500 ml-1">&times;</button></span>` : ''; }).join('')}</div>
-                        </div>
+
+                    <div class="border-t pt-3"><label class="block text-sm font-bold mb-1 text-purple-700">Treinamentos Obrigatórios</label>
+                        <div class="flex gap-2 mb-2"><select id="roleTrSelect" class="flex-1 border p-2 rounded"><option value="">Adicionar...</option>${state.trainings.filter(t => !(role.trainingIds || []).includes(t.id)).map(t => `<option value="${t.id}">${t.title}</option>`).join('')}</select><button type="button" onclick="addTrToRole()" class="bg-gray-100 px-3 rounded">Add</button></div>
+                        <div id="roleTrContainer" class="flex flex-wrap gap-1">${(role.trainingIds||[]).map(tId => { const t = state.trainings.find(x=>x.id===tId); return t ? `<span class="bg-purple-50 border text-purple-800 px-2 py-0.5 rounded text-xs tr-badge" data-id="${t.id}">${t.title} <button onclick="this.parentElement.remove()" class="text-purple-500 ml-1">&times;</button></span>` : ''; }).join('')}</div>
                     </div>
-                    <div>
-                        <label class="text-sm font-semibold">Treinamentos Necessários</label>
-                        <div class="flex gap-2"><select id="roleTrainingSelect" class="flex-1 border p-1.5 rounded text-sm"><option value="">Selecionar...</option>${state.trainings.filter(t => !(role.trainingIds || []).includes(t.id)).map(t => `<option value="${t.id}">${t.title}</option>`).join('')}</select><button type="button" onclick="addTrainingToRole()" class="bg-gray-100 px-3 rounded">Add</button></div>
-                        <div id="roleTrainingsContainer" class="flex flex-wrap gap-1 mt-1">${(role.trainingIds || []).map(tId => { const t = state.trainings.find(x => x.id === tId); return t ? `<span class="bg-blue-50 text-blue-800 border border-blue-200 rounded-full px-2 py-0.5 text-xs tr-badge" data-id="${t.id}">${t.title} <button onclick="removeTrainingFromRole(this)" class="text-blue-500 ml-1">&times;</button></span>` : ''; }).join('')}</div>
-                    </div>
-                </form>
-            `;
-            openModal(id ? 'Editar Cargo' : 'Novo Cargo', bodyHtml, `<button onclick="closeModal()" class="px-4 py-2 text-gray-600">Cancelar</button><button onclick="saveRole()" class="px-4 py-2 bg-blue-600 text-white rounded">Salvar</button>`);
+                </div>
+            `, `<button onclick="saveRole()" class="bg-blue-600 text-white px-4 py-2 rounded">Salvar</button>`);
         }
 
-        function addSkillToRole() { const select = document.getElementById('roleSkillSelect'); const sId = select.value; if (!sId) return; document.getElementById('roleSkillsContainer').insertAdjacentHTML('beforeend', `<span class="bg-blue-50 text-blue-800 border border-blue-200 rounded-full px-2 py-0.5 text-xs sk-badge" data-id="${sId}">${select.options[select.selectedIndex].text} <button onclick="removeSkillFromRole(this)" class="text-blue-500 ml-1">&times;</button></span>`); select.options[select.selectedIndex].remove(); }
-        function removeSkillFromRole(btn) { const badge = btn.parentElement; const id = parseInt(badge.getAttribute('data-id')); badge.remove(); const s = state.skills.find(x=>x.id===id); if(s) document.getElementById('roleSkillSelect').insertAdjacentHTML('beforeend', `<option value="${s.id}">${s.name}</option>`); }
-        function addTrainingToRole() { const select = document.getElementById('roleTrainingSelect'); const tId = select.value; if (!tId) return; document.getElementById('roleTrainingsContainer').insertAdjacentHTML('beforeend', `<span class="bg-blue-50 text-blue-800 border border-blue-200 rounded-full px-2 py-0.5 text-xs tr-badge" data-id="${tId}">${select.options[select.selectedIndex].text} <button onclick="removeTrainingFromRole(this)" class="text-blue-500 ml-1">&times;</button></span>`); select.options[select.selectedIndex].remove(); }
-        function removeTrainingFromRole(btn) { const badge = btn.parentElement; const id = parseInt(badge.getAttribute('data-id')); badge.remove(); const t = state.trainings.find(x=>x.id===id); if(t) document.getElementById('roleTrainingSelect').insertAdjacentHTML('beforeend', `<option value="${t.id}">${t.title}</option>`); }
+        function addSkillToRole() { const sel = document.getElementById('roleSkillSelect'); if(!sel.value) return; document.getElementById('roleSkillsContainer').insertAdjacentHTML('beforeend', `<span class="bg-blue-50 border text-blue-800 px-2 py-0.5 rounded text-xs sk-badge" data-id="${sel.value}">${sel.options[sel.selectedIndex].text} <button onclick="this.parentElement.remove()" class="text-blue-500 ml-1">&times;</button></span>`); sel.options[sel.selectedIndex].remove(); }
+        function addTrToRole() { const sel = document.getElementById('roleTrSelect'); if(!sel.value) return; document.getElementById('roleTrContainer').insertAdjacentHTML('beforeend', `<span class="bg-purple-50 border text-purple-800 px-2 py-0.5 rounded text-xs tr-badge" data-id="${sel.value}">${sel.options[sel.selectedIndex].text} <button onclick="this.parentElement.remove()" class="text-purple-500 ml-1">&times;</button></span>`); sel.options[sel.selectedIndex].remove(); }
 
         function saveRole() {
-            const id = document.getElementById('roleId').value; const name = document.getElementById('roleName').value;
-            if(!name) return Swal.fire('Aviso', 'Nome obrigatório.', 'warning');
+            const id = document.getElementById('roleId').value; const name = document.getElementById('roleName').value; if(!name) return;
             const skillIds = Array.from(document.querySelectorAll('#roleSkillsContainer .sk-badge')).map(b => parseInt(b.getAttribute('data-id')));
-            const trainingIds = Array.from(document.querySelectorAll('#roleTrainingsContainer .tr-badge')).map(b => parseInt(b.getAttribute('data-id')));
-            const roleObj = { id: id ? parseInt(id) : generateId(state.roles), name, desc: document.getElementById('roleDesc').value, responsibilities: document.getElementById('roleResp').value, competencies: document.getElementById('roleCompetencies').value, skillIds, trainingIds, experience: document.getElementById('roleExp').value };
-            dbSave('roles', roleObj.id, roleObj); addLog('Cargos', id?'Edição':'Criação', `Cargo "${name}" salvo.`);
-            closeModal(); renderCargos(document.getElementById('app-content'));
+            const trainingIds = Array.from(document.querySelectorAll('#roleTrContainer .tr-badge')).map(b => parseInt(b.getAttribute('data-id')));
+            const obj = { id: id ? parseInt(id) : generateId(state.roles), name, desc: document.getElementById('roleDesc').value, skillIds, trainingIds };
+            dbSave('roles', obj.id, obj); closeModal(); renderCargos(document.getElementById('app-content')); Swal.fire('Salvo!', '', 'success');
         }
 
-        function deleteRole(id) {
-            const role = state.roles.find(r => r.id === id);
-            if (state.employees.some(emp => emp.role === role.name)) return Swal.fire('Erro', 'Cargo associado a colaboradores.', 'error');
-            requirePasswordForAction(() => { dbDelete('roles', id); renderCargos(document.getElementById('app-content')); Swal.fire('Excluído', '', 'success'); });
-        }
+        function deleteRole(id) { if(state.employees.some(e => e.role === state.roles.find(r=>r.id===id).name)) return Swal.fire('Erro', 'Cargo em uso.', 'error'); requirePasswordForAction(() => { dbDelete('roles', id); renderCargos(document.getElementById('app-content')); }); }
 
-        // ================= MATRIZ E HABILIDADES =================
+        // ================= 3. HABILIDADES =================
         function renderHabilidades(container) {
-            container.innerHTML = `
-                <div class="bg-white rounded-xl shadow border p-6 mb-6">
-                    <div class="flex justify-between items-center mb-6">
-                        <div><h3 class="text-lg font-semibold text-gray-800">Matriz de Competências por Cargo</h3></div>
-                        <div><button onclick="openManageSkillsModal()" class="bg-white border px-4 py-2 rounded text-sm mr-2"><i data-lucide="list" class="w-4 h-4 inline"></i> Catálogo</button><button onclick="openSkillModal()" class="bg-blue-600 text-white px-4 py-2 rounded text-sm"><i data-lucide="plus" class="w-4 h-4 inline"></i> Nova</button></div>
-                    </div>
-                    <div class="mb-6 bg-blue-50 p-4 rounded"><select id="matrixRoleFilter" onchange="updateMatrixView()" class="w-full md:w-1/3 border p-2 rounded"><option value="">-- Selecione o Cargo --</option>${state.roles.map(r => `<option value="${r.name}" ${currentMatrixRole === r.name ? 'selected' : ''}>${r.name}</option>`).join('')}</select></div>
-                    <div id="matrixTableContainer" class="overflow-x-auto custom-scrollbar border rounded hidden"></div><div id="matrixEmptyState" class="text-center py-12 bg-gray-50 border-2 border-dashed rounded text-gray-500">Selecione um cargo.</div>
-                </div>
-            `;
+            container.innerHTML = `<div class="bg-white rounded-xl shadow border p-6 mb-6"><div class="flex justify-between items-center mb-6"><h3 class="text-lg font-semibold">Matriz de Competências por Cargo</h3><div><button onclick="openManageSkillsModal()" class="bg-gray-100 px-4 py-2 rounded mr-2 text-sm"><i data-lucide="list" class="w-4 h-4 inline"></i> Catálogo</button><button onclick="openSkillModal()" class="bg-blue-600 text-white px-4 py-2 rounded text-sm"><i data-lucide="plus" class="w-4 h-4 inline"></i> Nova Habilidade Base</button></div></div><div class="mb-6 bg-blue-50 p-4 rounded-lg"><select id="matrixRoleFilter" onchange="updateMatrixView()" class="w-full md:w-1/3 border p-2 rounded"><option value="">-- Selecione o Cargo --</option>${state.roles.map(r => `<option value="${r.name}" ${currentMatrixRole === r.name ? 'selected' : ''}>${r.name}</option>`).join('')}</select></div><div id="matrixTableContainer" class="overflow-x-auto hidden border rounded-lg"></div><div id="matrixEmptyState" class="text-center py-10 bg-gray-50 text-gray-500 rounded">Selecione um cargo acima.</div></div>`;
             if(currentMatrixRole) updateMatrixView();
         }
 
         function updateMatrixView() {
-            currentMatrixRole = document.getElementById('matrixRoleFilter').value;
-            const container = document.getElementById('matrixTableContainer'); const emptyState = document.getElementById('matrixEmptyState');
-            if (!currentMatrixRole) { container.classList.add('hidden'); emptyState.classList.remove('hidden'); return; }
-
-            const role = state.roles.find(r => r.name === currentMatrixRole); const emps = state.employees.filter(e => e.role === currentMatrixRole && e.status === 'Ativo'); const roleSkills = (role.skillIds || []).map(id => state.skills.find(s => s.id === id)).filter(s => s);
-
-            if (roleSkills.length === 0) container.innerHTML = `<div class="p-8 text-center text-gray-500">Este cargo não possui habilidades.</div>`;
-            else {
-                let html = `<table class="w-full text-left border-collapse min-w-[600px]"><thead><tr><th class="p-4 bg-gray-50 border-b text-sm">Colaborador</th>${roleSkills.map(s => `<th class="p-4 bg-gray-50 border-b text-center text-xs">${s.name}</th>`).join('')}</tr></thead><tbody>`;
-                emps.forEach(emp => {
-                    html += `<tr class="hover:bg-blue-50/50"><td class="p-4 border-b font-medium text-sm">${emp.name}</td>`;
-                    roleSkills.forEach(skill => {
-                        const es = state.employeeSkills.find(x => x.empId === emp.id && x.skillId === skill.id) || { req: 0, actual: 0 };
-                        const gap = es.req > 0 && es.actual < es.req;
-                        html += `<td class="p-2 border-b text-center cursor-pointer" onclick="openEvalSkillModal(${emp.id}, ${skill.id})"><div class="flex flex-col items-center"><span class="text-[10px] text-gray-400">Req: ${es.req}</span><span class="w-8 h-8 flex items-center justify-center rounded-full font-bold shadow-sm ${gap ? 'bg-red-50 text-red-600' : 'bg-green-50 text-green-600'}">${es.actual || '-'}</span></div></td>`;
-                    });
-                    html += `</tr>`;
-                });
-                container.innerHTML = html + `</tbody></table>`;
+            currentMatrixRole = document.getElementById('matrixRoleFilter').value; const cont = document.getElementById('matrixTableContainer'); const empty = document.getElementById('matrixEmptyState');
+            if(!currentMatrixRole) { cont.classList.add('hidden'); empty.classList.remove('hidden'); return; }
+            const role = state.roles.find(r => r.name === currentMatrixRole); const emps = state.employees.filter(e => e.role === role.name && e.status === 'Ativo'); const skills = (role.skillIds||[]).map(id => state.skills.find(s=>s.id===id)).filter(s=>s);
+            if(skills.length===0) { cont.innerHTML = '<p class="p-6 text-center">Sem habilidades vinculadas a este cargo.</p>'; } else {
+                let html = `<table class="w-full text-left text-sm border-collapse"><tr class="bg-gray-50 border-b"><th class="p-3">Colaborador</th>${skills.map(s=>`<th class="p-3 text-center text-xs">${s.name}</th>`).join('')}</tr>`;
+                emps.forEach(e => { html += `<tr class="border-b hover:bg-gray-50"><td class="p-3 font-medium">${e.name}</td>`; skills.forEach(s => { const es = state.employeeSkills.find(x=>x.empId===e.id && x.skillId===s.id) || {req:0, actual:0}; const gap = es.req>0 && es.actual<es.req; html += `<td class="p-2 text-center cursor-pointer" onclick="openEvalSkillModal(${e.id}, ${s.id})"><div class="flex flex-col items-center"><span class="text-[10px] text-gray-400">Req: ${es.req}</span><span class="w-8 h-8 rounded-full flex items-center justify-center font-bold shadow-sm ${gap?'bg-red-50 text-red-600':'bg-green-50 text-green-600'}">${es.actual||'-'}</span></div></td>`; }); html += `</tr>`; });
+                cont.innerHTML = html + `</table>`;
             }
-            container.classList.remove('hidden'); emptyState.classList.add('hidden');
+            cont.classList.remove('hidden'); empty.classList.add('hidden');
         }
 
         function openEvalSkillModal(empId, skillId) {
-            const es = state.employeeSkills.find(x => x.empId === empId && x.skillId === skillId) || { req: 0, actual: 0 };
-            openModal('Ajustar Competência / Meta', `<div class="bg-blue-50 p-3 rounded mb-4 text-sm text-blue-800">Nota Atual preenchida pela Avaliação de Desempenho. Defina apenas a <strong>Meta (Exigida)</strong>.</div><div class="grid grid-cols-2 gap-4"><div><label class="block font-bold">Exigida (Meta)</label><input type="number" id="skReq" value="${es.req}" class="w-full border p-2 rounded" step="0.5" min="0" max="5"></div><div><label class="block text-gray-400 font-bold">Nota Atual</label><input type="number" value="${es.actual}" class="w-full border p-2 rounded bg-gray-50 text-gray-500" disabled></div></div>`, `<button onclick="saveEmployeeSkill(${empId}, ${skillId})" class="bg-blue-600 text-white px-4 py-2 rounded">Salvar</button>`);
+            const es = state.employeeSkills.find(x=>x.empId===empId && x.skillId===skillId) || {req:0, actual:0};
+            openModal('Ajustar Meta da Função', `<div class="mb-3 text-sm text-blue-700 bg-blue-50 p-3 rounded">A Nota Atual só é modificada pelo Módulo de Avaliação de Desempenho. Aqui define-se a META para a função.</div><div class="grid grid-cols-2 gap-4"><div><label class="block text-sm font-bold mb-1">Nota Exigida (Meta)</label><input type="number" id="skReq" value="${es.req}" class="w-full border p-2 rounded" step="0.5" min="0" max="5"></div><div><label class="block text-sm font-bold mb-1 text-gray-400">Nota Atual</label><input type="number" value="${es.actual}" class="w-full border p-2 rounded bg-gray-100 text-gray-500" disabled></div></div>`, `<button onclick="dbSave('employeeSkills', '${empId}_${skillId}', {empId:${empId}, skillId:${skillId}, req:parseFloat(document.getElementById('skReq').value)||0, actual:${es.actual}}); closeModal(); setTimeout(updateMatrixView, 200);" class="bg-blue-600 text-white px-4 py-2 rounded">Salvar Meta</button>`);
         }
-        function saveEmployeeSkill(empId, skillId) { dbSave('employeeSkills', `${empId}_${skillId}`, { empId, skillId, req: parseFloat(document.getElementById('skReq').value) || 0, actual: parseFloat(document.querySelector('input[disabled]').value) || 0 }); closeModal(); updateMatrixView(); }
 
-        function openManageSkillsModal() {
-            openModal('Catálogo de Habilidades', `<table class="w-full text-left text-sm"><tr class="bg-gray-50 border-b"><th class="p-3">Habilidade</th><th class="p-3">Critérios</th><th class="p-3 text-center">Ações</th></tr>${state.skills.map(s => `<tr class="border-b"><td class="p-3 font-bold">${s.name}</td><td class="p-3 text-xs text-gray-600">${s.desc||'-'}</td><td class="p-3 text-center whitespace-nowrap"><button onclick="openSkillModal(${s.id})" class="text-blue-600 mx-1"><i data-lucide="edit" class="w-4 h-4"></i></button><button onclick="deleteSkill(${s.id})" class="text-red-600 mx-1"><i data-lucide="trash-2" class="w-4 h-4"></i></button></td></tr>`).join('')}</table>`, `<button onclick="closeModal()" class="bg-gray-100 px-4 py-2 rounded">Fechar</button>`);
-        }
-        function openSkillModal(id = null) {
-            const skill = id ? state.skills.find(s => s.id === id) : { name: '', desc: '' };
-            openModal(id?'Editar Habilidade':'Nova Habilidade', `<input type="hidden" id="skId" value="${id||''}"><div class="mb-3"><label class="block font-bold">Nome *</label><input type="text" id="skName" value="${skill.name}" class="w-full border p-2 rounded"></div><div><label class="block font-bold">Critérios</label><textarea id="skDesc" class="w-full border p-2 rounded" rows="3">${skill.desc||''}</textarea></div>`, `<button onclick="saveSkill()" class="bg-blue-600 text-white px-4 py-2 rounded">Salvar</button>`);
-        }
-        function saveSkill() { const name = document.getElementById('skName').value; if(!name) return; const obj = { id: document.getElementById('skId').value ? parseInt(document.getElementById('skId').value) : generateId(state.skills), name, desc: document.getElementById('skDesc').value }; dbSave('skills', obj.id, obj); closeModal(); renderHabilidades(document.getElementById('app-content')); if(document.getElementById('modal-title').innerText.includes('Catálogo')) openManageSkillsModal(); }
-        function deleteSkill(id) { if(state.roles.some(r => r.skillIds && r.skillIds.includes(id))) return Swal.fire('Erro', 'Vinculada a Cargos.', 'error'); requirePasswordForAction(()=>{ dbDelete('skills', id); state.employeeSkills.filter(es=>es.skillId===id).forEach(es=>dbDelete('employeeSkills', `${es.empId}_${es.skillId}`)); renderHabilidades(document.getElementById('app-content')); openManageSkillsModal(); }); }
+        function openManageSkillsModal() { openModal('Catálogo de Habilidades Base', `<table class="w-full text-left text-sm border-collapse"><tr class="bg-gray-50 border-b"><th class="p-3">Habilidade</th><th class="p-3 text-center">Ações</th></tr>${state.skills.map(s=>`<tr class="border-b"><td class="p-3 font-medium">${s.name}</td><td class="p-3 text-center"><button onclick="openSkillModal(${s.id})" class="text-blue-500 mx-1"><i data-lucide="edit" class="w-4 h-4"></i></button><button onclick="deleteSkill(${s.id})" class="text-red-500 mx-1"><i data-lucide="trash-2" class="w-4 h-4"></i></button></td></tr>`).join('')}</table>`, `<button onclick="closeModal()" class="px-4 py-2 bg-gray-100 rounded">Fechar</button>`); }
+        function openSkillModal(id=null) { const s = id ? state.skills.find(x=>x.id===id) : {name:'', desc:''}; openModal(id?'Editar Habilidade':'Nova Habilidade', `<input type="hidden" id="skId" value="${id||''}"><div class="mb-3"><label class="block text-sm font-bold">Nome *</label><input type="text" id="skName" value="${s.name}" class="w-full border p-2 rounded"></div><div><label class="block text-sm font-bold">Critérios</label><textarea id="skDesc" class="w-full border p-2 rounded" rows="3">${s.desc||''}</textarea></div>`, `<button onclick="saveSkill()" class="bg-blue-600 text-white px-4 py-2 rounded">Salvar</button>`); }
+        function saveSkill() { const id = document.getElementById('skId').value; const name = document.getElementById('skName').value; if(!name) return; const obj = {id:id?parseInt(id):generateId(state.skills), name, desc:document.getElementById('skDesc').value}; dbSave('skills', obj.id, obj); closeModal(); renderHabilidades(document.getElementById('app-content')); if(document.getElementById('modal-title').innerText.includes('Catálogo')) openManageSkillsModal(); }
+        function deleteSkill(id) { if(state.roles.some(r=>r.skillIds&&r.skillIds.includes(id))) return Swal.fire('Erro', 'Habilidade vinculada a cargo.', 'error'); requirePasswordForAction(() => { dbDelete('skills', id); openManageSkillsModal(); renderHabilidades(document.getElementById('app-content')); }); }
 
-        // ================= TREINAMENTOS (CATÁLOGO) =================
+        // ================= 4. TREINAMENTOS (CATÁLOGO) =================
         function renderTreinamentos(container) {
-            container.innerHTML = `<div class="bg-white rounded-xl shadow border p-6"><div class="flex justify-between items-center mb-4"><h3 class="text-lg font-semibold">Catálogo de Treinamentos</h3><button onclick="openTrainingModal()" class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm">Novo Treinamento</button></div><table class="w-full text-left text-sm"><tr class="bg-gray-50 border-b"><th class="p-3">Título</th><th class="p-3">Tipo</th><th class="p-3 text-center">Ações</th></tr>${state.trainings.map(t => `<tr class="border-b"><td class="p-3 font-medium">${t.title}</td><td class="p-3">${t.type}</td><td class="p-3 text-center"><button onclick="openTrainingModal(${t.id})" class="text-blue-600 mx-1"><i data-lucide="edit" class="w-4 h-4"></i></button><button onclick="deleteTraining(${t.id})" class="text-red-600 mx-1"><i data-lucide="trash-2" class="w-4 h-4"></i></button></td></tr>`).join('')}</table></div>`;
+            container.innerHTML = `<div class="bg-white rounded-xl shadow border p-6"><div class="flex justify-between items-center mb-4"><h3 class="text-lg font-semibold">Catálogo de Treinamentos</h3><button onclick="openTrainingModal()" class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm"><i data-lucide="plus" class="w-4 h-4 inline mr-1"></i> Novo Treinamento</button></div><table class="w-full text-left text-sm"><tr class="bg-gray-50 border-b"><th class="p-3">Título</th><th class="p-3">Validade (Meses)</th><th class="p-3 text-center">Ações</th></tr>${state.trainings.map(t=>`<tr class="border-b hover:bg-gray-50"><td class="p-3 font-medium">${t.title}</td><td class="p-3">${t.periodicityMonths||'Indeterminado'}</td><td class="p-3 text-center"><button onclick="openTrainingModal(${t.id})" class="text-blue-500 mx-1"><i data-lucide="edit" class="w-4 h-4"></i></button><button onclick="deleteTraining(${t.id})" class="text-red-500 mx-1"><i data-lucide="trash-2" class="w-4 h-4"></i></button></td></tr>`).join('')}</table></div>`;
         }
 
-        function openTrainingModal(id = null) {
-            const tr = id ? state.trainings.find(t => t.id === id) : { title: '', type: 'Interno', periodicityMonths: 0, content: '', roleIds: [], criteria: [] };
-            openModal(id?'Editar Treinamento':'Cadastrar Treinamento', `
-                <input type="hidden" id="trId" value="${id || ''}">
-                <div class="space-y-3 text-left">
-                    <div><label class="block font-bold">Título *</label><input type="text" id="trTitle" value="${tr.title}" class="w-full border p-2 rounded"></div>
-                    <div class="grid grid-cols-2 gap-4"><div><label class="block font-bold">Tipo</label><select id="trType" class="w-full border p-2 rounded"><option value="Interno" ${tr.type==='Interno'?'selected':''}>Interno</option><option value="Externo" ${tr.type==='Externo'?'selected':''}>Externo</option></select></div><div><label class="block font-bold">Validade (Meses)</label><input type="number" id="trPeriod" value="${tr.periodicityMonths}" class="w-full border p-2 rounded"></div></div>
-                    <div><label class="block font-bold">Conteúdo</label><textarea id="trContent" class="w-full border p-2 rounded" rows="2">${tr.content||''}</textarea></div>
-                    
-                    <div class="border-t pt-3"><label class="block font-bold text-blue-700 mb-1">Cargos Associados</label>
-                        <div class="flex gap-2"><select id="trRoleSelect" class="flex-1 border p-1.5 rounded"><option value="">Vincular cargo...</option>${state.roles.filter(r => !(tr.roleIds || []).includes(r.id)).map(r => `<option value="${r.id}">${r.name}</option>`).join('')}</select><button type="button" onclick="addRoleToTraining()" class="bg-gray-100 px-3 rounded">Add</button></div>
-                        <div id="trRolesContainer" class="flex flex-wrap gap-1 mt-1">${(tr.roleIds || []).map(rId => { const role = state.roles.find(r => r.id === rId); return role ? `<span class="bg-blue-50 text-blue-800 border px-2 py-0.5 rounded text-xs tr-role-badge" data-id="${role.id}">${role.name} <button onclick="this.parentElement.remove()" class="text-blue-500 ml-1">&times;</button></span>` : ''; }).join('')}</div>
-                    </div>
-                    
-                    <div class="border-t pt-3"><label class="block font-bold text-emerald-700 mb-1">Critérios de Avaliação</label>
-                        <div class="flex gap-2"><input type="text" id="trCriteriaInput" class="flex-1 border p-1.5 rounded" placeholder="Ex: Prova..."><button type="button" onclick="addCriteriaToTraining()" class="bg-gray-100 px-3 rounded">Add</button></div>
-                        <div id="trCriteriaContainer" class="flex flex-wrap gap-1 mt-1">${(tr.criteria || []).map(crit => `<span class="bg-emerald-50 text-emerald-800 border px-2 py-0.5 rounded text-xs tr-crit-badge" data-val="${crit}">${crit} <button onclick="this.parentElement.remove()" class="text-emerald-500 ml-1">&times;</button></span>`).join('')}</div>
-                    </div>
-                </div>
-            `, `<button onclick="saveTraining()" class="bg-blue-600 text-white px-4 py-2 rounded">Salvar</button>`);
+        function openTrainingModal(id=null) {
+            const tr = id ? state.trainings.find(t=>t.id===id) : {title:'', periodicityMonths:0, content:''};
+            openModal(id?'Editar Treinamento':'Novo Treinamento', `<input type="hidden" id="trId" value="${id||''}"><div class="space-y-3 text-left"><div><label class="block text-sm font-bold">Título *</label><input type="text" id="trTitle" value="${tr.title}" class="w-full border p-2 rounded"></div><div><label class="block text-sm font-bold">Meses de Validade (0 = Sem validade)</label><input type="number" id="trPeriod" value="${tr.periodicityMonths}" class="w-full border p-2 rounded"></div><div><label class="block text-sm font-bold">Conteúdo / Ementa</label><textarea id="trContent" class="w-full border p-2 rounded" rows="3">${tr.content||''}</textarea></div></div>`, `<button onclick="saveTraining()" class="bg-blue-600 text-white px-4 py-2 rounded">Salvar</button>`);
         }
 
-        function addRoleToTraining() { const s = document.getElementById('trRoleSelect'); if(!s.value) return; document.getElementById('trRolesContainer').insertAdjacentHTML('beforeend', `<span class="bg-blue-50 text-blue-800 border px-2 py-0.5 rounded text-xs tr-role-badge" data-id="${s.value}">${s.options[s.selectedIndex].text} <button onclick="this.parentElement.remove()" class="text-blue-500 ml-1">&times;</button></span>`); s.options[s.selectedIndex].remove(); }
-        function addCriteriaToTraining() { const i = document.getElementById('trCriteriaInput'); if(!i.value.trim()) return; document.getElementById('trCriteriaContainer').insertAdjacentHTML('beforeend', `<span class="bg-emerald-50 text-emerald-800 border px-2 py-0.5 rounded text-xs tr-crit-badge" data-val="${i.value}">${i.value} <button onclick="this.parentElement.remove()" class="text-emerald-500 ml-1">&times;</button></span>`); i.value=''; }
-
-        function saveTraining() {
-            const title = document.getElementById('trTitle').value; if(!title) return;
-            const roleIds = Array.from(document.querySelectorAll('#trRolesContainer .tr-role-badge')).map(b => parseInt(b.getAttribute('data-id')));
-            const criteria = Array.from(document.querySelectorAll('#trCriteriaContainer .tr-crit-badge')).map(b => b.getAttribute('data-val'));
-            const obj = { id: document.getElementById('trId').value ? parseInt(document.getElementById('trId').value) : generateId(state.trainings), title, type: document.getElementById('trType').value, periodicityMonths: parseInt(document.getElementById('trPeriod').value)||0, content: document.getElementById('trContent').value, roleIds, criteria };
-            
-            dbSave('trainings', obj.id, obj);
-            state.roles.forEach(r => {
-                let mod = false; if(!r.trainingIds) r.trainingIds=[];
-                if(roleIds.includes(r.id) && !r.trainingIds.includes(obj.id)) { r.trainingIds.push(obj.id); mod=true; }
-                else if(!roleIds.includes(r.id) && r.trainingIds.includes(obj.id)) { r.trainingIds.splice(r.trainingIds.indexOf(obj.id), 1); mod=true; }
-                if(mod) dbSave('roles', r.id, r);
-            });
-            closeModal(); renderTreinamentos(document.getElementById('app-content'));
-        }
-
+        function saveTraining() { const id = document.getElementById('trId').value; const title = document.getElementById('trTitle').value; if(!title) return; const obj = {id:id?parseInt(id):generateId(state.trainings), title, periodicityMonths:parseInt(document.getElementById('trPeriod').value)||0, content:document.getElementById('trContent').value}; dbSave('trainings', obj.id, obj); closeModal(); renderTreinamentos(document.getElementById('app-content')); Swal.fire('Salvo!', '', 'success'); }
         function deleteTraining(id) { requirePasswordForAction(()=>{ dbDelete('trainings', id); renderTreinamentos(document.getElementById('app-content')); }); }
 
-        // INICIALIZAÇÃO
+        // Inicializa o sistema após a autenticação
         auth.onAuthStateChanged((user) => { if (user) { currentUser = user; document.getElementById('user-avatar').innerText = user.email ? user.email.charAt(0).toUpperCase() : 'U'; loadDataFromFirestore(); } else auth.signInAnonymously(); });
     </script>
 </body>
