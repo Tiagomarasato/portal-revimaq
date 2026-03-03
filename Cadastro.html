@@ -57,7 +57,7 @@
                     
                     <!-- Link para o outro módulo -->
                     <a href="dashboard.html" class="hidden md:inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-blue-700 bg-blue-100 hover:bg-blue-200 focus:outline-none transition-colors">
-                        <i data-lucide="layout-dashboard" class="w-4 h-4 mr-2"></i> Ir para Dashboard & Avaliações
+                        <i data-lucide="layout-dashboard" class="w-4 h-4 mr-2"></i> Ir para Operação
                     </a>
                     
                     <button class="text-gray-500 hover:text-blue-600 relative" onclick="showDevInfo()"><i data-lucide="info" class="w-5 h-5"></i></button>
@@ -76,7 +76,7 @@
                 <a href="#" onclick="navigate('cargos')" class="nav-cargos menu-item block pl-4 py-2 border-l-4 border-transparent text-gray-600">Cargos</a>
                 <a href="#" onclick="navigate('habilidades')" class="nav-habilidades menu-item block pl-4 py-2 border-l-4 border-transparent text-gray-600">Habilidades</a>
                 <a href="#" onclick="navigate('treinamentos')" class="nav-treinamentos menu-item block pl-4 py-2 border-l-4 border-transparent text-gray-600">Treinamento</a>
-                <a href="dashboard.html" class="block pl-4 py-3 bg-blue-50 text-blue-700 font-bold border-t">Ir para Dashboard & Avaliações &rarr;</a>
+                <a href="dashboard.html" class="block pl-4 py-3 bg-blue-50 text-blue-700 font-bold border-t">Ir para Operação &rarr;</a>
                 <a href="index.html" class="block pl-4 py-3 text-white bg-slate-800 hover:bg-slate-700 font-bold border-t">
                     <i data-lucide="arrow-left" class="w-5 h-5 inline mr-2"></i> PORTAL
                 </a>
@@ -149,15 +149,18 @@
                     if(loadedCount >= collections.length) {
                         clearTimeout(fallbackTimer);
                         
-                        // Lógica de Permissões
+                        // --- LÓGICA DE PERMISSÕES ---
                         if (currentUser.email && currentUser.email !== 'Local') {
                             currentEmp = state.employees.find(e => e.email === currentUser.email);
                             if (currentEmp) {
                                 const roleObj = state.roles.find(r => r.name === currentEmp.role);
                                 if (roleObj && roleObj.permissions) userPermissions = roleObj.permissions;
+                                else userPermissions = {}; 
+                            } else {
+                                userPermissions = {}; 
                             }
                         } else {
-                            // Acesso Total (Admin/Local)
+                            // Acesso Total (Admin ou Teste Local)
                             userPermissions = {
                                 colaboradores: {view:true, create:true, edit:true, delete:true},
                                 cargos: {view:true, create:true, edit:true, delete:true},
@@ -176,9 +179,11 @@
                             else showAccessDenied();
                         } else {
                             if (checkPerm(currentPage, 'view')) navigate(currentPage);
-                            else { currentPage = ''; loadDataFromFirestore(); } // Reinicia caso perca a permissão
+                            else { currentPage = ''; loadDataFromFirestore(); }
                         }
                     }
+                }, (error) => {
+                    console.error(`Erro na coleção ${col}:`, error);
                 });
             });
         }
@@ -394,16 +399,21 @@
             const a = atts[index];
             if (!a) return;
 
-            if (a.url) window.open(a.url, '_blank');
-            else if (a.data) {
-                const link = document.createElement('a'); link.href = a.data; link.download = a.fileName || 'documento';
-                document.body.appendChild(link); link.click(); document.body.removeChild(link);
+            if (a.url) {
+                window.open(a.url, '_blank');
+            } else if (a.data) {
+                const link = document.createElement('a');
+                link.href = a.data;
+                link.download = a.fileName || 'documento';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
             }
         }
 
         function openEmployeeModal(id = null) {
-            if (id && !checkPerm('colaboradores', 'edit')) return Swal.fire('Acesso Negado', 'Sem permissão para editar colaboradores.', 'error');
-            if (!id && !checkPerm('colaboradores', 'create')) return Swal.fire('Acesso Negado', 'Sem permissão para criar colaboradores.', 'error');
+            if (id && !checkPerm('colaboradores', 'edit')) return Swal.fire('Acesso Negado', 'Seu cargo não permite editar colaboradores.', 'error');
+            if (!id && !checkPerm('colaboradores', 'create')) return Swal.fire('Acesso Negado', 'Seu cargo não permite cadastrar novos colaboradores.', 'error');
 
             const emp = id ? state.employees.find(e => e.id === id) : { 
                 name: '', role: '', dept: '', admission: '', status: 'Ativo', 
@@ -419,7 +429,11 @@
                 tempEmpAttachments = [...emp.attachments];
             } else if (emp.attachment) {
                 tempEmpAttachments.push({
-                    docName: 'Documento Principal', expirationDate: '', data: emp.attachment.data, url: emp.attachment.url, fileName: emp.attachment.name || 'documento'
+                    docName: 'Documento Principal',
+                    expirationDate: '',
+                    data: emp.attachment.data,
+                    url: emp.attachment.url,
+                    fileName: emp.attachment.name || 'documento'
                 });
             }
 
@@ -624,7 +638,7 @@
             
             if(!name || !role || !admission) return Swal.fire('Aviso', 'Preencha Nome, Cargo e Admissão (*).', 'warning');
 
-            Swal.fire({title: 'A Processar Dados...', html: 'Por favor, aguarde.', allowOutsideClick: false, didOpen: () => Swal.showLoading()});
+            Swal.fire({title: 'Processando Dados e Anexos...', html: 'Por favor, aguarde.', allowOutsideClick: false, didOpen: () => Swal.showLoading()});
 
             try {
                 const processedAttachments = await Promise.all(tempEmpAttachments.map(att => processSingleEmpFile(att)));
@@ -651,6 +665,8 @@
                     nextReviewDate: document.getElementById('empNextReview').value,
                     attachments: processedAttachments
                 };
+                
+                delete empObj.attachment;
                 
                 await dbSave('employees', empObj.id, empObj);
                 addLog('Colaboradores', isEdit ? 'Edição' : 'Criação', `Perfil de "${name}" salvo.`);
@@ -813,12 +829,12 @@
                     ${checkPerm('cargos', 'create') ? `<button onclick="openRoleModal()" class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm"><i data-lucide="plus" class="w-4 h-4 inline mr-1"></i> Novo Cargo</button>` : ''}
                     </div>
                     <div class="overflow-x-auto">
-                        <table class="w-full text-left text-sm"><tr class="bg-gray-50 border-b"><th class="p-3">Cargo</th><th class="p-3">Missão</th><th class="p-3 text-center">Ações</th></tr>
-                        ${state.roles.map(r => `<tr class="border-b hover:bg-gray-50"><td class="p-3 font-medium">${r.name}</td><td class="p-3 text-gray-500">${r.desc||'-'}</td>
-                        <td class="p-3 text-center">
+                        <table class="w-full text-left text-sm border-collapse"><tr class="bg-gray-50 border-b"><th class="p-3">Cargo</th><th class="p-3">Processo</th><th class="p-3">Missão</th><th class="p-3 text-center">Ações</th></tr>
+                        ${state.roles.map(r => `<tr class="border-b hover:bg-gray-50"><td class="p-3 font-medium">${r.name}</td><td class="p-3 text-gray-600">${r.process||'-'}</td><td class="p-3 text-gray-500">${r.desc||'-'}</td>
+                        <td class="p-3 text-center whitespace-nowrap">
                             ${checkPerm('cargos', 'edit') ? `<button onclick="openRoleModal(${r.id})" class="text-blue-500 mx-1"><i data-lucide="edit" class="w-4 h-4"></i></button>` : ''}
                             ${checkPerm('cargos', 'delete') ? `<button onclick="deleteRole(${r.id})" class="text-red-500 mx-1"><i data-lucide="trash-2" class="w-4 h-4"></i></button>` : ''}
-                        </td></tr>`).join('') || '<tr><td colspan="3" class="p-4 text-center text-gray-500">Nenhum cargo.</td></tr>'}
+                        </td></tr>`).join('') || '<tr><td colspan="4" class="p-4 text-center text-gray-500">Nenhum cargo.</td></tr>'}
                         </table>
                     </div>
                 </div>`;
@@ -829,40 +845,103 @@
             if (id && !checkPerm('cargos', 'edit')) return Swal.fire('Acesso Negado', 'Sem permissão para editar cargos.', 'error');
             if (!id && !checkPerm('cargos', 'create')) return Swal.fire('Acesso Negado', 'Sem permissão para criar cargos.', 'error');
 
-            const role = id ? state.roles.find(r => r.id === id) : { name: '', desc: '', skillIds: [], trainingIds: [] };
-            openModal(id?'Editar Cargo':'Novo Cargo', `
+            const role = id ? state.roles.find(r => r.id === id) : { name: '', process: '', desc: '', experience: '', skillIds: [], trainingIds: [] };
+            
+            let empsInRoleHtml = '';
+            if (id && role.name) {
+                const empsInRole = state.employees.filter(e => e.role === role.name && e.status === 'Ativo');
+                if (empsInRole.length > 0) {
+                    empsInRoleHtml = `
+                        <div class="border-t border-gray-200 pt-3 mt-4">
+                            <label class="block text-sm font-bold mb-2 text-slate-700 flex items-center"><i data-lucide="users" class="w-4 h-4 mr-2 text-blue-500"></i> Colaboradores Ativos neste Cargo (${empsInRole.length})</label>
+                            <div class="max-h-32 overflow-y-auto custom-scrollbar bg-blue-50/50 border border-blue-100 rounded-lg p-2 space-y-1">
+                                ${empsInRole.map(e => `<div class="text-xs text-gray-800 px-3 py-2 bg-white border border-gray-100 rounded-md shadow-sm flex items-center justify-between"><span class="font-semibold">${e.name}</span><span class="text-[10px] text-gray-400 bg-gray-50 px-2 py-0.5 rounded-full border border-gray-100">${e.dept || 'Sem depto.'}</span></div>`).join('')}
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    empsInRoleHtml = `<div class="border-t border-gray-200 pt-3 mt-4"><label class="block text-sm font-bold mb-1 text-slate-700 flex items-center"><i data-lucide="users" class="w-4 h-4 mr-2 text-gray-400"></i> Colaboradores Ativos neste Cargo</label><p class="text-xs text-gray-500 italic bg-gray-50 p-2 rounded border border-dashed border-gray-200">Nenhum colaborador ativo vinculado a este cargo no momento.</p></div>`;
+                }
+            }
+
+            openModal(id?'Editar Cargo / Perfil':'Novo Cargo', `
                 <input type="hidden" id="roleId" value="${id||''}">
-                <div class="space-y-3 text-left">
-                    <div><label class="block text-sm font-bold mb-1">Nome *</label><input type="text" id="roleName" value="${role.name}" class="w-full border p-2 rounded outline-none focus:ring-2 focus:ring-blue-500"></div>
-                    <div><label class="block text-sm font-bold mb-1">Missão</label><textarea id="roleDesc" rows="2" class="w-full border p-2 rounded">${role.desc||''}</textarea></div>
+                <div class="space-y-4 text-left">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div><label class="block text-sm font-bold mb-1 text-gray-700">Nome do Cargo *</label><input type="text" id="roleName" value="${role.name}" class="w-full border border-gray-300 p-2 rounded-lg outline-none focus:ring-2 focus:ring-blue-500"></div>
+                        <div><label class="block text-sm font-bold mb-1 text-gray-700">Processo Vinculado</label><input type="text" id="roleProcess" value="${role.process||''}" placeholder="Ex: Comercial, Produção..." class="w-full border border-gray-300 p-2 rounded-lg outline-none focus:ring-2 focus:ring-blue-500"></div>
+                    </div>
                     
-                    <div class="border-t pt-3"><label class="block text-sm font-bold mb-1 text-blue-700">Habilidades Exigidas</label>
-                        <div class="flex gap-2 mb-2"><select id="roleSkillSelect" class="flex-1 border p-2 rounded"><option value="">Adicionar...</option>${state.skills.filter(s => !(role.skillIds || []).includes(s.id)).map(s => `<option value="${s.id}">${s.name}</option>`).join('')}</select><button type="button" onclick="addSkillToRole()" class="bg-gray-100 px-3 rounded">Add</button></div>
-                        <div id="roleSkillsContainer" class="flex flex-wrap gap-1">${(role.skillIds||[]).map(sId => { const s = state.skills.find(x=>x.id===sId); return s ? `<span class="bg-blue-50 border text-blue-800 px-2 py-0.5 rounded text-xs sk-badge" data-id="${s.id}">${s.name} <button type="button" onclick="removeSkillFromRole(this)" class="text-blue-500 ml-1">&times;</button></span>` : ''; }).join('')}</div>
+                    <div><label class="block text-sm font-bold mb-1 text-gray-700">Missão do Cargo</label><textarea id="roleDesc" rows="2" class="w-full border border-gray-300 p-2 rounded-lg outline-none focus:ring-2 focus:ring-blue-500 custom-scrollbar">${role.desc||''}</textarea></div>
+                    
+                    <div><label class="block text-sm font-bold mb-1 text-gray-700">Experiência Exigida</label><textarea id="roleExp" rows="2" placeholder="Ex: 6 meses na função, ensino médio completo..." class="w-full border border-gray-300 p-2 rounded-lg outline-none focus:ring-2 focus:ring-blue-500 custom-scrollbar">${role.experience||''}</textarea></div>
+                    
+                    <div class="border-t border-gray-200 pt-3"><label class="block text-sm font-bold mb-2 text-blue-700 flex items-center"><i data-lucide="check-circle" class="w-4 h-4 mr-2"></i> Habilidades Exigidas na Matriz</label>
+                        <div class="flex gap-2 mb-2"><select id="roleSkillSelect" class="flex-1 border border-gray-300 p-2 rounded-lg outline-none focus:ring-2 focus:ring-blue-500 text-sm"><option value="">Selecionar habilidade...</option>${state.skills.filter(s => !(role.skillIds || []).includes(s.id)).map(s => `<option value="${s.id}">${s.name}</option>`).join('')}</select><button type="button" onclick="addSkillToRole()" class="bg-gray-100 hover:bg-gray-200 text-gray-800 px-4 rounded-lg font-bold text-sm transition">Adicionar</button></div>
+                        <div id="roleSkillsContainer" class="flex flex-wrap gap-2 min-h-[30px] p-2 bg-gray-50 rounded-lg border border-gray-100">${(role.skillIds||[]).map(sId => { const s = state.skills.find(x=>x.id===sId); return s ? `<span class="bg-blue-50 border border-blue-200 text-blue-800 px-3 py-1 rounded-full text-xs font-medium sk-badge flex items-center shadow-sm" data-id="${s.id}">${s.name} <button type="button" onclick="removeSkillFromRole(this)" class="text-blue-500 ml-2 hover:text-blue-700 font-bold">&times;</button></span>` : ''; }).join('') || '<span class="text-xs text-gray-400 m-auto">Nenhuma habilidade vinculada.</span>'}</div>
                     </div>
 
-                    <div class="border-t pt-3"><label class="block text-sm font-bold mb-1 text-purple-700">Treinamentos Obrigatórios</label>
-                        <div class="flex gap-2 mb-2"><select id="roleTrSelect" class="flex-1 border p-2 rounded"><option value="">Adicionar...</option>${state.trainings.filter(t => !(role.trainingIds || []).includes(t.id)).map(t => `<option value="${t.id}">${t.title}</option>`).join('')}</select><button type="button" onclick="addTrToRole()" class="bg-gray-100 px-3 rounded">Add</button></div>
-                        <div id="roleTrContainer" class="flex flex-wrap gap-1">${(role.trainingIds||[]).map(tId => { const t = state.trainings.find(x=>x.id===tId); return t ? `<span class="bg-purple-50 border text-purple-800 px-2 py-0.5 rounded text-xs tr-badge" data-id="${t.id}">${t.title} <button type="button" onclick="removeTrainingFromRole(this)" class="text-purple-500 ml-1">&times;</button></span>` : ''; }).join('')}</div>
+                    <div class="border-t border-gray-200 pt-3"><label class="block text-sm font-bold mb-2 text-purple-700 flex items-center"><i data-lucide="book-open" class="w-4 h-4 mr-2"></i> Treinamentos Obrigatórios</label>
+                        <div class="flex gap-2 mb-2"><select id="roleTrSelect" class="flex-1 border border-gray-300 p-2 rounded-lg outline-none focus:ring-2 focus:ring-purple-500 text-sm"><option value="">Selecionar treinamento...</option>${state.trainings.filter(t => !(role.trainingIds || []).includes(t.id)).map(t => `<option value="${t.id}">${t.title}</option>`).join('')}</select><button type="button" onclick="addTrToRole()" class="bg-gray-100 hover:bg-gray-200 text-gray-800 px-4 rounded-lg font-bold text-sm transition">Adicionar</button></div>
+                        <div id="roleTrContainer" class="flex flex-wrap gap-2 min-h-[30px] p-2 bg-gray-50 rounded-lg border border-gray-100">${(role.trainingIds||[]).map(tId => { const t = state.trainings.find(x=>x.id===tId); return t ? `<span class="bg-purple-50 border border-purple-200 text-purple-800 px-3 py-1 rounded-full text-xs font-medium tr-badge flex items-center shadow-sm" data-id="${t.id}">${t.title} <button type="button" onclick="removeTrainingFromRole(this)" class="text-purple-500 ml-2 hover:text-purple-700 font-bold">&times;</button></span>` : ''; }).join('') || '<span class="text-xs text-gray-400 m-auto">Nenhum treinamento vinculado.</span>'}</div>
                     </div>
+
+                    ${empsInRoleHtml}
                 </div>
-            `, `<button onclick="saveRole()" class="bg-blue-600 text-white px-4 py-2 rounded">Salvar</button>`);
+            `, `<button onclick="saveRole()" class="bg-blue-600 text-white px-5 py-2.5 rounded-lg font-bold shadow-sm transition">Salvar Perfil do Cargo</button>`);
         }
 
-        function addSkillToRole() { const sel = document.getElementById('roleSkillSelect'); if(!sel.value) return; document.getElementById('roleSkillsContainer').insertAdjacentHTML('beforeend', `<span class="bg-blue-50 border text-blue-800 px-2 py-0.5 rounded text-xs sk-badge" data-id="${sel.value}">${sel.options[sel.selectedIndex].text} <button type="button" onclick="removeSkillFromRole(this)" class="text-blue-500 ml-1">&times;</button></span>`); sel.options[sel.selectedIndex].remove(); }
-        function removeSkillFromRole(btn) { const badge = btn.parentElement; const id = parseInt(badge.getAttribute('data-id')); badge.remove(); const s = state.skills.find(x=>x.id===id); if(s) document.getElementById('roleSkillSelect').insertAdjacentHTML('beforeend', `<option value="${s.id}">${s.name}</option>`); }
-        function addTrToRole() { const sel = document.getElementById('roleTrSelect'); if(!sel.value) return; document.getElementById('roleTrContainer').insertAdjacentHTML('beforeend', `<span class="bg-purple-50 border text-purple-800 px-2 py-0.5 rounded text-xs tr-badge" data-id="${sel.value}">${sel.options[sel.selectedIndex].text} <button type="button" onclick="removeTrainingFromRole(this)" class="text-purple-500 ml-1">&times;</button></span>`); sel.options[sel.selectedIndex].remove(); }
-        function removeTrainingFromRole(btn) { const badge = btn.parentElement; const id = parseInt(badge.getAttribute('data-id')); badge.remove(); const t = state.trainings.find(x=>x.id===id); if(t) document.getElementById('roleTrSelect').insertAdjacentHTML('beforeend', `<option value="${t.id}">${t.title}</option>`); }
+        function addSkillToRole() { 
+            const sel = document.getElementById('roleSkillSelect'); if(!sel.value) return; 
+            const container = document.getElementById('roleSkillsContainer');
+            if (container.innerHTML.includes('Nenhuma habilidade')) container.innerHTML = '';
+            container.insertAdjacentHTML('beforeend', `<span class="bg-blue-50 border border-blue-200 text-blue-800 px-3 py-1 rounded-full text-xs font-medium sk-badge flex items-center shadow-sm" data-id="${sel.value}">${sel.options[sel.selectedIndex].text} <button type="button" onclick="removeSkillFromRole(this)" class="text-blue-500 ml-2 hover:text-blue-700 font-bold">&times;</button></span>`); 
+            sel.options[sel.selectedIndex].remove(); 
+        }
+
+        function removeSkillFromRole(btn) { 
+            const badge = btn.parentElement; const id = parseInt(badge.getAttribute('data-id')); badge.remove(); 
+            const s = state.skills.find(x=>x.id===id); if(s) document.getElementById('roleSkillSelect').insertAdjacentHTML('beforeend', `<option value="${s.id}">${s.name}</option>`); 
+            const container = document.getElementById('roleSkillsContainer');
+            if (container.children.length === 0) container.innerHTML = '<span class="text-xs text-gray-400 m-auto">Nenhuma habilidade vinculada.</span>';
+        }
+
+        function addTrToRole() { 
+            const sel = document.getElementById('roleTrSelect'); if(!sel.value) return; 
+            const container = document.getElementById('roleTrContainer');
+            if (container.innerHTML.includes('Nenhum treinamento')) container.innerHTML = '';
+            container.insertAdjacentHTML('beforeend', `<span class="bg-purple-50 border border-purple-200 text-purple-800 px-3 py-1 rounded-full text-xs font-medium tr-badge flex items-center shadow-sm" data-id="${sel.value}">${sel.options[sel.selectedIndex].text} <button type="button" onclick="removeTrainingFromRole(this)" class="text-purple-500 ml-2 hover:text-purple-700 font-bold">&times;</button></span>`); 
+            sel.options[sel.selectedIndex].remove(); 
+        }
+
+        function removeTrainingFromRole(btn) { 
+            const badge = btn.parentElement; const id = parseInt(badge.getAttribute('data-id')); badge.remove(); 
+            const t = state.trainings.find(x=>x.id===id); if(t) document.getElementById('roleTrSelect').insertAdjacentHTML('beforeend', `<option value="${t.id}">${t.title}</option>`); 
+            const container = document.getElementById('roleTrContainer');
+            if (container.children.length === 0) container.innerHTML = '<span class="text-xs text-gray-400 m-auto">Nenhum treinamento vinculado.</span>';
+        }
 
         function saveRole() {
             const id = document.getElementById('roleId').value; 
             if (id && !checkPerm('cargos', 'edit')) return;
             if (!id && !checkPerm('cargos', 'create')) return;
 
-            const name = document.getElementById('roleName').value; if(!name) return;
+            const name = document.getElementById('roleName').value; if(!name) return Swal.fire('Aviso', 'O nome do cargo é obrigatório.', 'warning');
+            const process = document.getElementById('roleProcess') ? document.getElementById('roleProcess').value : '';
+            const experience = document.getElementById('roleExp') ? document.getElementById('roleExp').value : '';
+            const desc = document.getElementById('roleDesc').value;
+
             const skillIds = Array.from(document.querySelectorAll('#roleSkillsContainer .sk-badge')).map(b => parseInt(b.getAttribute('data-id')));
             const trainingIds = Array.from(document.querySelectorAll('#roleTrContainer .tr-badge')).map(b => parseInt(b.getAttribute('data-id')));
-            const obj = { id: id ? parseInt(id) : generateId(state.roles), name, desc: document.getElementById('roleDesc').value, skillIds, trainingIds };
+            const obj = { 
+                id: id ? parseInt(id) : generateId(state.roles), 
+                name, 
+                process,
+                experience,
+                desc, 
+                skillIds, 
+                trainingIds 
+            };
             dbSave('roles', obj.id, obj); closeModal(); renderCargos(document.getElementById('app-content')); Swal.fire('Salvo!', '', 'success');
         }
 
@@ -880,9 +959,9 @@
                 return;
             }
 
-            container.innerHTML = `<div class="bg-white rounded-xl shadow border p-6 mb-6"><div class="flex justify-between items-center mb-6"><h3 class="text-lg font-semibold">Matriz de Competências por Cargo</h3><div><button onclick="openManageSkillsModal()" class="bg-gray-100 px-4 py-2 rounded mr-2 text-sm"><i data-lucide="list" class="w-4 h-4 inline"></i> Catálogo</button>
-            ${checkPerm('habilidades', 'create') ? `<button onclick="openSkillModal()" class="bg-blue-600 text-white px-4 py-2 rounded text-sm"><i data-lucide="plus" class="w-4 h-4 inline"></i> Nova Habilidade Base</button>` : ''}
-            </div></div><div class="mb-6 bg-blue-50 p-4 rounded-lg"><select id="matrixRoleFilter" onchange="updateMatrixView()" class="w-full md:w-1/3 border p-2 rounded"><option value="">-- Selecione o Cargo --</option>${state.roles.map(r => `<option value="${r.name}" ${currentMatrixRole === r.name ? 'selected' : ''}>${r.name}</option>`).join('')}</select></div><div id="matrixTableContainer" class="overflow-x-auto hidden border rounded-lg"></div><div id="matrixEmptyState" class="text-center py-10 bg-gray-50 text-gray-500 rounded">Selecione um cargo acima.</div></div>`;
+            container.innerHTML = `<div class="bg-white rounded-xl shadow border p-6 mb-6"><div class="flex justify-between items-center mb-6"><h3 class="text-lg font-semibold">Matriz de Competências por Cargo</h3><div><button onclick="openManageSkillsModal()" class="bg-gray-100 hover:bg-gray-200 transition px-4 py-2 rounded-lg text-sm font-medium mr-2"><i data-lucide="list" class="w-4 h-4 inline mr-1"></i> Catálogo</button>
+            ${checkPerm('habilidades', 'create') ? `<button onclick="openSkillModal()" class="bg-blue-600 hover:bg-blue-700 transition text-white px-4 py-2 rounded-lg text-sm font-bold shadow-sm"><i data-lucide="plus" class="w-4 h-4 inline mr-1"></i> Nova Habilidade Base</button>` : ''}
+            </div></div><div class="mb-6 bg-blue-50 p-4 rounded-lg"><select id="matrixRoleFilter" onchange="updateMatrixView()" class="w-full md:w-1/3 border p-2 rounded outline-none focus:ring-2 focus:ring-blue-500"><option value="">-- Selecione o Cargo --</option>${state.roles.map(r => `<option value="${r.name}" ${currentMatrixRole === r.name ? 'selected' : ''}>${r.name}</option>`).join('')}</select></div><div id="matrixTableContainer" class="overflow-x-auto hidden border border-gray-200 rounded-lg custom-scrollbar"></div><div id="matrixEmptyState" class="text-center py-10 bg-gray-50 border-2 border-dashed border-gray-200 rounded-lg text-gray-500 font-medium">Selecione um cargo acima para visualizar a matriz.</div></div>`;
             if(currentMatrixRole) updateMatrixView();
             if(window.lucide) window.lucide.createIcons();
         }
@@ -891,9 +970,9 @@
             currentMatrixRole = document.getElementById('matrixRoleFilter').value; const cont = document.getElementById('matrixTableContainer'); const empty = document.getElementById('matrixEmptyState');
             if(!currentMatrixRole) { cont.classList.add('hidden'); empty.classList.remove('hidden'); return; }
             const role = state.roles.find(r => r.name === currentMatrixRole); const emps = state.employees.filter(e => e.role === role.name && e.status === 'Ativo'); const skills = (role.skillIds||[]).map(id => state.skills.find(s=>s.id===id)).filter(s=>s);
-            if(skills.length===0) { cont.innerHTML = '<p class="p-6 text-center">Sem habilidades vinculadas a este cargo.</p>'; } else {
-                let html = `<table class="w-full text-left text-sm border-collapse"><tr class="bg-gray-50 border-b"><th class="p-3">Colaborador</th>${skills.map(s=>`<th class="p-3 text-center text-xs">${s.name}</th>`).join('')}</tr>`;
-                emps.forEach(e => { html += `<tr class="border-b hover:bg-gray-50"><td class="p-3 font-medium">${e.name}</td>`; skills.forEach(s => { const es = state.employeeSkills.find(x=>x.empId===e.id && x.skillId===s.id) || {req:0, actual:0}; const gap = es.req>0 && es.actual<es.req; html += `<td class="p-2 text-center cursor-pointer" onclick="openEvalSkillModal(${e.id}, ${s.id})"><div class="flex flex-col items-center"><span class="text-[10px] text-gray-400">Req: ${es.req}</span><span class="w-8 h-8 rounded-full flex items-center justify-center font-bold shadow-sm ${gap?'bg-red-50 text-red-600':'bg-green-50 text-green-600'}">${es.actual||'-'}</span></div></td>`; }); html += `</tr>`; });
+            if(skills.length===0) { cont.innerHTML = '<p class="p-6 text-center text-gray-500 font-medium">Sem habilidades vinculadas a este cargo.</p>'; } else {
+                let html = `<table class="w-full text-left text-sm border-collapse"><tr class="bg-gray-50 border-b border-gray-200"><th class="p-3">Colaborador</th>${skills.map(s=>`<th class="p-3 text-center text-xs font-semibold text-gray-600">${s.name}</th>`).join('')}</tr>`;
+                emps.forEach(e => { html += `<tr class="border-b border-gray-100 hover:bg-blue-50/50 transition"><td class="p-3 font-medium text-gray-800">${e.name}</td>`; skills.forEach(s => { const es = state.employeeSkills.find(x=>x.empId===e.id && x.skillId===s.id) || {req:0, actual:0}; const gap = es.req>0 && es.actual<es.req; html += `<td class="p-2 text-center cursor-pointer" onclick="openEvalSkillModal(${e.id}, ${s.id})" title="Clique para ajustar a Meta deste colaborador"><div class="flex flex-col items-center"><span class="text-[10px] text-gray-400 font-bold mb-0.5">Req: ${es.req}</span><span class="w-8 h-8 rounded-full flex items-center justify-center font-bold shadow-sm ${gap?'bg-red-50 text-red-600 border border-red-200':'bg-green-50 text-green-600 border border-green-200'}">${es.actual||'-'}</span></div></td>`; }); html += `</tr>`; });
                 cont.innerHTML = html + `</table>`;
             }
             cont.classList.remove('hidden'); empty.classList.add('hidden');
@@ -902,20 +981,20 @@
         function openEvalSkillModal(empId, skillId) {
             if (!checkPerm('habilidades', 'edit')) return Swal.fire('Acesso Negado', 'Sem permissão para alterar metas na matriz.', 'error');
             const es = state.employeeSkills.find(x=>x.empId===empId && x.skillId===skillId) || {req:0, actual:0};
-            openModal('Ajustar Meta da Função', `<div class="mb-3 text-sm text-blue-700 bg-blue-50 p-3 rounded">A Nota Atual só é modificada pelo Módulo de Avaliação de Desempenho. Aqui define-se a META para a função.</div><div class="grid grid-cols-2 gap-4"><div><label class="block text-sm font-bold mb-1">Nota Exigida (Meta)</label><input type="number" id="skReq" value="${es.req}" class="w-full border p-2 rounded" step="0.5" min="0" max="5"></div><div><label class="block text-sm font-bold mb-1 text-gray-400">Nota Atual</label><input type="number" value="${es.actual}" class="w-full border p-2 rounded bg-gray-100 text-gray-500" disabled></div></div>`, `<button onclick="dbSave('employeeSkills', '${empId}_${skillId}', {empId:${empId}, skillId:${skillId}, req:parseFloat(document.getElementById('skReq').value)||0, actual:${es.actual}}); closeModal(); setTimeout(updateMatrixView, 200);" class="bg-blue-600 text-white px-4 py-2 rounded">Salvar Meta</button>`);
+            openModal('Ajustar Meta da Função', `<div class="mb-4 text-sm text-blue-800 bg-blue-50 p-4 rounded-lg border border-blue-100">A <strong class="text-blue-900">Nota Atual</strong> só é modificada pelo Módulo de Avaliação de Desempenho.<br>Aqui define-se a <strong class="text-blue-900">META EXIGIDA</strong> para a função.</div><div class="grid grid-cols-2 gap-4"><div><label class="block text-sm font-bold mb-1 text-gray-800">Nota Exigida (Meta)</label><input type="number" id="skReq" value="${es.req}" class="w-full border border-gray-300 p-2.5 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" step="0.5" min="0" max="5"></div><div><label class="block text-sm font-bold mb-1 text-gray-400">Nota Atual (Histórico)</label><input type="number" value="${es.actual}" class="w-full border border-gray-200 p-2.5 rounded-lg bg-gray-100 text-gray-500 font-semibold cursor-not-allowed" disabled></div></div>`, `<button onclick="dbSave('employeeSkills', '${empId}_${skillId}', {empId:${empId}, skillId:${skillId}, req:parseFloat(document.getElementById('skReq').value)||0, actual:${es.actual}}); closeModal(); setTimeout(updateMatrixView, 200);" class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-lg font-bold shadow-sm transition">Salvar Meta</button>`);
         }
 
         function openManageSkillsModal() { 
-            openModal('Catálogo de Habilidades Base', `<table class="w-full text-left text-sm border-collapse"><tr class="bg-gray-50 border-b"><th class="p-3">Habilidade</th><th class="p-3 text-center">Ações</th></tr>${state.skills.map(s=>`<tr class="border-b"><td class="p-3 font-medium">${s.name}</td><td class="p-3 text-center">
-                ${checkPerm('habilidades', 'edit') ? `<button onclick="openSkillModal(${s.id})" class="text-blue-500 mx-1"><i data-lucide="edit" class="w-4 h-4"></i></button>` : ''}
-                ${checkPerm('habilidades', 'delete') ? `<button onclick="deleteSkill(${s.id})" class="text-red-500 mx-1"><i data-lucide="trash-2" class="w-4 h-4"></i></button>` : ''}
-            </td></tr>`).join('')}</table>`, `<button onclick="closeModal()" class="px-4 py-2 bg-gray-100 rounded">Fechar</button>`); 
+            openModal('Catálogo de Habilidades Base', `<div class="overflow-y-auto max-h-96 custom-scrollbar border border-gray-200 rounded-lg"><table class="w-full text-left text-sm border-collapse"><thead class="sticky top-0 bg-gray-50"><tr class="border-b border-gray-200"><th class="p-3 text-gray-600 uppercase text-xs">Habilidade</th><th class="p-3 text-center text-gray-600 uppercase text-xs">Ações</th></tr></thead><tbody class="divide-y divide-gray-100">${state.skills.map(s=>`<tr class="hover:bg-gray-50 transition"><td class="p-3 font-medium text-gray-800">${s.name}</td><td class="p-3 text-center whitespace-nowrap">
+                ${checkPerm('habilidades', 'edit') ? `<button onclick="openSkillModal(${s.id})" class="text-blue-500 hover:text-blue-700 bg-blue-50 p-1.5 rounded transition mx-0.5"><i data-lucide="edit" class="w-4 h-4"></i></button>` : ''}
+                ${checkPerm('habilidades', 'delete') ? `<button onclick="deleteSkill(${s.id})" class="text-red-500 hover:text-red-700 bg-red-50 p-1.5 rounded transition mx-0.5"><i data-lucide="trash-2" class="w-4 h-4"></i></button>` : ''}
+            </td></tr>`).join('')}</tbody></table></div>`, `<button onclick="closeModal()" class="px-5 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg font-bold transition">Fechar Catálogo</button>`); 
         }
         
         function openSkillModal(id=null) { 
             if (id && !checkPerm('habilidades', 'edit')) return Swal.fire('Acesso Negado', 'Sem permissão para editar.', 'error');
             if (!id && !checkPerm('habilidades', 'create')) return Swal.fire('Acesso Negado', 'Sem permissão para criar.', 'error');
-            const s = id ? state.skills.find(x=>x.id===id) : {name:'', desc:''}; openModal(id?'Editar Habilidade':'Nova Habilidade', `<input type="hidden" id="skId" value="${id||''}"><div class="mb-3"><label class="block text-sm font-bold">Nome *</label><input type="text" id="skName" value="${s.name}" class="w-full border p-2 rounded"></div><div><label class="block text-sm font-bold">Critérios</label><textarea id="skDesc" class="w-full border p-2 rounded" rows="3">${s.desc||''}</textarea></div>`, `<button onclick="saveSkill()" class="bg-blue-600 text-white px-4 py-2 rounded">Salvar</button>`); 
+            const s = id ? state.skills.find(x=>x.id===id) : {name:'', desc:''}; openModal(id?'Editar Habilidade':'Nova Habilidade Base', `<input type="hidden" id="skId" value="${id||''}"><div class="mb-4"><label class="block text-sm font-bold text-gray-800 mb-1">Nome da Habilidade *</label><input type="text" id="skName" value="${s.name}" class="w-full border border-gray-300 p-2.5 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Ex: Comunicação, Liderança..."></div><div><label class="block text-sm font-bold text-gray-800 mb-1">Critérios de Avaliação</label><textarea id="skDesc" class="w-full border border-gray-300 p-2.5 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none custom-scrollbar" rows="3" placeholder="Descreva os comportamentos esperados...">${s.desc||''}</textarea></div>`, `<button onclick="saveSkill()" class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-lg font-bold shadow-sm transition">Salvar Habilidade</button>`); 
         }
         
         function saveSkill() { 
@@ -927,10 +1006,10 @@
         
         function deleteSkill(id) { 
             if (!checkPerm('habilidades', 'delete')) return Swal.fire('Acesso Negado', 'Sem permissão para excluir.', 'error');
-            if(state.roles.some(r=>r.skillIds&&r.skillIds.includes(id))) return Swal.fire('Erro', 'Habilidade vinculada a cargo.', 'error'); requirePasswordForAction(() => { dbDelete('skills', id); openManageSkillsModal(); renderHabilidades(document.getElementById('app-content')); }); 
+            if(state.roles.some(r=>r.skillIds&&r.skillIds.includes(id))) return Swal.fire('Erro', 'Esta habilidade está vinculada a um Cargo. Remova-a do Cargo primeiro.', 'error'); requirePasswordForAction(() => { dbDelete('skills', id); openManageSkillsModal(); renderHabilidades(document.getElementById('app-content')); }); 
         }
 
-        // ================= 4. TREINAMENTOS (CATÁLOGO) =================
+        // ================= 4. TREINAMENTOS (CATÁLOGO COMPLETO) =================
         function renderTreinamentos(container) {
             if (!checkPerm('treinamentos', 'view')) {
                 container.innerHTML = '<div class="text-center py-10 text-red-600 font-bold"><i data-lucide="shield-alert" class="w-12 h-12 mx-auto mb-2"></i> Acesso Negado ao módulo de Treinamentos.</div>';
@@ -938,74 +1017,156 @@
                 return;
             }
 
-            container.innerHTML = `<div class="bg-white rounded-xl shadow border p-6"><div class="flex justify-between items-center mb-4"><h3 class="text-lg font-semibold">Treinamento</h3>
-            ${checkPerm('treinamentos', 'create') ? `<button onclick="openTrainingModal()" class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm"><i data-lucide="plus" class="w-4 h-4 inline mr-1"></i> Novo Treinamento</button>` : ''}
-            </div><table class="w-full text-left text-sm"><tr class="bg-gray-50 border-b"><th class="p-3">Título</th><th class="p-3">Validade (Meses)</th><th class="p-3 text-center">Ações</th></tr>${state.trainings.map(t=>`<tr class="border-b hover:bg-gray-50"><td class="p-3 font-medium">${t.title}</td><td class="p-3">${t.periodicityMonths||'Indeterminado'}</td><td class="p-3 text-center">
-            ${checkPerm('treinamentos', 'edit') ? `<button onclick="openTrainingModal(${t.id})" class="text-blue-500 mx-1"><i data-lucide="edit" class="w-4 h-4"></i></button>` : ''}
-            ${checkPerm('treinamentos', 'delete') ? `<button onclick="deleteTraining(${t.id})" class="text-red-500 mx-1"><i data-lucide="trash-2" class="w-4 h-4"></i></button>` : ''}
-            </td></tr>`).join('')}</table></div>`;
+            container.innerHTML = `<div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6"><div class="flex justify-between items-center mb-6"><h3 class="text-lg font-semibold text-gray-800">Catálogo de Treinamentos</h3>
+            ${checkPerm('treinamentos', 'create') ? `<button onclick="openTrainingModal()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-bold shadow-sm transition flex items-center"><i data-lucide="plus" class="w-4 h-4 mr-1"></i> Novo Treinamento</button>` : ''}
+            </div><div class="overflow-x-auto custom-scrollbar border border-gray-200 rounded-lg"><table class="w-full text-left text-sm border-collapse"><thead class="bg-gray-50"><tr class="border-b border-gray-200"><th class="p-4 text-xs uppercase text-gray-600">Título do Treinamento</th><th class="p-4 text-xs uppercase text-gray-600">Validade</th><th class="p-4 text-center text-xs uppercase text-gray-600">Ações</th></tr></thead><tbody class="divide-y divide-gray-100">${state.trainings.map(t=>`<tr class="hover:bg-gray-50 transition"><td class="p-4 font-medium text-gray-800">${t.title}</td><td class="p-4">${t.periodicityMonths ? `<span class="bg-blue-50 text-blue-700 px-2 py-1 rounded-full text-xs font-bold border border-blue-200">${t.periodicityMonths} Meses</span>` : '<span class="text-gray-400 italic text-xs">Sem Validade</span>'}</td><td class="p-4 text-center whitespace-nowrap">
+            ${checkPerm('treinamentos', 'edit') ? `<button onclick="openTrainingModal(${t.id})" class="text-blue-500 hover:text-blue-700 bg-blue-50 p-1.5 rounded transition mx-0.5" title="Editar"><i data-lucide="edit" class="w-4 h-4"></i></button>` : ''}
+            ${checkPerm('treinamentos', 'delete') ? `<button onclick="deleteTraining(${t.id})" class="text-red-500 hover:text-red-700 bg-red-50 p-1.5 rounded transition mx-0.5" title="Excluir"><i data-lucide="trash-2" class="w-4 h-4"></i></button>` : ''}
+            </td></tr>`).join('') || `<tr><td colspan="3" class="p-8 text-center text-gray-500">Nenhum treinamento cadastrado.</td></tr>`}</tbody></table></div></div>`;
             if(window.lucide) window.lucide.createIcons();
         }
+
+        // FUNÇÃO DE TOGGLE DO CHECKBOX DE VALIDADE
+        window.toggleValidityInput = function() {
+            const checkbox = document.getElementById('trHasValidity');
+            const container = document.getElementById('trValidityContainer');
+            if(checkbox.checked) {
+                container.classList.remove('hidden');
+            } else {
+                container.classList.add('hidden');
+            }
+        };
+
+        // FUNÇÃO PARA ADICIONAR CRITÉRIOS EM FORMA DE TAG
+        window.addCriteriaToTraining = function() { 
+            const i = document.getElementById('trCriteriaInput'); 
+            if(!i.value.trim()) return; 
+            document.getElementById('trCriteriaContainer').insertAdjacentHTML('beforeend', `<span class="bg-emerald-50 text-emerald-800 border border-emerald-200 px-3 py-1 rounded-full text-xs font-medium tr-crit-badge flex items-center shadow-sm" data-val="${i.value.trim()}">${i.value.trim()} <button type="button" onclick="this.parentElement.remove()" class="text-emerald-500 ml-2 hover:text-emerald-700 font-bold">&times;</button></span>`); 
+            i.value=''; 
+            if(window.lucide) window.lucide.createIcons();
+        };
 
         function openTrainingModal(id=null) {
             if (id && !checkPerm('treinamentos', 'edit')) return Swal.fire('Acesso Negado', 'Sem permissão para editar.', 'error');
             if (!id && !checkPerm('treinamentos', 'create')) return Swal.fire('Acesso Negado', 'Sem permissão para criar.', 'error');
             
-            const tr = id ? state.trainings.find(t=>t.id===id) : {title:'', periodicityMonths:0, content:'', roleIds: [], criteria: []};
+            const tr = id ? state.trainings.find(t=>t.id===id) : {title:'', periodicityMonths:0, content:'', type: 'Interno', roleIds: [], criteria: []};
+            const hasVal = tr.periodicityMonths > 0;
+            
             openModal(id?'Editar Treinamento':'Novo Treinamento', `
                 <input type="hidden" id="trId" value="${id||''}">
-                <div class="space-y-3 text-left">
-                    <div><label class="block text-sm font-bold">Título *</label><input type="text" id="trTitle" value="${tr.title}" class="w-full border p-2 rounded"></div>
-                    <div class="grid grid-cols-2 gap-4">
-                        <div><label class="block text-sm font-bold">Tipo</label><select id="trType" class="w-full border p-2 rounded"><option value="Interno" ${tr.type === 'Interno' ? 'selected' : ''}>Interno</option><option value="Externo" ${tr.type === 'Externo' ? 'selected' : ''}>Externo</option></select></div>
-                        <div><label class="block text-sm font-bold">Meses de Validade (0 = Sem validade)</label><input type="number" id="trPeriod" value="${tr.periodicityMonths}" class="w-full border p-2 rounded"></div>
+                <div class="space-y-4 text-left">
+                    <div>
+                        <label class="block text-sm font-bold text-gray-800 mb-1">Título do Treinamento *</label>
+                        <input type="text" id="trTitle" value="${tr.title}" class="w-full border border-gray-300 p-2.5 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Ex: Integração SGQ">
                     </div>
-                    <div><label class="block text-sm font-bold">Conteúdo / Ementa</label><textarea id="trContent" class="w-full border p-2 rounded" rows="2">${tr.content||''}</textarea></div>
                     
-                    <div class="border-t pt-3"><label class="block font-bold text-blue-700 mb-1">Cargos Associados</label>
-                        <div class="flex gap-2"><select id="trModalRoleSelect" class="flex-1 border p-1.5 rounded"><option value="">Vincular cargo...</option>${state.roles.filter(r => !(tr.roleIds || []).includes(r.id)).map(r => `<option value="${r.id}">${r.name}</option>`).join('')}</select><button type="button" onclick="addRoleToTrainingModal()" class="bg-gray-100 px-3 rounded">Add</button></div>
-                        <div id="trModalRolesContainer" class="flex flex-wrap gap-1 mt-1">${(tr.roleIds || []).map(rId => { const role = state.roles.find(r => r.id === rId); return role ? `<span class="bg-blue-50 text-blue-800 border px-2 py-0.5 rounded text-xs tr-role-badge" data-id="${role.id}">${role.name} <button type="button" onclick="removeRoleFromTrainingModal(this)" class="text-blue-500 ml-1">&times;</button></span>` : ''; }).join('')}</div>
+                    <div class="grid grid-cols-2 gap-4 items-end bg-gray-50 p-3 rounded-lg border border-gray-200">
+                        <div>
+                            <label class="block text-sm font-bold text-gray-800 mb-1">Tipo</label>
+                            <select id="trType" class="w-full border border-gray-300 p-2 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
+                                <option value="Interno" ${tr.type === 'Interno' ? 'selected' : ''}>Interno</option>
+                                <option value="Externo" ${tr.type === 'Externo' ? 'selected' : ''}>Externo</option>
+                            </select>
+                        </div>
+                        
+                        <div class="pb-2 pl-2">
+                            <label class="flex items-center text-sm font-bold text-gray-700 cursor-pointer select-none">
+                                <input type="checkbox" id="trHasValidity" class="mr-2 w-5 h-5 text-blue-600 rounded border-gray-300 focus:ring-blue-500 transition" ${hasVal ? 'checked' : ''} onchange="toggleValidityInput()">
+                                Exigir validade?
+                            </label>
+                        </div>
+                    </div>
+
+                    <div id="trValidityContainer" class="${hasVal ? '' : 'hidden'} bg-blue-50 p-3 rounded-lg border border-blue-100 flex items-center justify-between">
+                        <label class="text-sm font-bold text-blue-900">Prazo de Validade (Meses)</label>
+                        <input type="number" id="trPeriod" value="${tr.periodicityMonths || 12}" class="w-24 border border-blue-300 p-2 rounded text-center focus:ring-2 focus:ring-blue-500 outline-none font-bold text-blue-700" placeholder="12" min="1">
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-bold text-gray-800 mb-1">Conteúdo / Ementa Base</label>
+                        <textarea id="trContent" class="w-full border border-gray-300 p-2.5 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none custom-scrollbar" rows="3" placeholder="Descreva os tópicos principais...">${tr.content||''}</textarea>
+                    </div>
+                    
+                    <div class="border-t border-gray-200 pt-4 mt-2">
+                        <label class="block font-bold text-blue-800 mb-2 flex items-center"><i data-lucide="users" class="w-4 h-4 mr-2"></i> Cargos Associados (Matriz)</label>
+                        <div class="flex gap-2">
+                            <select id="trModalRoleSelect" class="flex-1 border border-gray-300 p-2.5 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm">
+                                <option value="">Vincular a um cargo...</option>
+                                ${state.roles.filter(r => !(tr.roleIds || []).includes(r.id)).map(r => `<option value="${r.id}">${r.name}</option>`).join('')}
+                            </select>
+                            <button type="button" onclick="addRoleToTrainingModal()" class="bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 rounded-lg font-bold transition">Adicionar</button>
+                        </div>
+                        <div id="trModalRolesContainer" class="flex flex-wrap gap-2 mt-3 p-2 bg-gray-50 rounded-lg min-h-[40px] border border-gray-100">
+                            ${(tr.roleIds || []).map(rId => { const role = state.roles.find(r => r.id === rId); return role ? `<span class="bg-blue-100 text-blue-800 border border-blue-200 px-3 py-1 rounded-full text-xs font-medium tr-role-badge flex items-center shadow-sm" data-id="${role.id}">${role.name} <button type="button" onclick="removeRoleFromTrainingModal(this)" class="text-blue-500 ml-2 hover:text-blue-700 font-bold">&times;</button></span>` : ''; }).join('') || '<span class="text-xs text-gray-400 flex items-center m-auto">Nenhum cargo vinculado.</span>'}
+                        </div>
+                    </div>
+
+                    <!-- NOVO: HABILIDADES E CRITÉRIOS EM FORMA DE TAG -->
+                    <div class="border-t border-gray-200 pt-4 mt-2">
+                        <label class="block font-bold text-emerald-800 mb-2 flex items-center"><i data-lucide="check-circle" class="w-4 h-4 mr-2"></i> Habilidades / Critérios de Avaliação</label>
+                        <div class="flex gap-2">
+                            <input type="text" id="trCriteriaInput" class="flex-1 border border-gray-300 p-2.5 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none text-sm" placeholder="Ex: Prova Escrita, Conhecimento Prático...">
+                            <button type="button" onclick="addCriteriaToTraining()" class="bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 rounded-lg font-bold transition">Adicionar</button>
+                        </div>
+                        <div id="trCriteriaContainer" class="flex flex-wrap gap-2 mt-3 p-2 bg-gray-50 rounded-lg min-h-[40px] border border-gray-100">
+                            ${(tr.criteria || []).map(crit => `<span class="bg-emerald-50 text-emerald-800 border border-emerald-200 px-3 py-1 rounded-full text-xs font-medium tr-crit-badge flex items-center shadow-sm" data-val="${crit}">${crit} <button type="button" onclick="this.parentElement.remove()" class="text-emerald-500 ml-2 hover:text-emerald-700 font-bold">&times;</button></span>`).join('') || '<span class="text-xs text-gray-400 flex items-center m-auto">Nenhum critério definido.</span>'}
+                        </div>
                     </div>
                 </div>
-            `, `<button onclick="saveTraining()" class="bg-blue-600 text-white px-4 py-2 rounded">Salvar</button>`);
+            `, `<button onclick="closeModal()" class="px-5 py-2.5 text-gray-600 hover:bg-gray-100 font-bold rounded-lg transition">Cancelar</button><button onclick="saveTraining()" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2.5 rounded-lg font-bold shadow-sm transition">Salvar Treinamento</button>`);
         }
 
-        function addRoleToTrainingModal() { 
+        window.addRoleToTrainingModal = function() { 
             const s = document.getElementById('trModalRoleSelect'); 
             if(!s.value) return; 
-            document.getElementById('trModalRolesContainer').insertAdjacentHTML('beforeend', `<span class="bg-blue-50 text-blue-800 border px-2 py-0.5 rounded text-xs tr-role-badge" data-id="${s.value}">${s.options[s.selectedIndex].text} <button type="button" onclick="removeRoleFromTrainingModal(this)" class="text-blue-500 ml-1">&times;</button></span>`); 
+            const container = document.getElementById('trModalRolesContainer');
+            if (container.innerHTML.includes('Nenhum cargo vinculado')) container.innerHTML = '';
+            
+            container.insertAdjacentHTML('beforeend', `<span class="bg-blue-100 text-blue-800 border border-blue-200 px-3 py-1 rounded-full text-xs font-medium tr-role-badge flex items-center shadow-sm" data-id="${s.value}">${s.options[s.selectedIndex].text} <button type="button" onclick="removeRoleFromTrainingModal(this)" class="text-blue-500 ml-2 hover:text-blue-700 font-bold">&times;</button></span>`); 
             s.options[s.selectedIndex].remove(); 
-        }
+        };
 
-        function removeRoleFromTrainingModal(btn) { 
+        window.removeRoleFromTrainingModal = function(btn) { 
             const badge = btn.parentElement; 
             const id = parseInt(badge.getAttribute('data-id')); 
             badge.remove(); 
+            
             const r = state.roles.find(x => x.id === id); 
             if(r) document.getElementById('trModalRoleSelect').insertAdjacentHTML('beforeend', `<option value="${r.id}">${r.name}</option>`); 
-        }
+            
+            const container = document.getElementById('trModalRolesContainer');
+            if (container.children.length === 0) container.innerHTML = '<span class="text-xs text-gray-400 flex items-center m-auto">Nenhum cargo vinculado.</span>';
+        };
 
-        function saveTraining() { 
+        window.saveTraining = function() { 
             const idStr = document.getElementById('trId').value;
             if (idStr && !checkPerm('treinamentos', 'edit')) return;
             if (!idStr && !checkPerm('treinamentos', 'create')) return;
 
-            const title = document.getElementById('trTitle').value; if(!title) return; 
+            const title = document.getElementById('trTitle').value.trim(); 
+            if(!title) return Swal.fire('Aviso', 'Preencha o título do treinamento.', 'warning'); 
             
             const roleIds = Array.from(document.querySelectorAll('#trModalRolesContainer .tr-role-badge')).map(b => parseInt(b.getAttribute('data-id')));
+            const criteria = Array.from(document.querySelectorAll('#trCriteriaContainer .tr-crit-badge')).map(b => b.getAttribute('data-val'));
             const id = idStr ? parseInt(idStr) : generateId(state.trainings);
+            
+            const hasValidity = document.getElementById('trHasValidity').checked;
+            const period = hasValidity ? (parseInt(document.getElementById('trPeriod').value) || 0) : 0;
             
             const obj = { 
                 id: id, 
                 title, 
                 type: document.getElementById('trType').value, 
-                periodicityMonths: parseInt(document.getElementById('trPeriod').value)||0, 
+                periodicityMonths: period, 
                 content: document.getElementById('trContent').value, 
-                roleIds 
+                roleIds,
+                criteria 
             }; 
             
             dbSave('trainings', obj.id, obj); 
             
+            // Sincronização Bidirecional com a tabela de Cargos
             state.roles.forEach(r => {
                 let mod = false; 
                 if(!r.trainingIds) r.trainingIds = [];
@@ -1023,13 +1184,13 @@
 
             closeModal(); 
             renderTreinamentos(document.getElementById('app-content')); 
-            Swal.fire('Salvo!', '', 'success'); 
-        }
+            Swal.fire('Salvo!', 'Treinamento atualizado com sucesso.', 'success'); 
+        };
         
-        function deleteTraining(id) { 
+        window.deleteTraining = function(id) { 
             if (!checkPerm('treinamentos', 'delete')) return Swal.fire('Acesso Negado', 'Sem permissão para excluir.', 'error');
             requirePasswordForAction(()=>{ dbDelete('trainings', id); renderTreinamentos(document.getElementById('app-content')); }); 
-        }
+        };
 
         // INICIALIZAÇÃO
         auth.onAuthStateChanged((user) => { 
