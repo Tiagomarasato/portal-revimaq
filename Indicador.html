@@ -90,7 +90,7 @@
             <div class="bg-white rounded-xl shadow-2xl w-full max-w-lg overflow-hidden flex flex-col max-h-[90vh]">
                 <div class="p-5 border-b flex justify-between items-center bg-slate-50">
                     <h3 class="font-black text-sm uppercase tracking-widest" id="modal-indicator-title">Novo Indicador</h3>
-                    <button type="button" onclick="closeIndicatorModal()"><i data-lucide="x" class="w-5 h-5 text-slate-400"></i></button>
+                    <button onclick="closeIndicatorModal()"><i data-lucide="x" class="w-5 h-5 text-slate-400"></i></button>
                 </div>
                 <form onsubmit="saveIndicator(event)" class="p-5 space-y-4 overflow-y-auto">
                     <input type="hidden" id="ind-id">
@@ -98,23 +98,6 @@
                         <label class="block text-xs uppercase text-slate-500 mb-1">Nome do Indicador</label>
                         <input type="text" id="ind-name" required class="w-full border border-slate-300 p-2.5 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500 uppercase">
                     </div>
-                    
-                    <!-- NOVA SESSÃO DE CÁLCULO INÍCIO -->
-                    <div class="grid grid-cols-2 gap-4 bg-slate-50 p-3 rounded-lg border border-slate-100">
-                        <div>
-                            <label class="block text-xs uppercase text-slate-500 mb-1">Entrada de Dados</label>
-                            <select id="ind-calc-type" onchange="toggleFormulaField()" class="w-full border border-slate-300 p-2.5 rounded-lg uppercase bg-white">
-                                <option value="direto">Valor Direto</option>
-                                <option value="calculo">Fórmula / Cálculo</option>
-                            </select>
-                        </div>
-                        <div id="div-formula" class="hidden">
-                            <label class="block text-xs uppercase text-slate-500 mb-1 text-indigo-600">Fórmula (Descritivo)</label>
-                            <input type="text" id="ind-formula" placeholder="Ex: (A / B) * 100" class="w-full border border-slate-300 p-2.5 rounded-lg uppercase bg-white border-indigo-200">
-                        </div>
-                    </div>
-                    <!-- NOVA SESSÃO DE CÁLCULO FIM -->
-
                     <div class="grid grid-cols-2 gap-4">
                         <div><label class="block text-xs uppercase text-slate-500 mb-1">Meta</label><input type="number" step="any" id="ind-target" required class="w-full border border-slate-300 p-2.5 rounded-lg"></div>
                         <div><label class="block text-xs uppercase text-slate-500 mb-1">Unidade</label><input type="text" id="ind-unit" required class="w-full border border-slate-300 p-2.5 rounded-lg uppercase"></div>
@@ -142,21 +125,14 @@
             <div class="bg-white rounded-xl shadow-2xl w-full max-w-lg overflow-hidden flex flex-col max-h-[90vh]">
                 <div class="p-5 border-b flex justify-between items-center bg-slate-50">
                     <h3 class="font-black text-sm uppercase tracking-widest" id="modal-record-title">Lançar Dados</h3>
-                    <button type="button" onclick="closeRecordModal()"><i data-lucide="x" class="w-5 h-5 text-slate-400"></i></button>
+                    <button onclick="closeRecordModal()"><i data-lucide="x" class="w-5 h-5 text-slate-400"></i></button>
                 </div>
                 <form onsubmit="saveRecord(event)" class="p-5 space-y-4 overflow-y-auto">
                     <input type="hidden" id="rec-id">
                     <input type="hidden" id="rec-ind-id">
                     <div class="grid grid-cols-2 gap-4">
-                        <div><label class="block text-xs uppercase text-slate-500 mb-1">Período</label><input type="month" id="rec-period" required class="w-full border border-slate-300 p-2.5 rounded-lg uppercase"></div>
-                        
-                        <!-- CAMPO VALOR ATUALIZADO PARA ACEITAR CÁLCULO -->
-                        <div>
-                            <label class="block text-xs uppercase text-slate-500 mb-1">
-                                Valor <span id="rec-formula-hint" class="text-indigo-600 lowercase text-[10px] ml-1 font-bold"></span>
-                            </label>
-                            <input type="text" id="rec-value" required placeholder="Ex: 50 ou 10/20*100" class="w-full border border-slate-300 p-2.5 rounded-lg">
-                        </div>
+                        <div><label class="block text-xs uppercase text-slate-500 mb-1">Período</label><input type="text" id="rec-period" required class="w-full border border-slate-300 p-2.5 rounded-lg uppercase"></div>
+                        <div><label class="block text-xs uppercase text-slate-500 mb-1">Valor</label><input type="number" step="any" id="rec-value" required class="w-full border border-slate-300 p-2.5 rounded-lg"></div>
                     </div>
                     <div><label class="block text-xs uppercase text-slate-500 mb-1">Análise</label><textarea id="rec-analysis" rows="2" class="w-full border border-slate-300 p-2.5 rounded-lg uppercase"></textarea></div>
                     <div class="grid grid-cols-2 gap-4">
@@ -206,11 +182,11 @@
         
         window.dashboardCharts = {};
 
-        // Funções auxiliares para caminhos seguros (MODO DEFINITIVO)
-        const getIndCol = () => collection(db, 'indicadores');
-        const getRecCol = () => collection(db, 'lancamentos');
-        const getIndDoc = (id) => doc(db, 'indicadores', id);
-        const getRecDoc = (id) => doc(db, 'lancamentos', id);
+        // Funções auxiliares para caminhos seguros
+        const getIndCol = () => collection(db, 'artifacts', appId, 'public', 'data', 'indicators');
+        const getRecCol = () => collection(db, 'artifacts', appId, 'public', 'data', 'records');
+        const getIndDoc = (id) => doc(db, 'artifacts', appId, 'public', 'data', 'indicators', id);
+        const getRecDoc = (id) => doc(db, 'artifacts', appId, 'public', 'data', 'records', id);
 
         // AUTENTICAÇÃO E INÍCIO DOS LISTENERS
         onAuthStateChanged(auth, (user) => {
@@ -242,16 +218,6 @@
             });
         }
 
-        // Função para mostrar/esconder campo de fórmula
-        function toggleFormulaField() {
-            const type = document.getElementById('ind-calc-type').value;
-            if(type === 'calculo') {
-                document.getElementById('div-formula').classList.remove('hidden');
-            } else {
-                document.getElementById('div-formula').classList.add('hidden');
-            }
-        }
-
         // CRUD OPERAÇÕES
         async function saveIndicator(e) {
             e.preventDefault();
@@ -264,8 +230,6 @@
                 unit: document.getElementById('ind-unit').value.toUpperCase(),
                 targetType: document.getElementById('ind-type').value,
                 frequency: document.getElementById('ind-freq').value.toUpperCase(),
-                calcType: document.getElementById('ind-calc-type').value, // SALVANDO TIPO DE CÁLCULO
-                formula: document.getElementById('ind-formula').value.toUpperCase(), // SALVANDO FÓRMULA
                 updatedAt: new Date().toISOString()
             };
             try {
@@ -282,41 +246,14 @@
             if(!currentUser) return;
             const btn = document.getElementById('btn-save-rec');
             const id = document.getElementById('rec-id').value;
-            
-            // PROCESSAMENTO DO CÁLCULO DO VALOR
-            let valInput = document.getElementById('rec-value').value.replace(/,/g, '.');
-            let finalValue = 0;
-            
-            try {
-                // Limpa a string para garantir segurança (permite apenas números e operadores básicos matemáticos)
-                const cleanExpr = valInput.replace(/[^0-9.\+\-\*\/\(\)]/g, '');
-                if (!cleanExpr) throw new Error("Vazio");
-                
-                // Avalia a expressão matemática digitada pelo usuário
-                finalValue = Function('return ' + cleanExpr)();
-                
-                if (isNaN(finalValue) || !isFinite(finalValue)) throw new Error("Inválido");
-            } catch(err) { 
-                alert("Erro no Valor. Digite um número direto (ex: 10.5) ou um cálculo válido (ex: 10/20*100)."); 
-                return; 
-            }
-
-            let rawPeriod = document.getElementById('rec-period').value;
-            let formattedPeriod = rawPeriod.toUpperCase();
-            if (rawPeriod.includes('-')) {
-                const parts = rawPeriod.split('-');
-                if (parts.length >= 2) formattedPeriod = `${parts[1]}/${parts[0]}`;
-            }
-
             const data = {
                 indicatorId: document.getElementById('rec-ind-id').value,
-                period: formattedPeriod,
-                value: parseFloat(finalValue), // SALVA O RESULTADO DO CÁLCULO
+                period: document.getElementById('rec-period').value.toUpperCase(),
+                value: parseFloat(document.getElementById('rec-value').value),
                 date: document.getElementById('rec-date').value,
                 responsible: document.getElementById('rec-responsible').value.toUpperCase(),
                 analysis: document.getElementById('rec-analysis').value.toUpperCase() || ""
             };
-            
             try {
                 btn.disabled = true; btn.innerText = "Gravando...";
                 if(id) await updateDoc(getRecDoc(id), data);
@@ -403,7 +340,7 @@
                     trendHtml = `
                         <div class="flex items-center px-2 py-1 rounded-md text-sm font-bold ${trendColorClass}">
                             <i data-lucide="${trendIcon}" class="w-4 h-4 mr-1"></i>
-                            ${Number.isInteger(last.value) ? last.value : last.value.toFixed(2)}${ind.unit}
+                            ${last.value}${ind.unit}
                         </div>
                     `;
                 }
@@ -464,10 +401,6 @@
                     const ctx = document.getElementById(`chart-${ind.id}`);
                     if (!ctx) return;
 
-                    // Fix: Garante que o gráfico anterior no canvas seja destruído
-                    const existingChart = Chart.getChart(ctx);
-                    if (existingChart) existingChart.destroy();
-
                     const indRecs = records.filter(r => r.indicatorId === ind.id).sort((a, b) => new Date(a.date) - new Date(b.date));
                     const labels = indRecs.map(r => r.period);
                     const values = indRecs.map(r => r.value);
@@ -498,7 +431,7 @@
                                     datalabels: {
                                         align: 'top', anchor: 'end', offset: 6, color: '#1e293b',
                                         font: { weight: 'bold', size: 10 },
-                                        formatter: (val) => (Number.isInteger(val) ? val : val.toFixed(2)) + ind.unit
+                                        formatter: (val) => val + ind.unit
                                     }
                                 },
                                 {
@@ -558,7 +491,7 @@
                                     ${indRecs.map(r => `
                                         <tr class="border-t border-slate-50 uppercase">
                                             <td class="p-2 font-semibold text-slate-700">${r.period}</td>
-                                            <td class="p-2 font-bold ${ (ind.targetType==='maior' ? r.value >= ind.target : r.value <= ind.target) ? 'text-green-600' : 'text-red-600' }">${Number.isInteger(r.value) ? r.value : r.value.toFixed(2)}${ind.unit}</td>
+                                            <td class="p-2 font-bold ${ (ind.targetType==='maior' ? r.value >= ind.target : r.value <= ind.target) ? 'text-green-600' : 'text-red-600' }">${r.value}${ind.unit}</td>
                                             <td class="p-2 font-semibold text-slate-500">${ind.target}${ind.unit}</td>
                                             <td class="p-2 text-slate-500 max-w-[200px] truncate" title="${r.analysis || ''}">${r.analysis || '-'}</td>
                                             <td class="p-2 text-slate-500">${r.responsible || '-'}</td>
@@ -582,14 +515,7 @@
             document.getElementById('ind-target').value = '';
             document.getElementById('ind-unit').value = '';
             document.getElementById('ind-freq').value = '';
-            
-            // Reset campos de cálculo
-            document.getElementById('ind-calc-type').value = 'direto';
-            document.getElementById('ind-formula').value = '';
-            document.getElementById('div-formula').classList.add('hidden');
-
             document.getElementById('modal-indicator-title').innerText = id ? "EDITAR INDICADOR" : "NOVO INDICADOR";
-            
             if(id) {
                 const i = indicators.find(ind => ind.id === id);
                 document.getElementById('ind-name').value = i.name;
@@ -597,13 +523,6 @@
                 document.getElementById('ind-unit').value = i.unit;
                 document.getElementById('ind-type').value = i.targetType;
                 document.getElementById('ind-freq').value = i.frequency;
-                
-                // Preenche cálculo se existir
-                document.getElementById('ind-calc-type').value = i.calcType || 'direto';
-                document.getElementById('ind-formula').value = i.formula || '';
-                if(i.calcType === 'calculo') {
-                    document.getElementById('div-formula').classList.remove('hidden');
-                }
             }
             document.getElementById('modal-indicator').classList.remove('hidden');
         }
@@ -611,37 +530,17 @@
         function openRecordModal(indId, recId = null) {
             document.getElementById('rec-ind-id').value = indId;
             document.getElementById('rec-id').value = recId || '';
-            
-            const today = new Date();
-            const yyyy = today.getFullYear();
-            const mm = String(today.getMonth() + 1).padStart(2, '0');
-            document.getElementById('rec-period').value = `${yyyy}-${mm}`;
-            
+            document.getElementById('rec-period').value = '';
             document.getElementById('rec-value').value = '';
             document.getElementById('rec-analysis').value = '';
             document.getElementById('rec-date').value = new Date().toISOString().split('T')[0];
-            document.getElementById('rec-formula-hint').innerText = ''; // Reset da dica
-
-            const ind = indicators.find(i => i.id === indId);
-            
-            // MOSTRA A DICA DA FÓRMULA NO LANÇAMENTO
-            if(ind && ind.calcType === 'calculo' && ind.formula) {
-                document.getElementById('rec-formula-hint').innerText = ` - (Cálculo: ${ind.formula})`;
-            }
-
             const sel = document.getElementById('rec-responsible');
             sel.innerHTML = '<option value="">SELECIONE...</option>' + responsaveis.sort().map(r => `<option value="${r}">${r}</option>`).join('');
             
             if (recId) {
                 const r = records.find(rec => rec.id === recId);
                 if (r) {
-                    let periodVal = r.period || '';
-                    if (periodVal.includes('/')) {
-                        const parts = periodVal.split('/');
-                        if (parts.length === 2) periodVal = `${parts[1]}-${parts[0]}`;
-                    }
-                    document.getElementById('rec-period').value = periodVal;
-                    
+                    document.getElementById('rec-period').value = r.period || '';
                     document.getElementById('rec-value').value = r.value || '';
                     document.getElementById('rec-analysis').value = r.analysis || '';
                     if (r.date) document.getElementById('rec-date').value = r.date;
@@ -709,7 +608,7 @@
                                 return `
                                 <tr class="border-b border-slate-100">
                                     <td class="p-3 font-semibold text-slate-700">${r.period}</td>
-                                    <td class="p-3 font-bold ${isMet ? 'text-green-600' : 'text-red-600'}">${Number.isInteger(r.value) ? r.value : r.value.toFixed(2)}${ind.unit}</td>
+                                    <td class="p-3 font-bold ${isMet ? 'text-green-600' : 'text-red-600'}">${r.value}${ind.unit}</td>
                                     <td class="p-3 font-semibold text-slate-500">${ind.target}${ind.unit}</td>
                                     <td class="p-3 text-slate-600">${r.analysis || '-'}</td>
                                     <td class="p-3 text-slate-500">${r.responsible || '-'}</td>
@@ -728,11 +627,6 @@
             printArea.classList.remove('hidden');
 
             const ctx = document.getElementById('print-chart');
-            
-            // Fix: Destrói o gráfico de impressão caso o usuário imprima duas vezes
-            const existingPrintChart = Chart.getChart(ctx);
-            if (existingPrintChart) existingPrintChart.destroy();
-
             const labels = indRecs.map(r => r.period);
             const values = indRecs.map(r => r.value);
             const targetValues = indRecs.map(() => ind.target);
@@ -746,7 +640,7 @@
                         {
                             data: values, borderColor: '#3b82f6', backgroundColor: '#3b82f6',
                             pointBackgroundColor: pointColors, borderWidth: 2, pointRadius: 4,
-                            datalabels: { align: 'top', color: '#1e293b', font: { weight: 'bold' }, formatter: (v) => (Number.isInteger(v) ? v : v.toFixed(2)) + ind.unit }
+                            datalabels: { align: 'top', color: '#1e293b', font: { weight: 'bold' }, formatter: (v) => v + ind.unit }
                         },
                         {
                             data: targetValues, borderColor: '#ef4444', borderWidth: 1.5,
@@ -779,7 +673,6 @@
         window.deleteRecord = deleteRecord;
         window.addNewResp = addNewResp;
         window.printIndicator = printIndicator;
-        window.toggleFormulaField = toggleFormulaField; // Nova função exposta
 
     </script>
 </body>
