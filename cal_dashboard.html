@@ -22,7 +22,7 @@
             }
         }
 
-        // Função de navegação simplificada e direta para evitar erros de "página inexistente" no PC local
+        // Função de navegação simplificada
         function navigateTo(url) {
             window.location.href = url;
         }
@@ -63,7 +63,6 @@
                         <div class="relative flex items-center h-full">
                             <button onclick="navigateTo('cal_dashboard.html')" class="inline-flex items-center px-3 h-full border-b-2 border-amber-600 text-sm font-bold text-amber-700 bg-amber-50 transition-colors focus:outline-none uppercase">Dashboard</button>
                         </div>
-                        <!-- Aba Cadastro Ocultada -->
                         <div class="relative flex items-center h-full">
                             <button onclick="navigateTo('cal_lancamento.html')" class="inline-flex items-center px-3 h-full border-b-2 border-transparent text-sm font-medium text-gray-500 hover:text-amber-600 transition-colors focus:outline-none uppercase">Calibração</button>
                         </div>
@@ -123,7 +122,7 @@
     </header>
 
     <!-- Main Content -->
-    <main class="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full fade-in">
+    <main class="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full fade-in" id="app-main-content">
         
         <!-- Dashboard KPIs -->
         <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8 print:hidden">
@@ -168,12 +167,10 @@
                     
                     <div class="flex flex-col sm:flex-row items-center gap-3 w-full sm:w-auto print:hidden">
                         
-                        <!-- BOTÃO NOVO ATIVO AJUSTADO COM LINK DIRETO E EXPLÍCITO -->
                         <button onclick="navigateTo('cal_cadastro.html')" class="bg-amber-600 text-white px-4 py-2 rounded-md hover:bg-amber-700 text-sm font-bold shadow-md transition-colors w-full sm:w-auto flex justify-center items-center gap-2 uppercase">
                             <i class="fa-solid fa-plus"></i> Novo Ativo
                         </button>
 
-                        <!-- Botões de Backup e Impressão -->
                         <div class="flex gap-2 w-full sm:w-auto">
                             <button onclick="window.print()" class="bg-gray-100 text-gray-700 px-3 py-2 rounded-md hover:bg-gray-200 text-sm font-medium border border-gray-300 transition-colors w-full sm:w-auto flex justify-center items-center gap-2 uppercase" title="Imprimir Lista Mestra">
                                 <i class="fa-solid fa-print"></i> Imprimir
@@ -209,13 +206,11 @@
                             </tr>
                         </thead>
                         <tbody id="tableBody" class="bg-white divide-y divide-gray-200">
-                            <!-- Linhas renderizadas via JS -->
                             <tr><td colspan="6" class="text-center p-8 text-gray-500">A carregar dados...</td></tr>
                         </tbody>
                     </table>
                 </div>
                 
-                <!-- Empty State -->
                 <div id="emptyState" class="hidden flex flex-col items-center justify-center py-12 text-gray-500">
                     <i class="fa-solid fa-clipboard-list text-5xl mb-4 text-gray-300 print:hidden"></i>
                     <p class="text-lg font-medium uppercase">Nenhum equipamento encontrado.</p>
@@ -241,7 +236,7 @@
         &copy; 2026 REVIMAQ - Controle de Monitoramento e Medição (ISO 9001:2015)
     </footer>
 
-    <!-- Scripts de Lógica (Apenas o necessário para o Dashboard) -->
+    <!-- Scripts de Lógica -->
     <script>
         const firebaseConfig = {
             apiKey: "AIzaSyBqV0KOQMAYR4z6P_RKnrQPDfkAR2CsXBI",
@@ -252,7 +247,7 @@
             appId: "1:615097388185:web:efe0ff09ca41de81f23c08"
         };
 
-        let ativos = [], logs = [], db, userId, appId = 'gestao-de-pessoas-49200';
+        let ativos = [], logs = [], db, userId = null, currentUser = null, appId = 'gestao-de-pessoas-49200';
 
         // Permissões
         let state = { roles: [], employees: [] };
@@ -271,33 +266,47 @@
                 await signInAnonymously(auth);
                 onAuthStateChanged(auth, user => {
                     if (user) {
+                        currentUser = user;
                         userId = user.uid;
                         if(document.getElementById('user-avatar')) {
                             document.getElementById('user-avatar').innerText = user.email ? user.email.charAt(0).toUpperCase() : 'U'; 
                         }
 
-                        // Carregar permissões ativas de RH
+                        let dataLoaded = { roles: false, emp: false, cal: false };
+                        
+                        // Sincroniza a leitura de tudo antes de renderizar para garantir que as permissões foram carregadas
+                        const tryRender = () => {
+                            if (dataLoaded.roles && dataLoaded.emp && dataLoaded.cal) {
+                                updatePermissions(currentUser);
+                                if (checkPerm('calibracao', 'view')) {
+                                    renderTable();
+                                    if(window.lucide) window.lucide.createIcons();
+                                } else {
+                                    showAccessDenied();
+                                }
+                            }
+                        };
+
                         const rolesRef = collection(db, 'artifacts', appId, 'public', 'data', 'roles');
                         onSnapshot(rolesRef, snap => {
                             state.roles = snap.docs.map(d => d.data());
-                            updatePermissions(user);
+                            dataLoaded.roles = true;
+                            tryRender();
                         });
 
                         const empRef = collection(db, 'artifacts', appId, 'public', 'data', 'employees');
                         onSnapshot(empRef, snap => {
                             state.employees = snap.docs.map(d => d.data());
-                            updatePermissions(user);
+                            dataLoaded.emp = true;
+                            tryRender();
                         });
 
-                        // Carregar Inventário de Calibração Global
                         const globalDocRef = doc(db, 'calibracao', 'inventario_geral');
-                        
                         onSnapshot(globalDocRef, async snap => {
                             if (snap.exists() && snap.data().lista && snap.data().lista.length > 0) {
                                 ativos = snap.data().lista;
                                 logs = snap.data().logs || [];
                             } else {
-                                // Fallback (Resgate inicial se a global estiver vazia)
                                 let recuperou = false;
                                 try {
                                     const oldDocRef = doc(db, 'artifacts', appId, 'users', userId, 'gestao_calibracao', 'inventario');
@@ -323,8 +332,8 @@
                                 }
                             }
                             
-                            renderTable();
-                            if(window.lucide) window.lucide.createIcons();
+                            dataLoaded.cal = true;
+                            tryRender();
                         }, (err) => {
                             console.error("ERRO FIREBASE:", err);
                         });
@@ -353,11 +362,25 @@
             }
         }
 
+        // FUNÇÃO DE SEGURANÇA CORRIGIDA
         function checkPerm(module, action) {
-            if (userId && (!userPermissions || Object.keys(userPermissions).length === 0)) return true;
+            if (currentUser && currentUser.email === 'Local') return true; 
             const modPerms = userPermissions[module] || userPermissions['ativos'] || userPermissions['equipamentos'];
-            if (!modPerms) return false;
+            if (!modPerms) return false; // Falha estava aqui: Antes retornava true se as permissões fossem vazias.
             return modPerms[action] === true;
+        }
+
+        // BLOQUEIO VISUAL DO MÓDULO
+        function showAccessDenied() {
+            const mainContent = document.getElementById('app-main-content');
+            mainContent.innerHTML = `
+                <div class="flex flex-col items-center justify-center h-96 text-center">
+                    <div class="text-red-500 mb-4"><i class="fa-solid fa-lock text-6xl"></i></div>
+                    <h3 class="text-2xl font-bold text-gray-800 uppercase">Acesso Restrito</h3>
+                    <p class="text-gray-500 mt-2 uppercase">O seu perfil não possui permissões para visualizar o módulo de Calibração.</p>
+                    <button onclick="navigateTo('dashboard.html')" class="mt-6 bg-slate-800 text-white px-6 py-2 rounded-md font-bold uppercase hover:bg-slate-700 transition-colors">Voltar ao Início</button>
+                </div>
+            `;
         }
 
         async function salvar() {
@@ -366,11 +389,10 @@
             const globalDocRef = doc(db, 'calibracao', 'inventario_geral');
             await setDoc(globalDocRef, { lista: ativos, logs: logs });
             
-            // Tratamento contra erro de limite de memória (QuotaExceededError)
             try {
                 localStorage.setItem('backup_calibracao', JSON.stringify({ lista: ativos, logs: logs }));
             } catch (e) {
-                console.warn("Armazenamento local cheio. O backup local foi ignorado, mas os dados foram salvos na nuvem com sucesso.");
+                console.warn("Armazenamento local cheio. O backup local foi ignorado.");
             }
         }
 
@@ -459,6 +481,10 @@
         }
 
         function importarBackup(e) {
+            if (!checkPerm('calibracao', 'create') && !checkPerm('calibracao', 'edit')) {
+                return alert('Acesso Negado: Não tem permissão para importar ficheiros.');
+            }
+
             const file = e.target.files[0]; if (!file) return;
             const r = new FileReader(); r.onload = async ev => {
                 try {

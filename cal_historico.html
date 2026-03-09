@@ -129,7 +129,7 @@
     </header>
 
     <!-- Main Content -->
-    <main class="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full fade-in">
+    <main class="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full fade-in" id="app-main-content">
         
         <div class="max-w-4xl mx-auto bg-white rounded-lg shadow-md p-6 uppercase">
             <div class="flex justify-between items-center border-b pb-4 mb-6">
@@ -147,7 +147,7 @@
             </div>
             
             <div id="historicoContainer" class="space-y-4">
-                <p class="text-center text-gray-400 py-10 font-bold uppercase">A carregar dados...</p>
+                <p class="text-center text-gray-400 py-10 font-bold uppercase">A carregar permissões e dados...</p>
             </div>
         </div>
 
@@ -180,7 +180,7 @@
             appId: "1:615097388185:web:efe0ff09ca41de81f23c08"
         };
 
-        let ativos = [], logs = [], db, userId, appId = 'gestao-de-pessoas-49200';
+        let ativos = [], logs = [], db, userId = null, currentUser = null, appId = 'gestao-de-pessoas-49200';
 
         // Permissões
         let state = { roles: [], employees: [] };
@@ -199,35 +199,47 @@
                 await signInAnonymously(auth);
                 onAuthStateChanged(auth, user => {
                     if (user) {
+                        currentUser = user;
                         userId = user.uid;
                         if(document.getElementById('user-avatar')) {
                             document.getElementById('user-avatar').innerText = user.email ? user.email.charAt(0).toUpperCase() : 'U'; 
                         }
 
-                        // Carregar permissões ativas de RH
+                        let dataLoaded = { roles: false, emp: false, cal: false };
+                        const tryRender = () => {
+                            if (dataLoaded.roles && dataLoaded.emp && dataLoaded.cal) {
+                                updatePermissions(currentUser);
+                                if (checkPerm('calibracao', 'view')) {
+                                    populateSelects();
+                                    if(window.lucide) window.lucide.createIcons();
+                                } else {
+                                    showAccessDenied();
+                                }
+                            }
+                        };
+
                         const rolesRef = collection(db, 'artifacts', appId, 'public', 'data', 'roles');
                         onSnapshot(rolesRef, snap => {
                             state.roles = snap.docs.map(d => d.data());
-                            updatePermissions(user);
+                            dataLoaded.roles = true;
+                            tryRender();
                         });
 
                         const empRef = collection(db, 'artifacts', appId, 'public', 'data', 'employees');
                         onSnapshot(empRef, snap => {
                             state.employees = snap.docs.map(d => d.data());
-                            updatePermissions(user);
+                            dataLoaded.emp = true;
+                            tryRender();
                         });
 
-                        // Carregar Inventário de Calibração Global
                         const globalDocRef = doc(db, 'calibracao', 'inventario_geral');
-                        
                         onSnapshot(globalDocRef, async snap => {
                             if (snap.exists() && snap.data().lista && snap.data().lista.length > 0) {
                                 ativos = snap.data().lista;
                                 logs = snap.data().logs || [];
                             }
-                            
-                            populateSelects();
-                            if(window.lucide) window.lucide.createIcons();
+                            dataLoaded.cal = true;
+                            tryRender();
                         }, (err) => {
                             console.error("ERRO FIREBASE:", err);
                         });
@@ -256,11 +268,24 @@
             }
         }
 
+        // FUNÇÃO DE SEGURANÇA CORRIGIDA
         function checkPerm(module, action) {
-            if (userId && (!userPermissions || Object.keys(userPermissions).length === 0)) return true;
+            if (currentUser && currentUser.email === 'Local') return true; 
             const modPerms = userPermissions[module] || userPermissions['ativos'] || userPermissions['equipamentos'];
-            if (!modPerms) return false;
+            if (!modPerms) return false; // Bloqueia caso o utilizador não tenha este módulo nas permissões.
             return modPerms[action] === true;
+        }
+
+        function showAccessDenied() {
+            const mainContent = document.getElementById('app-main-content');
+            mainContent.innerHTML = `
+                <div class="flex flex-col items-center justify-center h-96 text-center">
+                    <div class="text-red-500 mb-4"><i class="fa-solid fa-lock text-6xl"></i></div>
+                    <h3 class="text-2xl font-bold text-gray-800 uppercase">Acesso Restrito</h3>
+                    <p class="text-gray-500 mt-2 uppercase">O seu perfil não possui permissão para consultar o histórico de equipamentos.</p>
+                    <button onclick="navigateTo('dashboard.html')" class="mt-6 bg-slate-800 text-white px-6 py-2 rounded-md font-bold uppercase hover:bg-slate-700 transition-colors">Voltar ao Início</button>
+                </div>
+            `;
         }
 
         async function salvar() {
@@ -293,7 +318,6 @@
             if (histSelect) {
                 histSelect.innerHTML = html;
                 
-                // Verifica se há ID na URL para auto-selecionar (vindo do Dashboard)
                 const urlParams = new URLSearchParams(window.location.search);
                 const autoSelectId = urlParams.get('id');
 
@@ -362,7 +386,6 @@
                 return;
             }
 
-            // Ordena da mais recente para a mais antiga
             hist.sort((x, y) => new Date(y.data) - new Date(x.data));
 
             container.innerHTML = hist.map(h => {
@@ -454,7 +477,6 @@
             }).join('');
         }
 
-        // Redireciona para o formulário de lançamento com o ID e o índice da calibração a editar
         function editarCalibracaoHistorico(ativoId, histIndex) {
             if (!checkPerm('calibracao', 'edit')) {
                 return alert('Acesso Negado: O seu perfil não possui permissão para editar calibrações do histórico.');
@@ -462,7 +484,6 @@
             navigateTo(`cal_lancamento.html?eqId=${ativoId}&editIndex=${histIndex}`);
         }
 
-        // Apaga uma calibração do histórico e repuxa os valores atuais
         async function apagarCalibracaoHistorico(ativoId, histIndex) {
             if (!checkPerm('calibracao', 'delete')) {
                 return alert('Acesso Negado: O seu perfil não possui permissão para excluir calibrações do histórico.');
@@ -493,8 +514,7 @@
         }
 
         function verAnexos(id) {
-            // Placeholder para anexos do equipamento (não do certificado) se for preciso no futuro.
-            // A visualização dos anexos do certificado já é feita pelos links azuis direto no HTML.
+            // Logica para anexos
         }
 
         function fecharModalAnexos() { 
