@@ -22,7 +22,7 @@
             }
         }
 
-        // Função de navegação simplificada
+        // Função de navegação simplificada e direta para evitar erros de "página inexistente" no PC local
         function navigateTo(url) {
             window.location.href = url;
         }
@@ -206,7 +206,7 @@
                             </tr>
                         </thead>
                         <tbody id="tableBody" class="bg-white divide-y divide-gray-200">
-                            <tr><td colspan="6" class="text-center p-8 text-gray-500">A carregar dados...</td></tr>
+                            <tr><td colspan="6" class="text-center p-8 text-gray-500">A carregar dados e permissões...</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -248,8 +248,6 @@
         };
 
         let ativos = [], logs = [], db, userId = null, currentUser = null, appId = 'gestao-de-pessoas-49200';
-
-        // Permissões
         let state = { roles: [], employees: [] };
         let userPermissions = {};
 
@@ -263,124 +261,123 @@
                 const auth = getAuth(app);
                 db = getFirestore(app);
 
-                await signInAnonymously(auth);
+                const setupListeners = (userObj) => {
+                    let dataLoaded = { roles: false, emp: false, cal: false };
+                    
+                    const tryRender = () => {
+                        if (dataLoaded.roles && dataLoaded.emp && dataLoaded.cal) {
+                            updatePermissions(userObj);
+                            if (checkPerm('calibracao', 'view')) {
+                                renderTable();
+                                if(window.lucide) window.lucide.createIcons();
+                            } else {
+                                showAccessDenied();
+                            }
+                        }
+                    };
+
+                    const rolesRef = collection(db, 'artifacts', appId, 'public', 'data', 'roles');
+                    onSnapshot(rolesRef, snap => { state.roles = snap.docs.map(d => d.data()); dataLoaded.roles = true; tryRender(); });
+
+                    const empRef = collection(db, 'artifacts', appId, 'public', 'data', 'employees');
+                    onSnapshot(empRef, snap => { state.employees = snap.docs.map(d => d.data()); dataLoaded.emp = true; tryRender(); });
+
+                    const globalDocRef = doc(db, 'calibracao', 'inventario_geral');
+                    onSnapshot(globalDocRef, async snap => {
+                        if (snap.exists() && snap.data().lista) {
+                            ativos = snap.data().lista;
+                            logs = snap.data().logs || [];
+                        } else {
+                            // Resgate Legado
+                            let recuperou = false;
+                            try {
+                                if(userObj && userObj.uid) {
+                                    const oldDocRef = doc(db, 'artifacts', appId, 'users', userObj.uid, 'gestao_calibracao', 'inventario');
+                                    const oldSnap = await getDoc(oldDocRef);
+                                    if (oldSnap.exists() && oldSnap.data().lista) {
+                                        ativos = oldSnap.data().lista; logs = oldSnap.data().logs || []; recuperou = true;
+                                    }
+                                }
+                            } catch(e){}
+                            
+                            if (!recuperou) {
+                                const local = JSON.parse(localStorage.getItem('backup_calibracao') || '{"lista":[]}');
+                                if (local.lista && local.lista.length > 0) { ativos = local.lista; logs = local.logs || []; recuperou = true; }
+                            }
+                            if (recuperou) await setDoc(globalDocRef, { lista: ativos, logs: logs });
+                        }
+                        dataLoaded.cal = true; tryRender();
+                    });
+                };
+
                 onAuthStateChanged(auth, user => {
-                    if (user) {
+                    if (user && user.email) {
+                        // Usuário logado com E-mail
                         currentUser = user;
                         userId = user.uid;
-                        if(document.getElementById('user-avatar')) {
-                            document.getElementById('user-avatar').innerText = user.email ? user.email.charAt(0).toUpperCase() : 'U'; 
-                        }
-
-                        let dataLoaded = { roles: false, emp: false, cal: false };
-                        
-                        // Sincroniza a leitura de tudo antes de renderizar para garantir que as permissões foram carregadas
-                        const tryRender = () => {
-                            if (dataLoaded.roles && dataLoaded.emp && dataLoaded.cal) {
-                                updatePermissions(currentUser);
-                                if (checkPerm('calibracao', 'view')) {
-                                    renderTable();
-                                    if(window.lucide) window.lucide.createIcons();
-                                } else {
-                                    showAccessDenied();
-                                }
-                            }
-                        };
-
-                        const rolesRef = collection(db, 'artifacts', appId, 'public', 'data', 'roles');
-                        onSnapshot(rolesRef, snap => {
-                            state.roles = snap.docs.map(d => d.data());
-                            dataLoaded.roles = true;
-                            tryRender();
-                        });
-
-                        const empRef = collection(db, 'artifacts', appId, 'public', 'data', 'employees');
-                        onSnapshot(empRef, snap => {
-                            state.employees = snap.docs.map(d => d.data());
-                            dataLoaded.emp = true;
-                            tryRender();
-                        });
-
-                        const globalDocRef = doc(db, 'calibracao', 'inventario_geral');
-                        onSnapshot(globalDocRef, async snap => {
-                            if (snap.exists() && snap.data().lista && snap.data().lista.length > 0) {
-                                ativos = snap.data().lista;
-                                logs = snap.data().logs || [];
-                            } else {
-                                let recuperou = false;
-                                try {
-                                    const oldDocRef = doc(db, 'artifacts', appId, 'users', userId, 'gestao_calibracao', 'inventario');
-                                    const oldSnap = await getDoc(oldDocRef);
-                                    if (oldSnap.exists() && oldSnap.data().lista && oldSnap.data().lista.length > 0) {
-                                        ativos = oldSnap.data().lista;
-                                        logs = oldSnap.data().logs || [];
-                                        recuperou = true;
-                                    }
-                                } catch(e) {}
-                                
-                                if (!recuperou) {
-                                    const local = JSON.parse(localStorage.getItem('backup_calibracao') || '{"lista":[]}');
-                                    if (local.lista && local.lista.length > 0) {
-                                        ativos = local.lista;
-                                        logs = local.logs || [];
-                                        recuperou = true;
-                                    }
-                                }
-                                
-                                if (recuperou) {
-                                    await setDoc(globalDocRef, { lista: ativos, logs: logs });
-                                }
-                            }
-                            
-                            dataLoaded.cal = true;
-                            tryRender();
-                        }, (err) => {
-                            console.error("ERRO FIREBASE:", err);
+                        if(document.getElementById('user-avatar')) document.getElementById('user-avatar').innerText = user.email.charAt(0).toUpperCase();
+                        setupListeners(currentUser);
+                    } else if (user) {
+                        // Usuário Visitante (Anónimo sem e-mail)
+                        currentUser = { email: 'Visitante' };
+                        userId = user.uid;
+                        setupListeners(currentUser);
+                    } else {
+                        // Ninguém logado, forçar o login anónimo restrito
+                        signInAnonymously(auth).then((cred) => {
+                            currentUser = { email: 'Visitante' }; // CORRIGIDO: Agora diz 'Visitante' em vez de 'Local'
+                            userId = cred.user.uid;
+                            setupListeners(currentUser);
                         });
                     }
                 });
             } catch (e) { 
                 console.error(e);
-                const local = JSON.parse(localStorage.getItem('backup_calibracao') || '{"lista":[],"logs":[]}');
-                ativos = local.lista || []; logs = local.logs || [];
-                renderTable();
+                showAccessDenied(); // CORRIGIDO: Se a BD falhar, bloqueia o ecrã em vez de desenhar a tabela em branco ignorando a segurança.
             }
         }
 
+        // LÓGICA BLINDADA DE PERMISSÃO
         function updatePermissions(user) {
-            if (user && user.email && user.email !== 'Local') {
-                const currentEmp = state.employees.find(e => e.email === user.email);
+            userPermissions = {}; // Default = SEM ACESSO
+            if (!user) return;
+
+            // Liberação apenas se a plataforma o marcar explicitamente como dev Local
+            if (user.email === 'Local') {
+                userPermissions = { calibracao: { view:true, create:true, edit:true, delete:true } };
+                return;
+            }
+
+            if (user.email) {
+                const currentEmp = state.employees.find(e => e.email && e.email.toLowerCase() === user.email.toLowerCase());
                 if (currentEmp) {
                     const roleObj = state.roles.find(r => r.name === currentEmp.role);
-                    if (roleObj && roleObj.permissions) userPermissions = roleObj.permissions;
-                    else userPermissions = {};
-                } else {
-                    userPermissions = {};
+                    if (roleObj && roleObj.permissions) {
+                        userPermissions = roleObj.permissions;
+                    }
                 }
-            } else {
-                userPermissions = { calibracao: { view:true, create:true, edit:true, delete:true } };
             }
         }
 
-        // FUNÇÃO DE SEGURANÇA CORRIGIDA
         function checkPerm(module, action) {
             if (currentUser && currentUser.email === 'Local') return true; 
             const modPerms = userPermissions[module] || userPermissions['ativos'] || userPermissions['equipamentos'];
-            if (!modPerms) return false; // Falha estava aqui: Antes retornava true se as permissões fossem vazias.
+            if (!modPerms) return false; // Bloqueia se o módulo estiver vazio ou o cargo não o possuir
             return modPerms[action] === true;
         }
 
-        // BLOQUEIO VISUAL DO MÓDULO
         function showAccessDenied() {
             const mainContent = document.getElementById('app-main-content');
-            mainContent.innerHTML = `
-                <div class="flex flex-col items-center justify-center h-96 text-center">
-                    <div class="text-red-500 mb-4"><i class="fa-solid fa-lock text-6xl"></i></div>
-                    <h3 class="text-2xl font-bold text-gray-800 uppercase">Acesso Restrito</h3>
-                    <p class="text-gray-500 mt-2 uppercase">O seu perfil não possui permissões para visualizar o módulo de Calibração.</p>
-                    <button onclick="navigateTo('dashboard.html')" class="mt-6 bg-slate-800 text-white px-6 py-2 rounded-md font-bold uppercase hover:bg-slate-700 transition-colors">Voltar ao Início</button>
-                </div>
-            `;
+            if (mainContent) {
+                mainContent.innerHTML = `
+                    <div class="flex flex-col items-center justify-center h-96 text-center">
+                        <div class="text-red-500 mb-4"><i class="fa-solid fa-lock text-6xl"></i></div>
+                        <h3 class="text-2xl font-bold text-gray-800 uppercase">Acesso Restrito</h3>
+                        <p class="text-gray-500 mt-2 uppercase">O seu perfil não possui permissões suficientes para aceder a este módulo.</p>
+                        <button onclick="navigateTo('dashboard.html')" class="mt-6 bg-slate-800 text-white px-6 py-2 rounded-md font-bold uppercase hover:bg-slate-700 transition-colors">Voltar ao Início</button>
+                    </div>
+                `;
+            }
         }
 
         async function salvar() {
@@ -388,12 +385,7 @@
             const { doc, setDoc } = await import("https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js");
             const globalDocRef = doc(db, 'calibracao', 'inventario_geral');
             await setDoc(globalDocRef, { lista: ativos, logs: logs });
-            
-            try {
-                localStorage.setItem('backup_calibracao', JSON.stringify({ lista: ativos, logs: logs }));
-            } catch (e) {
-                console.warn("Armazenamento local cheio. O backup local foi ignorado.");
-            }
+            try { localStorage.setItem('backup_calibracao', JSON.stringify({ lista: ativos, logs: logs })); } catch (e) {}
         }
 
         async function registrarLog(acao, detalhe) {

@@ -98,7 +98,7 @@
                         <i data-lucide="arrow-left" class="w-4 h-4 mr-2"></i> PORTAL
                     </a>
                     <button class="text-gray-400 hover:text-gray-600 relative transition-colors" onclick="showDevInfo()"><i data-lucide="info" class="w-5 h-5"></i></button>
-                    <div class="h-8 w-8 rounded-full bg-amber-600 flex items-center justify-center text-white font-bold text-sm shadow-sm uppercase" id="user-avatar">U</div>
+                    <div class="h-8 w-8 rounded-full bg-amber-600 flex items-center justify-center text-white font-bold text-sm shadow-sm uppercase" id="user-avatar">--</div>
                     <!-- Mobile menu button -->
                     <button type="button" onclick="document.getElementById('mobile-menu').classList.toggle('hidden')" class="lg:hidden p-2 rounded-md text-gray-400 hover:bg-gray-100">
                         <i data-lucide="menu" class="w-6 h-6"></i>
@@ -261,9 +261,9 @@
             try {
                 const { initializeApp } = await import("https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js");
                 const { getAuth, signInAnonymously, onAuthStateChanged } = await import("https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js");
-                const { getFirestore, doc, collection, onSnapshot, setDoc, getDoc } = await import("https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js");
+                const { getFirestore, doc, collection, onSnapshot, setDoc } = await import("https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js");
                 
-                // Importar o Firebase Storage para uploads ilimitados do Blaze
+                // Importar o Firebase Storage para uploads
                 const { getStorage, ref, uploadBytes, getDownloadURL } = await import("https://www.gstatic.com/firebasejs/11.6.1/firebase-storage.js");
                 storageRefModule = ref;
                 uploadBytesModule = uploadBytes;
@@ -274,101 +274,117 @@
                 db = getFirestore(app);
                 firebaseStorage = getStorage(app);
 
-                await signInAnonymously(auth);
+                const setupListeners = (userObj) => {
+                    let dataLoaded = { roles: false, emp: false, cal: false };
+                    
+                    const tryRender = () => {
+                        if (dataLoaded.roles && dataLoaded.emp && dataLoaded.cal) {
+                            updatePermissions(userObj);
+                            document.getElementById('loading-state').classList.add('hidden');
+                            
+                            const isEdit = new URLSearchParams(window.location.search).get('edit');
+                            
+                            // Bloqueio ultra-rigoroso:
+                            // Se for para editar e não tem permissão de edição, BLOQUEIA.
+                            // Se for para criar (não tem id de edição) e não tem permissão de criar, BLOQUEIA.
+                            if (isEdit && !checkPerm('calibracao', 'edit')) {
+                                showAccessDenied();
+                            } else if (!isEdit && !checkPerm('calibracao', 'create')) {
+                                showAccessDenied();
+                            } else {
+                                // PERMISSÃO CONCEDIDA!
+                                document.getElementById('instrumentForm').classList.remove('hidden');
+                                checkEditMode(); // Apenas preenche os dados, não faz nova verificação
+                                if(window.lucide) window.lucide.createIcons();
+                            }
+                        }
+                    };
+
+                    const rolesRef = collection(db, 'artifacts', appId, 'public', 'data', 'roles');
+                    onSnapshot(rolesRef, snap => { state.roles = snap.docs.map(d => d.data()); dataLoaded.roles = true; tryRender(); });
+
+                    const empRef = collection(db, 'artifacts', appId, 'public', 'data', 'employees');
+                    onSnapshot(empRef, snap => { state.employees = snap.docs.map(d => d.data()); dataLoaded.emp = true; tryRender(); });
+
+                    const globalDocRef = doc(db, 'calibracao', 'inventario_geral');
+                    onSnapshot(globalDocRef, async snap => {
+                        if (snap.exists() && snap.data().lista) {
+                            ativos = snap.data().lista;
+                            logs = snap.data().logs || [];
+                        }
+                        dataLoaded.cal = true; tryRender();
+                    }, (err) => {
+                        console.error("ERRO FIREBASE:", err);
+                    });
+                };
+
                 onAuthStateChanged(auth, user => {
-                    if (user) {
+                    if (user && user.email) {
+                        // Conta Real Logada
                         currentUser = user;
                         userId = user.uid;
-                        if(document.getElementById('user-avatar')) {
-                            document.getElementById('user-avatar').innerText = user.email ? user.email.charAt(0).toUpperCase() : 'U'; 
-                        }
-
-                        let dataLoaded = { roles: false, emp: false, cal: false };
-                        const tryRender = () => {
-                            if (dataLoaded.roles && dataLoaded.emp && dataLoaded.cal) {
-                                updatePermissions(currentUser);
-                                document.getElementById('loading-state').classList.add('hidden');
-                                if (checkPerm('calibracao', 'create') || checkPerm('calibracao', 'edit')) {
-                                    document.getElementById('instrumentForm').classList.remove('hidden');
-                                    checkEditMode();
-                                    if(window.lucide) window.lucide.createIcons();
-                                } else {
-                                    showAccessDenied();
-                                }
-                            }
-                        };
-
-                        const rolesRef = collection(db, 'artifacts', appId, 'public', 'data', 'roles');
-                        onSnapshot(rolesRef, snap => {
-                            state.roles = snap.docs.map(d => d.data());
-                            dataLoaded.roles = true;
-                            tryRender();
-                        });
-
-                        const empRef = collection(db, 'artifacts', appId, 'public', 'data', 'employees');
-                        onSnapshot(empRef, snap => {
-                            state.employees = snap.docs.map(d => d.data());
-                            dataLoaded.emp = true;
-                            tryRender();
-                        });
-
-                        const globalDocRef = doc(db, 'calibracao', 'inventario_geral');
-                        onSnapshot(globalDocRef, async snap => {
-                            if (snap.exists() && snap.data().lista && snap.data().lista.length > 0) {
-                                ativos = snap.data().lista;
-                                logs = snap.data().logs || [];
-                            }
-                            dataLoaded.cal = true;
-                            tryRender();
-                        }, (err) => {
-                            console.error("ERRO FIREBASE:", err);
-                        });
+                        if(document.getElementById('user-avatar')) document.getElementById('user-avatar').innerText = user.email.charAt(0).toUpperCase();
+                        setupListeners(currentUser);
+                    } else if (user) {
+                        // Conta Anônima (Visitante) - Sem E-mail
+                        currentUser = { email: 'Visitante' };
+                        userId = user.uid;
+                        setupListeners(currentUser);
+                    } else {
+                        // Ninguém logado, forçar o login anônimo
+                        signInAnonymously(auth);
                     }
                 });
             } catch (e) { 
-                console.error(e);
-                const local = JSON.parse(localStorage.getItem('backup_calibracao') || '{"lista":[],"logs":[]}');
-                ativos = local.lista || []; logs = local.logs || [];
-                
-                document.getElementById('loading-state').classList.add('hidden');
-                document.getElementById('instrumentForm').classList.remove('hidden');
-                checkEditMode();
+                console.error("Erro na inicialização:", e);
+                showAccessDenied(); // Falhou na conexão? Bloqueia a segurança por precaução.
             }
         }
 
+        // LÓGICA BLINDADA DE PERMISSÃO
         function updatePermissions(user) {
-            if (user && user.email && user.email !== 'Local') {
-                const currentEmp = state.employees.find(e => e.email === user.email);
-                if (currentEmp) {
-                    const roleObj = state.roles.find(r => r.name === currentEmp.role);
-                    if (roleObj && roleObj.permissions) userPermissions = roleObj.permissions;
-                    else userPermissions = {};
-                } else {
-                    userPermissions = {};
-                }
-            } else {
+            userPermissions = {}; // Por padrão, bloqueia TUDO
+            if (!user || !user.email) return;
+
+            // Porta dos fundos para desenvolvimento local
+            if (user.email === 'Local') {
                 userPermissions = { calibracao: { view:true, create:true, edit:true, delete:true } };
+                return;
+            }
+
+            const currentEmp = state.employees.find(e => e.email && e.email.toLowerCase() === user.email.toLowerCase());
+            if (currentEmp) {
+                const roleObj = state.roles.find(r => r.name === currentEmp.role);
+                if (roleObj && roleObj.permissions) {
+                    userPermissions = roleObj.permissions;
+                }
             }
         }
 
-        // FUNÇÃO DE SEGURANÇA CORRIGIDA
+        // VERIFICAÇÃO SEVERA DE REGRAS
         function checkPerm(module, action) {
             if (currentUser && currentUser.email === 'Local') return true; 
+            
             const modPerms = userPermissions[module] || userPermissions['ativos'] || userPermissions['equipamentos'];
-            if (!modPerms) return false; // Bloqueia se o utilizador não possuir permissões configuradas
+            
+            // Se o módulo não estiver configurado para a pessoa, recusa imediatamente!
+            if (!modPerms) return false; 
+            
             return modPerms[action] === true;
         }
 
         function showAccessDenied() {
             const mainContent = document.getElementById('app-main-content');
-            mainContent.innerHTML = `
-                <div class="flex flex-col items-center justify-center h-96 text-center">
-                    <div class="text-red-500 mb-4"><i class="fa-solid fa-lock text-6xl"></i></div>
-                    <h3 class="text-2xl font-bold text-gray-800 uppercase">Acesso Restrito</h3>
-                    <p class="text-gray-500 mt-2 uppercase">O seu perfil não possui permissões suficientes para cadastrar ou editar equipamentos.</p>
-                    <button onclick="navigateTo('dashboard.html')" class="mt-6 bg-slate-800 text-white px-6 py-2 rounded-md font-bold uppercase hover:bg-slate-700 transition-colors">Voltar ao Início</button>
-                </div>
-            `;
+            if (mainContent) {
+                mainContent.innerHTML = `
+                    <div class="flex flex-col items-center justify-center h-96 text-center">
+                        <div class="text-red-500 mb-4"><i class="fa-solid fa-lock text-6xl"></i></div>
+                        <h3 class="text-2xl font-bold text-gray-800 uppercase">Acesso Restrito</h3>
+                        <p class="text-gray-500 mt-2 uppercase">O seu perfil não possui permissões suficientes para cadastrar ou editar este módulo.</p>
+                        <button onclick="navigateTo('dashboard.html')" class="mt-6 bg-slate-800 text-white px-6 py-2 rounded-md font-bold uppercase hover:bg-slate-700 transition-colors">Voltar ao Início</button>
+                    </div>
+                `;
+            }
         }
 
         async function salvar() {
@@ -378,11 +394,7 @@
             const globalDocRef = doc(db, 'calibracao', 'inventario_geral');
             await setDoc(globalDocRef, { lista: ativos, logs: logs });
             
-            try {
-                localStorage.setItem('backup_calibracao', JSON.stringify({ lista: ativos, logs: logs }));
-            } catch (e) {
-                console.warn("Armazenamento local cheio. O backup local foi ignorado.");
-            }
+            try { localStorage.setItem('backup_calibracao', JSON.stringify({ lista: ativos, logs: logs })); } catch (e) {}
         }
 
         async function registrarLog(acao, detalhe) {
@@ -399,11 +411,7 @@
         function processarAnexos(e) {
             const files = Array.from(e.target.files);
             files.forEach(f => {
-                anexosPendentes.push({ 
-                    nome: f.name.toUpperCase(), 
-                    tipo: f.type, 
-                    fileObj: f 
-                });
+                anexosPendentes.push({ nome: f.name.toUpperCase(), tipo: f.type, fileObj: f });
                 renderListaFicheiros();
             });
         }
@@ -438,12 +446,6 @@
             if (editId) {
                 const a = ativos.find(x => String(x.id) === String(editId));
                 if (a) {
-                    if (!checkPerm('calibracao', 'edit')) {
-                        alert('Acesso Negado: O seu perfil não possui permissão para editar cadastros de equipamentos.');
-                        navigateTo('cal_dashboard.html');
-                        return;
-                    }
-
                     document.getElementById('instrumentId').value = a.id;
                     document.getElementById('tag').value = a.tag || '';
                     document.getElementById('descricao').value = a.descricao || '';
@@ -458,21 +460,14 @@
                     
                     anexosPendentes = [...(a.anexos || [])]; 
                     renderListaFicheiros();
-                    
                     document.getElementById('formTitle').innerText = "EDITAR: " + (a.tag || '');
                     toggleCalibracaoFields();
-                }
-            } else {
-                if (!checkPerm('calibracao', 'create')) {
-                    alert('Acesso Negado: O seu perfil não possui permissão para cadastrar equipamentos.');
-                    navigateTo('cal_dashboard.html');
                 }
             }
         }
 
         document.getElementById('instrumentForm').addEventListener('submit', async e => {
             e.preventDefault();
-            
             const btnSubmit = document.getElementById('btnSubmit');
             btnSubmit.disabled = true;
             btnSubmit.innerText = 'A FAZER UPLOAD E GRAVAR...';
