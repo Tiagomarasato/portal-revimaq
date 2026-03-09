@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SGQ - Matriz de Competência (ISO 9001)</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; }
+        .custom-scrollbar::-webkit-scrollbar { height: 8px; width: 8px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        .modal-open { overflow: hidden; }
+    </style>
+</head>
+<body class="flex flex-col h-screen text-gray-800 bg-gray-50">
+
+    <!-- ========================================================================= -->
+    <!-- MENU INTELIGENTE PADRÃO (COM DASHBOARD ISOLADO E APLICATIVOS) -->
+    <!-- ========================================================================= -->
+    <header class="bg-white shadow-sm z-20 no-print">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <!-- Logotipo / Título Dinâmico do Menu -->
+                <div class="flex items-center flex-1">
+                    <div class="flex-shrink-0 flex items-center mr-6" id="menu-logo-container">
+                        <div class="p-2 bg-slate-100 rounded-lg mr-3"><i data-lucide="layers" class="w-6 h-6 text-slate-700"></i></div>
+                        <h1 class="text-xl font-bold text-gray-800">SGQ <span class="text-slate-600">Portal</span></h1>
+                    </div>
+                    
+                    <!-- Desktop Menu -->
+                    <nav class="hidden lg:flex space-x-6 h-full">
+                        
+                        <!-- Menu Dashboard (Isolado e Direto) -->
+                        <div class="relative flex items-center h-full">
+                            <a href="dashboard.html" class="inline-flex items-center px-1 h-full border-b-2 border-transparent text-sm font-medium text-gray-500 hover:text-indigo-600 transition-colors focus:outline-none">
+                                Dashboard
+                            </a>
+                        </div>
+
+                        <!-- Menu Cadastros (Apenas RH e Negócio) -->
+                        <div class="relative group h-full flex items-center">
+                            <button class="inline-flex items-center px-1 h-full border-b-2 border-transparent text-sm font-medium text-gray-500 hover:text-blue-600 transition-colors focus:outline-none">
+                                Cadastros <i data-lucide="chevron-down" class="w-4 h-4 ml-1"></i>
+                            </button>
+                            <div class="absolute left-0 top-16 w-56 bg-white border border-gray-200 rounded-b-lg shadow-xl hidden group-hover:block transition-all z-50">
+                                <a href="pe_cad_colaboradores.html" class="block px-5 py-3 text-sm font-medium text-gray-600 hover:bg-gray-50 hover:text-blue-600 border-l-4 border-transparent transition-colors">Colaboradores</a>
+                                <a href="pe_cad_educacao.html" class="block px-5 py-3 text-sm font-medium text-gray-600 hover:bg-gray-50 hover:text-blue-600 border-l-4 border-transparent transition-colors">Educação</a>
+                                <a href="pe_cad_experiencia.html" class="block px-5 py-3 text-sm font-medium text-gray-600 hover:bg-gray-50 hover:text-blue-600 border-l-4 border-transparent transition-colors">Experiência</a>
+                                <a href="pe_cad_habilidades.html" class="block px-5 py-3 text-sm font-medium text-gray-600 hover:bg-gray-50 hover:text-blue-600 border-l-4 border-transparent transition-colors">Habilidades</a>
+                                <a href="pe_cad_treinamentos.html" class="block px-5 py-3 text-sm font-medium text-gray-600 hover:bg-gray-50 hover:text-blue-600 border-l-4 border-transparent transition-colors">Treinamentos</a>
+                            </div>
+                        </div>
+
+                        <!-- Menu Operacional -->
+                        <div class="relative group h-full flex items-center">
+                            <button class="inline-flex items-center px-1 h-full border-b-2 border-transparent text-sm font-medium text-gray-500 hover:text-amber-600 transition-colors focus:outline-none">
+                                Operacional <i data-lucide="chevron-down" class="w-4 h-4 ml-1"></i>
+                            </button>
+                            <div class="absolute left-0 top-16 w-64 bg-white border border-gray-200 rounded-b-lg shadow-xl hidden group-hover:block transition-all z-50">
+                                <a href="pe_ope_avaliacao_desempenho.html" class="block px-5 py-3 text-sm font-medium text-gray-600 hover:bg-gray-50 hover:text-amber-600 border-l-4 border-transparent transition-colors">Avaliação de Desempenho</a>
+                                <a href="pe_ope_eficacia.html" class="block px-5 py-3 text-sm font-medium text-gray-600 hover:bg-gray-50 hover:text-amber-600 border-l-4 border-transparent transition-colors">Eficácia</a>
+                                <a href="pe_ope_lista_de_presenca.html" class="block px-5 py-3 text-sm font-medium text-gray-600 hover:bg-gray-50 hover:text-amber-600 border-l-4 border-transparent transition-colors">Lista de Presença</a>
+                                <a href="pe_ope_planejamento_treinamento.html" class="block px-5 py-3 text-sm font-medium text-gray-600 hover:bg-gray-50 hover:text-amber-600 border-l-4 border-transparent transition-colors">Planejamento de Treinamento</a>
+                            </div>
+                        </div>
+
+                        <!-- Menu Consultas & Relatórios -->
+                        <div class="relative group h-full flex items-center">
+                            <button class="inline-flex items-center px-1 h-full border-b-2 border-transparent text-sm font-medium text-gray-500 hover:text-emerald-600 transition-colors focus:outline-none">
+                                Consultas <i data-lucide="chevron-down" class="w-4 h-4 ml-1"></i>
+                            </button>
+                            <div class="absolute left-0 top-16 w-64 bg-white border border-gray-200 rounded-b-lg shadow-xl hidden group-hover:block transition-all z-50">
+                                <a href="pe_con_colaboradores.html" class="block px-5 py-3 text-sm font-medium text-gray-600 hover:bg-gray-50 hover:text-emerald-600 border-l-4 border-transparent transition-colors">Colaboradores</a>
+                                <a href="pe_con_matriz.html" class="block px-5 py-3 text-sm font-medium text-gray-600 hover:bg-gray-50 hover:text-emerald-600 border-l-4 border-transparent transition-colors">Matriz de Competências</a>
+                                <a href="pe_con_matriz_competencia.html" class="block px-5 py-3 text-sm font-medium text-gray-600 hover:bg-gray-50 hover:text-emerald-600 border-l-4 border-transparent transition-colors">Matriz de Competência</a>
+                                <a href="pe_con_competencia.html" class="block px-5 py-3 text-sm font-medium text-gray-600 hover:bg-gray-50 hover:text-emerald-600 border-l-4 border-transparent transition-colors">Histórico de Competência</a>
+                                <a href="pe_con_presenca_e_avaliacao.html" class="block px-5 py-3 text-sm font-medium text-gray-600 hover:bg-gray-50 hover:text-emerald-600 border-l-4 border-transparent transition-colors">Presença e Avaliação</a>
+                            </div>
+                        </div>
+
+                        <!-- Menu Configurações -->
+                        <div class="relative group h-full flex items-center">
+                            <button class="inline-flex items-center px-1 h-full border-b-2 border-transparent text-sm font-medium text-gray-500 hover:text-slate-800 transition-colors focus:outline-none">
+                                Configurações <i data-lucide="settings" class="w-4 h-4 ml-1"></i>
+                            </button>
+                            <div class="absolute right-0 top-16 w-64 bg-white border border-gray-200 rounded-b-lg shadow-xl hidden group-hover:block transition-all z-50">
+                                <div class="px-4 py-2 text-[10px] font-black text-slate-400 uppercase tracking-widest bg-slate-50 border-b border-slate-100">Estrutura e Cargos</div>
+                                <a href="pe_cad_setores.html" class="block px-5 py-3 text-sm font-medium text-gray-600 hover:bg-gray-50 hover:text-slate-800 border-l-4 border-transparent transition-colors">Setores / Departamentos</a>
+                                <a href="pe_cad_processos.html" class="block px-5 py-3 text-sm font-medium text-gray-600 hover:bg-gray-50 hover:text-slate-800 border-l-4 border-transparent transition-colors">Processos</a>
+                                <a href="pe_cad_cargos.html" class="block px-5 py-3 text-sm font-medium text-gray-600 hover:bg-gray-50 hover:text-slate-800 border-l-4 border-transparent transition-colors">Cargos</a>
+                                
+                                <div class="px-4 py-2 text-[10px] font-black text-slate-400 uppercase tracking-widest bg-slate-50 border-y border-slate-100 mt-1">Sistema & Segurança</div>
+                                <a href="pe_cfg_sistema.html" class="block px-5 py-3 text-sm font-medium text-gray-600 hover:bg-gray-50 hover:text-slate-800 border-l-4 border-transparent transition-colors">Parâmetros e Anexos</a>
+                                <a href="Permissoes.html" class="block px-5 py-3 text-sm font-bold text-red-600 bg-red-50/30 hover:bg-red-50 hover:text-red-700 border-l-4 border-transparent transition-colors flex justify-between items-center">Permissões de Acesso <i data-lucide="lock" class="w-4 h-4"></i></a>
+                            </div>
+                        </div>
+
+                        <!-- Menu Aplicativos Externos -->
+                        <div class="relative group h-full flex items-center">
+                            <button class="inline-flex items-center px-1 h-full border-b-2 border-transparent text-sm font-medium text-gray-500 hover:text-indigo-600 transition-colors focus:outline-none">
+                                Aplicativos <i data-lucide="layout-grid" class="w-4 h-4 ml-1"></i>
+                            </button>
+                            <div class="absolute right-0 top-16 w-64 bg-white border border-gray-200 rounded-b-lg shadow-xl hidden group-hover:block transition-all z-50">
+                                <div class="px-4 py-2 text-[10px] font-black text-indigo-500 uppercase tracking-widest bg-indigo-50 border-b border-indigo-100">Outros Sistemas</div>
+                                <a href="Ocorrencias.html" class="block px-5 py-3 text-sm font-medium text-gray-600 hover:bg-gray-50 hover:text-indigo-600 border-l-4 border-transparent transition-colors flex items-center"><i data-lucide="shield-alert" class="w-4 h-4 mr-2 text-indigo-500"></i> Gestão de Ocorrências</a>
+                                <a href="calibracao.html" class="block px-5 py-3 text-sm font-medium text-gray-600 hover:bg-gray-50 hover:text-indigo-600 border-l-4 border-transparent transition-colors flex items-center"><i data-lucide="scale" class="w-4 h-4 mr-2 text-indigo-500"></i> Ativos e Calibração</a>
+                                <a href="Indicador.html" class="block px-5 py-3 text-sm font-medium text-gray-600 hover:bg-gray-50 hover:text-indigo-600 border-l-4 border-transparent transition-colors flex items-center"><i data-lucide="line-chart" class="w-4 h-4 mr-2 text-indigo-500"></i> Painel de Indicadores</a>
+                            </div>
+                        </div>
+                    </nav>
+                </div>
+                
+                <!-- Ações do Utilizador -->
+                <div class="flex items-center space-x-4">
+                    <a href="index.html" class="hidden lg:inline-flex items-center px-4 py-2 border border-transparent text-sm font-bold rounded-md shadow-sm text-white bg-slate-800 hover:bg-slate-700 focus:outline-none transition-colors">
+                        <i data-lucide="arrow-left" class="w-4 h-4 mr-2"></i> PORTAL
+                    </a>
+                    <button class="text-gray-400 hover:text-gray-600 relative transition-colors" onclick="showDevInfo()"><i data-lucide="info" class="w-5 h-5"></i></button>
+                    <div class="h-8 w-8 rounded-full bg-slate-400 flex items-center justify-center text-white font-bold text-sm shadow-sm" id="user-avatar">--</div>
+                    <!-- Mobile menu button -->
+                    <button type="button" onclick="document.getElementById('mobile-menu').classList.toggle('hidden')" class="lg:hidden p-2 rounded-md text-gray-400 hover:bg-gray-100">
+                        <i data-lucide="menu" class="w-6 h-6"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Mobile Menu (Cascata Vertical) -->
+        <div class="hidden lg:hidden absolute w-full bg-white z-50 border-t shadow-lg max-h-[80vh] overflow-y-auto" id="mobile-menu">
+            <div class="pt-2 pb-3 space-y-1">
+                
+                <!-- Link direto Dashboard Mobile -->
+                <a href="dashboard.html" class="block pl-6 py-3 border-l-4 border-transparent text-gray-800 font-bold hover:bg-gray-50 text-sm flex items-center mb-1">
+                    <i data-lucide="layout-dashboard" class="w-5 h-5 mr-2 text-indigo-600"></i> Dashboard
+                </a>
+
+                <div class="px-4 py-2 text-xs font-bold text-blue-600 uppercase tracking-wider bg-blue-50/50 border-t border-gray-100">Cadastros</div>
+                <a href="pe_cad_colaboradores.html" class="block pl-6 py-2 border-l-4 border-transparent text-gray-600 font-medium hover:bg-gray-50 text-sm">Colaboradores</a>
+                <a href="pe_cad_educacao.html" class="block pl-6 py-2 border-l-4 border-transparent text-gray-600 font-medium hover:bg-gray-50 text-sm">Educação</a>
+                <a href="pe_cad_experiencia.html" class="block pl-6 py-2 border-l-4 border-transparent text-gray-600 font-medium hover:bg-gray-50 text-sm">Experiência</a>
+                <a href="pe_cad_habilidades.html" class="block pl-6 py-2 border-l-4 border-transparent text-gray-600 font-medium hover:bg-gray-50 text-sm">Habilidades</a>
+                <a href="pe_cad_treinamentos.html" class="block pl-6 py-2 border-l-4 border-transparent text-gray-600 font-medium hover:bg-gray-50 text-sm">Treinamentos</a>
+                
+                <div class="px-4 py-2 text-xs font-bold text-amber-600 uppercase tracking-wider bg-amber-50/50 mt-2">Operacional</div>
+                <a href="pe_ope_avaliacao_desempenho.html" class="block pl-6 py-2 border-l-4 border-transparent text-gray-600 font-medium hover:bg-gray-50 text-sm">Avaliação de Desempenho</a>
+                <a href="pe_ope_eficacia.html" class="block pl-6 py-2 border-l-4 border-transparent text-gray-600 font-medium hover:bg-gray-50 text-sm">Eficácia</a>
+                <a href="pe_ope_lista_de_presenca.html" class="block pl-6 py-2 border-l-4 border-transparent text-gray-600 font-medium hover:bg-gray-50 text-sm">Lista de Presença</a>
+                <a href="pe_ope_planejamento_treinamento.html" class="block pl-6 py-2 border-l-4 border-transparent text-gray-600 font-medium hover:bg-gray-50 text-sm">Planejamento de Treinamento</a>
+
+                <div class="px-4 py-2 text-xs font-bold text-emerald-600 uppercase tracking-wider bg-emerald-50/50 mt-2">Consultas</div>
+                <a href="pe_con_colaboradores.html" class="block pl-6 py-2 border-l-4 border-transparent text-gray-600 font-medium hover:bg-gray-50 text-sm">Colaboradores</a>
+                <a href="pe_con_matriz.html" class="block pl-6 py-2 border-l-4 border-transparent text-gray-600 font-medium hover:bg-gray-50 text-sm">Matriz de Competências</a>
+                <a href="pe_con_matriz_competencia.html" class="block pl-6 py-2 border-l-4 border-transparent text-gray-600 font-medium hover:bg-gray-50 text-sm">Matriz de Competência</a>
+                <a href="pe_con_competencia.html" class="block pl-6 py-2 border-l-4 border-transparent text-gray-600 font-medium hover:bg-gray-50 text-sm">Histórico de Competência</a>
+                <a href="pe_con_presenca_e_avaliacao.html" class="block pl-6 py-2 border-l-4 border-transparent text-gray-600 font-medium hover:bg-gray-50 text-sm">Presença e Avaliação</a>
+
+                <div class="px-4 py-2 text-xs font-bold text-slate-600 uppercase tracking-wider bg-slate-100 mt-2">Configurações</div>
+                <a href="pe_cad_setores.html" class="block pl-6 py-2 border-l-4 border-transparent text-gray-600 font-medium hover:bg-gray-50 text-sm">Setores</a>
+                <a href="pe_cad_processos.html" class="block pl-6 py-2 border-l-4 border-transparent text-gray-600 font-medium hover:bg-gray-50 text-sm">Processos</a>
+                <a href="pe_cad_cargos.html" class="block pl-6 py-2 border-l-4 border-transparent text-gray-600 font-medium hover:bg-gray-50 text-sm">Cargos</a>
+                <a href="pe_cfg_sistema.html" class="block pl-6 py-2 border-l-4 border-transparent text-gray-600 font-medium hover:bg-gray-50 text-sm">Parâmetros e Anexos</a>
+                <a href="Permissoes.html" class="block pl-6 py-2 border-l-4 border-transparent text-red-600 font-bold hover:bg-red-50 text-sm">Permissões (Admin)</a>
+                
+                <div class="px-4 py-2 text-xs font-bold text-indigo-600 uppercase tracking-wider bg-indigo-50 mt-2 border-t border-indigo-100">Aplicativos</div>
+                <a href="Ocorrencias.html" class="block pl-6 py-2 border-l-4 border-transparent text-gray-600 font-medium hover:bg-gray-50 text-sm flex items-center"><i data-lucide="shield-alert" class="w-4 h-4 mr-2 text-indigo-500"></i> Ocorrências</a>
+                <a href="calibracao.html" class="block pl-6 py-2 border-l-4 border-transparent text-gray-600 font-medium hover:bg-gray-50 text-sm flex items-center"><i data-lucide="scale" class="w-4 h-4 mr-2 text-indigo-500"></i> Calibração</a>
+                <a href="Indicador.html" class="block pl-6 py-2 border-l-4 border-transparent text-gray-600 font-medium hover:bg-gray-50 text-sm flex items-center"><i data-lucide="line-chart" class="w-4 h-4 mr-2 text-indigo-500"></i> Indicadores</a>
+
+                <div class="border-t border-gray-100 mt-3 pt-2">
+                    <a href="index.html" class="block pl-6 py-3 text-white bg-slate-800 hover:bg-slate-700 font-bold"><i data-lucide="arrow-left" class="w-5 h-5 inline mr-2"></i> PORTAL</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- SCRIPT MÁGICO DE AUTO-DESTAQUE DE MENU ATUALIZADO -->
+        <script>
+            document.addEventListener("DOMContentLoaded", () => {
+                let currentPath = window.location.pathname.split('/').pop() || 'dashboard.html';
+                // Lidar com nomes de ficheiros que possam ter espaços (codificados como %20)
+                currentPath = decodeURIComponent(currentPath);
+                
+                const logoContainer = document.getElementById('menu-logo-container');
+                
+                let activeClasses = [];
+                let highlightColorClass = '';
+                
+                // Lógica de cores baseada no ficheiro aberto
+                if (currentPath === 'dashboard.html') {
+                    // Módulo Dashboard
+                    activeClasses = ['border-indigo-600', 'text-indigo-700', 'bg-indigo-50', 'font-bold'];
+                    highlightColorClass = 'text-indigo-600';
+                    logoContainer.innerHTML = '<div class="p-2 bg-indigo-100 rounded-lg mr-3"><i data-lucide="layout-dashboard" class="w-6 h-6 text-indigo-700"></i></div><h1 class="text-xl font-bold text-gray-800">SGQ <span class="text-indigo-600">Painel</span></h1>';
+                } else if (currentPath === 'pe_cad_setores.html' || currentPath === 'pe_cad_processos.html' || currentPath === 'pe_cad_cargos.html' || currentPath.startsWith('Permissoes') || currentPath.startsWith('pe_cfg')) {
+                    // Módulo de Configurações
+                    activeClasses = ['border-slate-600', 'text-slate-800', 'bg-slate-100', 'font-bold'];
+                    highlightColorClass = 'text-slate-700';
+                    logoContainer.innerHTML = '<div class="p-2 bg-slate-200 rounded-lg mr-3"><i data-lucide="settings" class="w-6 h-6 text-slate-800"></i></div><h1 class="text-xl font-bold text-gray-800">SGQ <span class="text-slate-600">Config</span></h1>';
+                } else if (currentPath.startsWith('pe_cad') || currentPath.startsWith('pe_ca_')) {
+                    // Módulo Cadastros (RH)
+                    activeClasses = ['border-blue-600', 'text-blue-700', 'bg-blue-50', 'font-bold'];
+                    highlightColorClass = 'text-blue-600';
+                    logoContainer.innerHTML = '<div class="p-2 bg-blue-100 rounded-lg mr-3"><i data-lucide="users" class="w-6 h-6 text-blue-700"></i></div><h1 class="text-xl font-bold text-gray-800">SGQ <span class="text-blue-600">Cadastros</span></h1>';
+                } else if (currentPath.startsWith('pe_ope')) {
+                    // Módulo Operacional
+                    activeClasses = ['border-amber-600', 'text-amber-700', 'bg-amber-50', 'font-bold'];
+                    highlightColorClass = 'text-amber-600';
+                    logoContainer.innerHTML = '<div class="p-2 bg-amber-100 rounded-lg mr-3"><i data-lucide="cog" class="w-6 h-6 text-amber-700"></i></div><h1 class="text-xl font-bold text-gray-800">SGQ <span class="text-amber-600">Operação</span></h1>';
+                } else if (currentPath.startsWith('pe_con') || currentPath.startsWith('pe_rel')) {
+                    // Módulo Consultas & Relatórios
+                    activeClasses = ['border-emerald-600', 'text-emerald-700', 'bg-emerald-50', 'font-bold'];
+                    highlightColorClass = 'text-emerald-600';
+                    logoContainer.innerHTML = '<div class="p-2 bg-emerald-100 rounded-lg mr-3"><i data-lucide="search" class="w-6 h-6 text-emerald-700"></i></div><h1 class="text-xl font-bold text-gray-800">SGQ <span class="text-emerald-600">Consultas</span></h1>';
+                }
+
+                // Aplica o destaque na listagem de links
+                const links = document.querySelectorAll('nav a, #mobile-menu a');
+                links.forEach(link => {
+                    const href = decodeURIComponent(link.getAttribute('href'));
+                    if (href === currentPath) {
+                        // Limpa classes base (tira o vermelho especial se for aba de Permissões)
+                        link.classList.remove('border-transparent', 'text-gray-600', 'font-medium', 'text-red-600', 'bg-red-50/30');
+                        // Adiciona as classes do módulo ativo
+                        link.classList.add(...activeClasses);
+                    }
+                });
+
+                // Tinge o avatar com a cor do módulo
+                const avatar = document.getElementById('user-avatar');
+                if (avatar && highlightColorClass) {
+                    avatar.classList.remove('bg-slate-400');
+                    avatar.classList.add(highlightColorClass.replace('text-', 'bg-'));
+                }
+                
+                // Recria os ícones Lucide recém injetados
+                if(window.lucide) window.lucide.createIcons();
+            });
+        </script>
+    </header>
+
+    <main class="flex-1 overflow-auto bg-gray-50 p-4 md:p-6" id="main-container">
+        <div class="max-w-7xl mx-auto mb-4">
+             <h2 class="text-2xl font-semibold text-gray-800">Matriz de Competência da Equipe</h2>
+             <p class="text-sm text-gray-500 mt-1">Selecione um colaborador para ver a evolução das suas avaliações de desempenho.</p>
+        </div>
+        
+        <div class="max-w-7xl mx-auto bg-white p-6 rounded-xl shadow-sm border border-gray-100" id="app-content">
+            <div class="flex justify-center py-10"><div class="animate-spin rounded-full h-10 w-10 border-b-2 border-emerald-600"></div></div>
+        </div>
+    </main>
+
+    <!-- Modal Container -->
+    <div id="modal-container" class="fixed inset-0 z-50 flex items-center justify-center hidden bg-black bg-opacity-50 backdrop-blur-sm p-4">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-[850px] max-h-[95vh] flex flex-col transform transition-all scale-95" id="modal-content-wrapper">
+            <div class="px-5 py-3 border-b border-gray-200 flex justify-between items-center"><h3 class="text-xl font-bold text-gray-800" id="modal-title">Título</h3><button onclick="closeModal()" class="text-gray-400 hover:text-gray-600"><i data-lucide="x" class="w-5 h-5"></i></button></div>
+            <div class="p-5 overflow-y-auto custom-scrollbar flex-1" id="modal-body"></div>
+            <div class="px-5 py-3 border-t border-gray-100 bg-gray-50 rounded-b-xl flex justify-end gap-3" id="modal-footer"></div>
+        </div>
+    </div>
+
+    <script>
+        const firebaseConfig = { apiKey: "AIzaSyBqV0KOQMAYR4z6P_RKnrQPDfkAR2CsXBI", authDomain: "gestao-de-pessoas-49200.firebaseapp.com", projectId: "gestao-de-pessoas-49200", storageBucket: "gestao-de-pessoas-49200.firebasestorage.app", messagingSenderId: "615097388185", appId: "1:615097388185:web:ef87969b64f4a886f23c08" };
+        if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth(); const db = firebase.firestore(); db.settings({ experimentalForceLongPolling: true });
+        const appId = 'gestao-de-pessoas-49200'; let currentUser = null;
+
+        let state = { employees: [], performanceReviews: [] };
+
+        function loadDataFromFirestore() {
+            if (!currentUser) return;
+            const collections = ['employees', 'performanceReviews']; let loadedCount = 0;
+            collections.forEach(col => {
+                db.collection(`artifacts/${appId}/public/data/${col}`).onSnapshot((snapshot) => {
+                    state[col] = snapshot.docs.map(doc => doc.data());
+                    loadedCount++;
+                    if(loadedCount >= collections.length) renderCompetencia(document.getElementById('app-content'));
+                });
+            });
+        }
+
+        const formatDate = (dateStr) => { if(!dateStr) return '-'; const [y, m, d] = dateStr.split('-'); return `${d}/${m}/${y}`; };
+
+        function openModal(title, bodyHtml, footerHtml) {
+            document.getElementById('modal-title').innerHTML = title; document.getElementById('modal-body').innerHTML = bodyHtml; document.getElementById('modal-footer').innerHTML = footerHtml;
+            const modal = document.getElementById('modal-container'); const wrapper = document.getElementById('modal-content-wrapper');
+            modal.classList.remove('hidden'); setTimeout(() => { wrapper.classList.remove('scale-95'); wrapper.classList.add('scale-100'); }, 10);
+            document.body.classList.add('modal-open'); if(window.lucide) window.lucide.createIcons();
+        }
+        function closeModal() { 
+            const modal = document.getElementById('modal-container'); const wrapper = document.getElementById('modal-content-wrapper');
+            wrapper.classList.remove('scale-100'); wrapper.classList.add('scale-95');
+            setTimeout(() => { modal.classList.add('hidden'); document.body.classList.remove('modal-open'); }, 200);
+        }
+        function showDevInfo() { Swal.fire({ title: 'Consulta de Matriz de Competência', text: 'Conectado ao Firebase.', icon: 'info' }); }
+
+        // --- GESTÃO DE TELA ---
+        function renderCompetencia(container) {
+            const emps = state.employees.filter(e => e.status === 'Ativo');
+            
+            if(emps.length === 0) {
+                container.innerHTML = '<p class="text-center text-gray-500 py-10 flex flex-col items-center"><i data-lucide="users" class="w-10 h-10 mb-2 text-gray-300"></i>Nenhum colaborador ativo cadastrado.</p>';
+                if(window.lucide) window.lucide.createIcons();
+                return;
+            }
+
+            let html = `<div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">`;
+            
+            emps.forEach(emp => {
+                const reviews = state.performanceReviews.filter(r => r.empId === emp.id);
+                const lastRev = reviews.sort((a,b) => new Date(b.date) - new Date(a.date))[0];
+                const avg = lastRev ? lastRev.score : '-';
+                
+                html += `
+                    <div onclick="viewPerformanceHistory(${emp.id})" class="border border-gray-200 rounded-xl p-4 hover:shadow-lg hover:border-emerald-300 transition cursor-pointer bg-gray-50">
+                        <div class="flex items-center space-x-3 mb-3">
+                            <div class="w-10 h-10 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold text-lg border border-emerald-200 shadow-sm">${emp.name.charAt(0)}</div>
+                            <div class="truncate">
+                                <h4 class="font-bold text-gray-800 text-sm truncate">${emp.name}</h4>
+                                <p class="text-[10px] text-gray-500 uppercase truncate" title="${emp.role}">${emp.role}</p>
+                            </div>
+                        </div>
+                        <div class="flex justify-between items-center border-t border-gray-200 pt-3">
+                            <span class="text-xs text-gray-500 font-medium">Última Nota:</span>
+                            <span class="font-black text-lg ${avg !== '-' ? 'text-emerald-600' : 'text-gray-400'}">${avg}</span>
+                        </div>
+                        <div class="text-[10px] text-gray-400 mt-1">Total de Avaliações: <strong>${reviews.length}</strong></div>
+                    </div>
+                `;
+            });
+            html += `</div>`;
+            container.innerHTML = html;
+            if(window.lucide) window.lucide.createIcons();
+        }
+
+        window.viewPerformanceHistory = function(empId) {
+            const emp = state.employees.find(e => e.id === empId); if(!emp) return;
+            const reviews = state.performanceReviews.filter(r => r.empId === empId).sort((a, b) => new Date(b.date) - new Date(a.date));
+            if (reviews.length === 0) return Swal.fire('Aviso', 'Este colaborador ainda não possui avaliações de desempenho.', 'info');
+
+            let allMap = new Map(); 
+            reviews.forEach(r => { if(r.skills) r.skills.forEach(s => allMap.set(s.skillId, s.skillName)); });
+            
+            let html = `
+                <div class="text-left mb-4">
+                    <p class="text-sm text-gray-600">Acompanhamento evolutivo: <strong class="text-emerald-700 text-lg ml-1">${emp.name}</strong></p>
+                </div>
+                <div class="overflow-x-auto border border-gray-200 rounded-lg custom-scrollbar shadow-sm">
+                    <table class="w-full text-left text-sm border-collapse">
+                        <thead>
+                            <tr class="bg-gray-50 border-b border-gray-200 text-xs uppercase text-gray-500 tracking-wider">
+                                <th class="p-3 font-bold sticky left-0 bg-gray-50 z-10 shadow-[1px_0_0_0_#e5e7eb]">Competência Avaliada</th>
+                                ${reviews.map((r,i) => `<th class="p-3 text-center border-l border-gray-200 min-w-[100px]">${formatDate(r.date)}${i===0?' <br><span class="text-[9px] bg-emerald-100 text-emerald-800 px-1.5 rounded font-bold shadow-sm inline-block mt-1">Atual</span>':''}</th>`).join('')}
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-100">`;
+            
+            if(allMap.size > 0) {
+                allMap.forEach((name, sId) => {
+                    html += `<tr class="hover:bg-emerald-50/30 transition"><td class="p-3 font-medium text-gray-800 sticky left-0 bg-white z-10 shadow-[1px_0_0_0_#e5e7eb]">${name}</td>`;
+                    reviews.forEach(r => { 
+                        const sk = r.skills ? r.skills.find(x=>x.skillId===sId) : null; 
+                        const score = sk && sk.score > 0 ? sk.score : '-'; 
+                        html += `<td class="p-3 text-center border-l border-gray-100 font-bold ${score !== '-' ? 'text-emerald-600' : 'text-gray-300'}">${score}</td>`; 
+                    }); 
+                    html += `</tr>`;
+                });
+            } else {
+                html += `<tr><td colspan="${reviews.length + 1}" class="p-4 text-center text-gray-500 italic">Avaliações realizadas sem detalhamento de competências.</td></tr>`;
+            }
+            
+            html += `<tr class="bg-gray-100 border-t-2 border-gray-200"><td class="p-3 font-bold text-right text-xs uppercase sticky left-0 bg-gray-100 z-10 shadow-[1px_0_0_0_#e5e7eb]">Média Global Alcançada:</td>${reviews.map(r => `<td class="p-3 text-center border-l border-gray-200 font-black text-base ${!r.minScore ? 'text-blue-600' : (r.score >= r.minScore ? 'text-emerald-600' : 'text-red-600')}">${r.score}</td>`).join('')}</tr></tbody></table></div>`;
+            
+            openModal(`<i data-lucide="bar-chart-2" class="w-5 h-5 inline mr-2 text-emerald-600"></i> Comparativo Histórico`, html, `<button onclick="closeModal()" class="px-5 py-2.5 text-gray-600 bg-gray-100 hover:bg-gray-200 font-bold rounded-lg transition">Fechar Análise</button>`);
+        }
+
+        auth.onAuthStateChanged((user) => { 
+            if(user) { currentUser = user; document.getElementById('user-avatar').innerText = user.email ? user.email.charAt(0).toUpperCase() : 'U'; loadDataFromFirestore(); } 
+            else auth.signInAnonymously(); 
+        });
+    </script>
+</body>
+</html>

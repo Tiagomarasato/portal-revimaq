@@ -1,0 +1,1057 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Painel de Indicadores - REVIMAQ Cloud</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Adicionando Chart.js e plugin Datalabels para os gráficos -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
+
+    <style>
+        .fade-in { animation: fadeIn 0.3s ease-in-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+        .loading-overlay {
+            position: fixed; inset: 0; background: white;
+            display: flex; align-items: center; justify-content: center; z-index: 9999;
+        }
+        button:disabled { opacity: 0.5; cursor: not-allowed; }
+        /* Garantir que textos fiquem em maiúsculas conforme padrão REVIMAQ */
+        .uppercase-all { text-transform: uppercase; }
+        .custom-scrollbar::-webkit-scrollbar { height: 8px; width: 8px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+    </style>
+</head>
+<body class="min-h-screen bg-slate-50 text-slate-900 font-sans uppercase-all">
+
+    <!-- Tela de Carregamento -->
+    <div id="loading" class="loading-overlay">
+        <div class="flex flex-col items-center">
+            <div class="w-12 h-12 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
+            <p class="mt-4 text-slate-600 font-bold tracking-widest text-xs uppercase">Sincronizando com a Nuvem...</p>
+        </div>
+    </div>
+
+    <!-- Cabeçalho -->
+    <header id="app-header" class="bg-indigo-700 text-white shadow-lg">
+        <div class="max-w-7xl mx-auto px-4 h-16 flex justify-between items-center">
+            <div class="flex items-center space-x-3">
+                <i data-lucide="activity" class="h-8 w-8 text-indigo-200"></i>
+                <h1 class="text-xl font-black tracking-tight uppercase">Painel de Desempenho</h1>
+            </div>
+            <div id="status-cloud" class="flex items-center text-[10px] font-black bg-indigo-800 px-3 py-1.5 rounded-full border border-indigo-600 uppercase">
+                <span class="w-2 h-2 bg-amber-400 rounded-full mr-2" id="status-dot"></span>
+                <span id="status-text">Conectando...</span>
+            </div>
+        </div>
+    </header>
+
+    <nav id="app-nav" class="bg-white border-b border-slate-200 sticky top-0 z-10 print:hidden">
+        <div class="max-w-7xl mx-auto px-4 flex justify-between items-center">
+            <div class="flex items-center space-x-6">
+                <!-- BOTÃO DE VOLTAR AO PORTAL -->
+                <a href="index.html" class="flex items-center space-x-1 bg-slate-800 hover:bg-slate-700 px-3 py-2 rounded-md transition-colors border border-slate-700 text-white font-bold text-xs tracking-widest mr-2 uppercase" title="VOLTAR AO PORTAL">
+                    <i data-lucide="arrow-left" class="w-4 h-4"></i>
+                    <span class="hidden sm:block">PORTAL</span>
+                </a>
+
+                <div class="flex space-x-8">
+                    <button onclick="changeTab('dashboard')" id="btn-dashboard" class="py-4 border-b-2 border-indigo-600 text-indigo-600 font-bold text-sm flex items-center transition-colors uppercase">
+                        <i data-lucide="bar-chart-3" class="mr-2 h-4 w-4"></i> Visão Geral
+                    </button>
+                    <button onclick="changeTab('indicators')" id="btn-indicators" class="py-4 border-b-2 border-transparent text-slate-500 font-bold text-sm flex items-center hover:text-indigo-600 transition-colors uppercase">
+                        <i data-lucide="target" class="mr-2 h-4 w-4"></i> Indicadores
+                    </button>
+                </div>
+            </div>
+            <button onclick="window.print()" class="text-slate-600 hover:text-indigo-600 p-2"><i data-lucide="printer" class="w-5 h-5"></i></button>
+        </div>
+    </nav>
+
+    <main id="app-main" class="max-w-7xl mx-auto px-4 py-8">
+        <div id="view-dashboard" class="fade-in space-y-6">
+            <div id="dashboard-stats" class="grid grid-cols-1 md:grid-cols-3 gap-4 uppercase"></div>
+            <div id="dashboard-charts" class="grid grid-cols-1 lg:grid-cols-2 gap-6 uppercase"></div>
+        </div>
+
+        <div id="view-indicators" class="fade-in hidden bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+            <div class="p-5 border-b flex justify-between items-center bg-slate-50">
+                <h2 class="text-lg font-black text-slate-800 uppercase tracking-tight">Gerir Indicadores</h2>
+                <button onclick="openIndicatorModal()" class="bg-indigo-600 text-white px-4 py-2 rounded-lg text-xs font-black shadow-md hover:bg-indigo-700 transition-all uppercase tracking-widest">
+                    + Novo Indicador
+                </button>
+            </div>
+            <div id="indicators-list" class="divide-y divide-slate-100 uppercase"></div>
+        </div>
+
+        <!-- Modal Novo/Editar Indicador -->
+        <div id="modal-indicator" class="fixed inset-0 bg-slate-900/60 hidden flex items-center justify-center z-50 p-4 font-bold text-sm uppercase">
+            <div class="bg-white rounded-xl shadow-2xl w-full max-w-2xl overflow-hidden flex flex-col max-h-[90vh]">
+                <div class="p-5 border-b flex justify-between items-center bg-slate-50">
+                    <h3 class="font-black text-sm uppercase tracking-widest" id="modal-indicator-title">Novo Indicador</h3>
+                    <button type="button" onclick="closeIndicatorModal()"><i data-lucide="x" class="w-5 h-5 text-slate-400"></i></button>
+                </div>
+                <form onsubmit="saveIndicator(event)" class="p-5 space-y-4 overflow-y-auto custom-scrollbar">
+                    <input type="hidden" id="ind-id">
+                    <div>
+                        <label class="block text-xs uppercase text-slate-500 mb-1">Nome do Indicador</label>
+                        <input type="text" id="ind-name" required class="w-full border border-slate-300 p-2.5 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500 uppercase">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-xs uppercase text-slate-500 mb-1">Objetivos</label>
+                        <textarea id="ind-objectives" rows="4" class="w-full border border-slate-300 p-2.5 rounded-lg uppercase custom-scrollbar"></textarea>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs uppercase text-slate-500 mb-1">Processo (Tags)</label>
+                            <input type="text" id="ind-process" placeholder="Ex: VENDAS, COMERCIAL" class="w-full border border-slate-300 p-2.5 rounded-lg uppercase">
+                        </div>
+                        <div>
+                            <label class="block text-xs uppercase text-slate-500 mb-1">Responsável pelo Indicador</label>
+                            <select id="ind-responsible" class="w-full border border-slate-300 p-2.5 rounded-lg uppercase"></select>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs uppercase text-slate-500 mb-1">Base de Cálculo</label>
+                        <textarea id="ind-calc-base" rows="3" class="w-full border border-slate-300 p-2.5 rounded-lg uppercase custom-scrollbar"></textarea>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-4 bg-slate-50 p-3 rounded-lg border border-slate-100">
+                        <div>
+                            <label class="block text-xs uppercase text-slate-500 mb-1">Entrada de Dados</label>
+                            <select id="ind-calc-type" onchange="toggleFormulaField()" class="w-full border border-slate-300 p-2.5 rounded-lg uppercase bg-white">
+                                <option value="direto">Valor Direto</option>
+                                <option value="percentual">Cálculo: Realizado vs Meta (%)</option>
+                                <option value="calculo">Fórmula Livre</option>
+                            </select>
+                        </div>
+                        <div id="div-formula" class="hidden">
+                            <label class="block text-xs uppercase text-slate-500 mb-1 text-indigo-600">Fórmula (Descritivo)</label>
+                            <input type="text" id="ind-formula" placeholder="Ex: ( A / B ) * 100" class="w-full border border-slate-300 p-2.5 rounded-lg uppercase bg-white border-indigo-200">
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-4">
+                        <div><label class="block text-xs uppercase text-slate-500 mb-1">Meta</label><input type="number" step="any" id="ind-target" required class="w-full border border-slate-300 p-2.5 rounded-lg"></div>
+                        <div><label class="block text-xs uppercase text-slate-500 mb-1">Unidade</label><input type="text" id="ind-unit" required class="w-full border border-slate-300 p-2.5 rounded-lg uppercase"></div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs uppercase text-slate-500 mb-1">Tipo</label>
+                            <select id="ind-type" class="w-full border border-slate-300 p-2.5 rounded-lg uppercase">
+                                <option value="maior">Quanto Maior, Melhor</option>
+                                <option value="menor">Quanto Menor, Melhor</option>
+                            </select>
+                        </div>
+                        <div><label class="block text-xs uppercase text-slate-500 mb-1">Frequência</label><input type="text" id="ind-freq" required class="w-full border border-slate-300 p-2.5 rounded-lg uppercase"></div>
+                    </div>
+                    <div class="pt-4 flex justify-end space-x-3">
+                        <button type="button" onclick="closeIndicatorModal()" class="px-4 py-2 text-slate-600 hover:bg-slate-100 rounded-lg uppercase">Cancelar</button>
+                        <button type="submit" id="btn-save-ind" class="px-6 py-2 bg-indigo-600 text-white rounded-lg shadow-lg uppercase tracking-widest text-xs">Salvar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Modal Lançamento -->
+        <div id="modal-record" class="fixed inset-0 bg-slate-900/60 hidden flex items-center justify-center z-50 p-4 font-bold text-sm uppercase">
+            <div class="bg-white rounded-xl shadow-2xl w-full max-w-lg overflow-hidden flex flex-col max-h-[90vh]">
+                <div class="p-5 border-b flex justify-between items-center bg-slate-50">
+                    <h3 class="font-black text-sm uppercase tracking-widest" id="modal-record-title">Lançar Dados</h3>
+                    <button type="button" onclick="closeRecordModal()"><i data-lucide="x" class="w-5 h-5 text-slate-400"></i></button>
+                </div>
+                <form onsubmit="saveRecord(event)" class="p-5 space-y-4 overflow-y-auto custom-scrollbar">
+                    <input type="hidden" id="rec-id">
+                    <input type="hidden" id="rec-ind-id">
+                    
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs uppercase text-slate-500 mb-1">Período</label>
+                            <input type="month" id="rec-period" required class="w-full border border-slate-300 p-2.5 rounded-lg uppercase">
+                        </div>
+                        
+                        <!-- CAMPO DE VALOR DIRETO (VISÍVEL APENAS SE FOR DIRETO) -->
+                        <div id="div-rec-direto">
+                            <label class="block text-xs uppercase text-slate-500 mb-1">Valor</label>
+                            <input type="number" step="any" id="rec-value-direto" oninput="evaluateTarget()" class="w-full border border-slate-300 p-2.5 rounded-lg">
+                        </div>
+                    </div>
+
+                    <!-- CAIXA PERCENTUAL (REALIZADO VS META) -->
+                    <div id="div-rec-percentual" class="hidden bg-slate-50 p-4 rounded-lg border border-slate-200">
+                        <p class="text-[11px] font-bold text-indigo-700 mb-3 uppercase">Cálculo: (Realizado / Meta do Período) * 100</p>
+                        <div class="grid grid-cols-3 gap-3">
+                            <div>
+                                <label class="block text-[10px] font-bold uppercase text-slate-600 mb-1">Valor Realizado</label>
+                                <input type="number" step="any" id="rec-perc-realizado" oninput="calculatePercentual()" class="w-full border border-slate-300 p-2.5 rounded-lg bg-white placeholder:text-slate-300">
+                            </div>
+                            <div>
+                                <label class="block text-[10px] font-bold uppercase text-slate-600 mb-1">Meta (Valor)</label>
+                                <input type="number" step="any" id="rec-perc-meta" oninput="calculatePercentual()" class="w-full border border-slate-300 p-2.5 rounded-lg bg-white placeholder:text-slate-300">
+                            </div>
+                            <div>
+                                <label class="block text-[10px] font-bold uppercase text-slate-600 mb-1">Resultado (%)</label>
+                                <input type="number" step="any" id="rec-value-percentual" readonly class="w-full border border-indigo-200 p-2.5 rounded-lg bg-indigo-50 font-bold text-indigo-700 text-center">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- CAIXA DE CÁLCULO LIVRE -->
+                    <div id="div-rec-calculo" class="hidden bg-slate-50 p-4 rounded-lg border border-slate-200">
+                        <p class="text-[11px] font-bold text-indigo-700 mb-3 uppercase">Cálculo Configurado: <span id="rec-formula-display" class="font-normal text-slate-600"></span></p>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-xs uppercase text-slate-600 mb-1">Memória (Valores)</label>
+                                <input type="text" id="rec-calc-memory" placeholder="Ex: 90000/100000*100" oninput="calculatePreview()" class="w-full border border-slate-300 p-2.5 rounded-lg bg-white placeholder:text-slate-300">
+                            </div>
+                            <div>
+                                <label class="block text-xs uppercase text-slate-600 mb-1">Resultado Final</label>
+                                <input type="number" step="any" id="rec-value-calculo" readonly class="w-full border border-indigo-200 p-2.5 rounded-lg bg-indigo-50 font-bold text-indigo-700">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div><label class="block text-xs uppercase text-slate-500 mb-1">Análise</label><textarea id="rec-analysis" rows="2" class="w-full border border-slate-300 p-2.5 rounded-lg uppercase custom-scrollbar"></textarea></div>
+                    
+                    <!-- PLANO DE AÇÃO 5W2H (EXIBIDO APENAS SE META NÃO FOR ATINGIDA) -->
+                    <div id="div-5w2h" class="hidden bg-red-50/50 p-4 rounded-lg border border-red-200 mt-2 space-y-3">
+                        <h4 class="text-[11px] font-black text-red-700 uppercase tracking-widest flex items-center"><i data-lucide="alert-triangle" class="w-4 h-4 mr-1.5"></i> Meta Não Atingida - Plano de Ação (5W2H)</h4>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                            <div class="md:col-span-2"><label class="block text-[10px] uppercase text-slate-500 mb-1">What (O que será feito?)</label><textarea id="rec-5w-what" rows="2" class="w-full border border-slate-300 p-2.5 rounded-lg uppercase custom-scrollbar"></textarea></div>
+                            <div class="md:col-span-2"><label class="block text-[10px] uppercase text-slate-500 mb-1">Why (Por que será feito?)</label><textarea id="rec-5w-why" rows="2" class="w-full border border-slate-300 p-2.5 rounded-lg uppercase custom-scrollbar"></textarea></div>
+                            <div><label class="block text-[10px] uppercase text-slate-500 mb-1">Where (Onde?)</label><input type="text" id="rec-5w-where" class="w-full border border-slate-300 p-2.5 rounded-lg uppercase"></div>
+                            <div><label class="block text-[10px] uppercase text-slate-500 mb-1">When (Prazo?)</label><input type="date" id="rec-5w-when" class="w-full border border-slate-300 p-2.5 rounded-lg uppercase"></div>
+                            <div>
+                                <label class="block text-[10px] uppercase text-slate-500 mb-1">Who (Quem fará?)</label>
+                                <select id="rec-5w-who" class="w-full border border-slate-300 p-2.5 rounded-lg uppercase bg-white">
+                                    <option value="">SELECIONE...</option>
+                                </select>
+                            </div>
+                            <div><label class="block text-[10px] uppercase text-slate-500 mb-1">How Much (Custo?)</label><input type="text" id="rec-5w-howmuch" class="w-full border border-slate-300 p-2.5 rounded-lg uppercase" placeholder="0,00"></div>
+                            <div class="md:col-span-2"><label class="block text-[10px] uppercase text-slate-500 mb-1">How (Como será feito?)</label><textarea id="rec-5w-how" rows="2" class="w-full border border-slate-300 p-2.5 rounded-lg uppercase custom-scrollbar"></textarea></div>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-4 mt-2">
+                        <div><label class="block text-xs uppercase text-slate-500 mb-1">Data</label><input type="date" id="rec-date" class="w-full border border-slate-300 p-2.5 rounded-lg"></div>
+                        <div>
+                            <label class="block text-xs uppercase text-slate-500 mb-1">Quem</label>
+                            <select id="rec-responsible" class="w-full border border-slate-300 p-2.5 rounded-lg uppercase"></select>
+                        </div>
+                    </div>
+                    <div class="pt-4 flex justify-end space-x-3">
+                        <button type="button" onclick="closeRecordModal()" class="px-4 py-2 text-slate-600 hover:bg-slate-100 rounded-lg uppercase">Cancelar</button>
+                        <button type="submit" id="btn-save-rec" class="px-6 py-2 bg-indigo-600 text-white rounded-lg shadow-lg uppercase tracking-widest text-xs">Salvar Dados</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </main>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
+        import { getFirestore, collection, addDoc, onSnapshot, doc, deleteDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyBqV0KOQMAYR4z6P_RKnrQPDfkAR2CsXBI",
+            authDomain: "gestao-de-pessoas-49200.firebaseapp.com",
+            projectId: "gestao-de-pessoas-49200",
+            storageBucket: "gestao-de-pessoas-49200.firebasestorage.app",
+            messagingSenderId: "615097388185",
+            appId: "1:615097388185:web:cac0cd5fd4717b86f23c08"
+        };
+        const appId = "gestao-de-pessoas-49200";
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const auth = getAuth(app);
+
+        let indicators = [];
+        let records = [];
+        let employees = [];
+        let activeTab = 'dashboard';
+        let currentUser = null;
+        
+        window.dashboardCharts = {};
+        window.currentEditingInd = null;
+
+        const getIndCol = () => collection(db, 'indicadores');
+        const getRecCol = () => collection(db, 'lancamentos');
+        const getIndDoc = (id) => doc(db, 'indicadores', id);
+        const getRecDoc = (id) => doc(db, 'lancamentos', id);
+
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                currentUser = user;
+                initListeners();
+            } else {
+                signInAnonymously(auth).catch(err => console.error("Erro auth:", err));
+            }
+        });
+
+        function initListeners() {
+            onSnapshot(getIndCol(), (snap) => {
+                indicators = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+                document.getElementById('status-dot').className = "w-2 h-2 bg-green-400 rounded-full mr-2";
+                document.getElementById('status-text').innerText = "Cloud Ativo";
+                document.getElementById('loading').classList.add('hidden');
+                renderApp();
+            }, (err) => { 
+                console.error(err);
+                if(err.code === 'permission-denied') {
+                    alert("⚠️ ACESSO NEGADO PELO BANCO DE DADOS! Verifique se as Regras do Firestore foram publicadas.");
+                }
+            });
+
+            onSnapshot(getRecCol(), (snap) => {
+                records = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+                renderApp();
+            });
+
+            // Carrega a coleção oficial de Colaboradores (Ativos)
+            onSnapshot(collection(db, `artifacts/${appId}/public/data/employees`), (snap) => {
+                employees = snap.docs.map(d => ({ id: d.id, ...d.data() })).filter(e => e.status === 'Ativo');
+                renderRespSelects();
+            }, (err) => console.error("Erro ao carregar colaboradores:", err));
+        }
+
+        function toggleFormulaField() {
+            const type = document.getElementById('ind-calc-type').value;
+            if(type === 'calculo') {
+                document.getElementById('div-formula').classList.remove('hidden');
+            } else {
+                document.getElementById('div-formula').classList.add('hidden');
+            }
+        }
+
+        // FUNÇÃO PARA CÁLCULO DE REALIZADO VS META (%)
+        function calculatePercentual() {
+            const realizado = parseFloat(document.getElementById('rec-perc-realizado').value);
+            const meta = parseFloat(document.getElementById('rec-perc-meta').value);
+            let finalValue = '';
+            
+            if (!isNaN(realizado) && !isNaN(meta) && meta !== 0) {
+                finalValue = (realizado / meta) * 100;
+            }
+            
+            // Exibe arredondado no campo readonly
+            document.getElementById('rec-value-percentual').value = finalValue !== '' ? finalValue.toFixed(2) : '';
+            evaluateTarget();
+        }
+
+        // FUNÇÃO DE CÁLCULO LIVRE (EM TEMPO REAL)
+        function calculatePreview() {
+            let valInput = document.getElementById('rec-calc-memory').value.replace(/,/g, '.');
+            let finalValue = '';
+            try {
+                const cleanExpr = valInput.replace(/[^0-9.\+\-\*\/\(\)]/g, '');
+                if (cleanExpr) {
+                    finalValue = Function('return ' + cleanExpr)();
+                    if (isNaN(finalValue) || !isFinite(finalValue)) finalValue = '';
+                }
+            } catch(e) {}
+            document.getElementById('rec-value-calculo').value = finalValue;
+            evaluateTarget();
+        }
+
+        // AVALIA META PARA MOSTRAR/ESCONDER 5W2H
+        function evaluateTarget() {
+            if (!window.currentEditingInd) return;
+            const ind = window.currentEditingInd;
+            let finalValue = NaN;
+
+            if (ind.calcType === 'percentual') {
+                finalValue = parseFloat(document.getElementById('rec-value-percentual').value);
+            } else if (ind.calcType === 'calculo') {
+                finalValue = parseFloat(document.getElementById('rec-value-calculo').value);
+            } else {
+                finalValue = parseFloat(document.getElementById('rec-value-direto').value);
+            }
+
+            const div5w2h = document.getElementById('div-5w2h');
+            
+            if (!isNaN(finalValue)) {
+                const isMet = ind.targetType === 'maior' ? finalValue >= ind.target : finalValue <= ind.target;
+                if (!isMet) {
+                    div5w2h.classList.remove('hidden');
+                } else {
+                    div5w2h.classList.add('hidden');
+                }
+            } else {
+                div5w2h.classList.add('hidden');
+            }
+        }
+
+        async function saveIndicator(e) {
+            e.preventDefault();
+            if(!currentUser) return;
+            const btn = document.getElementById('btn-save-ind');
+            const id = document.getElementById('ind-id').value;
+            const data = {
+                name: document.getElementById('ind-name').value.toUpperCase(),
+                objectives: document.getElementById('ind-objectives').value.toUpperCase(),
+                process: document.getElementById('ind-process').value.toUpperCase(),
+                responsible: document.getElementById('ind-responsible').value.toUpperCase(),
+                calcBase: document.getElementById('ind-calc-base').value.toUpperCase(),
+                target: parseFloat(document.getElementById('ind-target').value),
+                unit: document.getElementById('ind-unit').value.toUpperCase(),
+                targetType: document.getElementById('ind-type').value,
+                frequency: document.getElementById('ind-freq').value.toUpperCase(),
+                calcType: document.getElementById('ind-calc-type').value,
+                formula: document.getElementById('ind-formula').value.toUpperCase(),
+                updatedAt: new Date().toISOString()
+            };
+            try {
+                btn.disabled = true; btn.innerText = "Gravando...";
+                if(id) await updateDoc(getIndDoc(id), data);
+                else await addDoc(getIndCol(), data);
+                closeIndicatorModal();
+            } catch(err) { alert("Erro ao salvar!"); console.error(err); }
+            finally { btn.disabled = false; btn.innerText = "Salvar"; }
+        }
+
+        async function saveRecord(e) {
+            e.preventDefault();
+            if(!currentUser) return;
+            const btn = document.getElementById('btn-save-rec');
+            
+            const indId = document.getElementById('rec-ind-id').value;
+            const ind = indicators.find(i => i.id === indId);
+            
+            let finalValue = 0;
+            let calcMemory = "";
+            let metaValor = null;
+            let realValor = null;
+
+            if (ind.calcType === 'percentual') {
+                finalValue = parseFloat(document.getElementById('rec-value-percentual').value);
+                realValor = document.getElementById('rec-perc-realizado').value;
+                metaValor = document.getElementById('rec-perc-meta').value;
+                calcMemory = `(${realValor} / ${metaValor}) * 100`;
+                if(isNaN(finalValue)) {
+                    alert("Erro no cálculo. Preencha o Valor Realizado e a Meta corretamente.");
+                    return;
+                }
+            } else if (ind.calcType === 'calculo') {
+                finalValue = parseFloat(document.getElementById('rec-value-calculo').value);
+                calcMemory = document.getElementById('rec-calc-memory').value;
+                if(isNaN(finalValue)) { 
+                    alert("Erro no cálculo. Verifique os valores inseridos na Memória de Cálculo."); 
+                    return; 
+                }
+            } else {
+                finalValue = parseFloat(document.getElementById('rec-value-direto').value);
+            }
+
+            let rawPeriod = document.getElementById('rec-period').value;
+            let formattedPeriod = rawPeriod.toUpperCase();
+            if (rawPeriod.includes('-')) {
+                const parts = rawPeriod.split('-');
+                if (parts.length >= 2) formattedPeriod = `${parts[1]}/${parts[0]}`;
+            }
+
+            // AVALIAR SE A META FOI ATINGIDA PARA SABER SE SALVA O 5W2H
+            let isMet = ind.targetType === 'maior' ? finalValue >= ind.target : finalValue <= ind.target;
+            const planData = !isMet ? {
+                planWhat: document.getElementById('rec-5w-what').value.toUpperCase(),
+                planWhy: document.getElementById('rec-5w-why').value.toUpperCase(),
+                planWhere: document.getElementById('rec-5w-where').value.toUpperCase(),
+                planWhen: document.getElementById('rec-5w-when').value, 
+                planWho: document.getElementById('rec-5w-who').value.toUpperCase(),
+                planHow: document.getElementById('rec-5w-how').value.toUpperCase(),
+                planHowMuch: document.getElementById('rec-5w-howmuch').value.toUpperCase()
+            } : {
+                planWhat: '', planWhy: '', planWhere: '', planWhen: '', planWho: '', planHow: '', planHowMuch: ''
+            };
+
+            const data = {
+                indicatorId: indId,
+                period: formattedPeriod,
+                value: finalValue,
+                calcMemory: calcMemory,
+                calcMetaValor: metaValor, 
+                calcRealValor: realValor, 
+                date: document.getElementById('rec-date').value,
+                responsible: document.getElementById('rec-responsible').value.toUpperCase(),
+                analysis: document.getElementById('rec-analysis').value.toUpperCase() || "",
+                ...planData
+            };
+            
+            try {
+                btn.disabled = true; btn.innerText = "Gravando...";
+                const id = document.getElementById('rec-id').value;
+                if(id) await updateDoc(getRecDoc(id), data);
+                else await addDoc(getRecCol(), data);
+                closeRecordModal();
+            } catch(err) { alert("Erro ao lançar!"); console.error(err); }
+            finally { btn.disabled = false; btn.innerText = "Salvar Dados"; }
+        }
+
+        async function deleteIndicator(id) {
+            if(!currentUser) return;
+            if(confirm("Eliminar este indicador e todos os seus dados?")) {
+                await deleteDoc(getIndDoc(id));
+                const toDel = records.filter(r => r.indicatorId === id);
+                for(const r of toDel) { await deleteDoc(getRecDoc(r.id)); }
+            }
+        }
+
+        async function deleteRecord(id) {
+            if(!currentUser) return;
+            if(confirm("Eliminar este lançamento?")) await deleteDoc(getRecDoc(id));
+        }
+
+        function changeTab(tab) {
+            activeTab = tab;
+            const bD = document.getElementById('btn-dashboard');
+            const bI = document.getElementById('btn-indicators');
+            if(tab === 'dashboard') {
+                bD.className = "py-4 border-b-2 border-indigo-600 text-indigo-600 font-bold text-sm flex items-center transition-colors uppercase";
+                bI.className = "py-4 border-b-2 border-transparent text-slate-500 font-bold text-sm flex items-center hover:text-indigo-600 transition-colors uppercase";
+                document.getElementById('view-dashboard').classList.remove('hidden');
+                document.getElementById('view-indicators').classList.add('hidden');
+            } else {
+                bI.className = "py-4 border-b-2 border-indigo-600 text-indigo-600 font-bold text-sm flex items-center transition-colors uppercase";
+                bD.className = "py-4 border-b-2 border-transparent text-slate-500 font-bold text-sm flex items-center hover:text-indigo-600 transition-colors uppercase";
+                document.getElementById('view-indicators').classList.remove('hidden');
+                document.getElementById('view-dashboard').classList.add('hidden');
+            }
+            renderApp();
+        }
+
+        function renderApp() {
+            if(activeTab === 'dashboard') { renderDashboard(); } 
+            else { renderIndicators(); }
+            if(window.lucide) lucide.createIcons();
+        }
+
+        function renderDashboard() {
+            let metCount = 0;
+            let htmlCharts = '';
+
+            Object.values(window.dashboardCharts).forEach(chart => chart.destroy());
+            window.dashboardCharts = {};
+
+            indicators.forEach(ind => {
+                const indRecs = records.filter(r => r.indicatorId === ind.id).sort((a, b) => new Date(a.date) - new Date(b.date));
+                const last = indRecs[indRecs.length - 1];
+                const previous = indRecs[indRecs.length - 2];
+                let isMet = false;
+
+                if(last) {
+                    isMet = ind.targetType === 'maior' ? last.value >= ind.target : last.value <= ind.target;
+                    if(isMet) metCount++;
+                }
+
+                let trendHtml = '';
+                if (last) {
+                    let trendIcon = 'minus';
+                    let trendColorClass = 'text-slate-500 bg-slate-50';
+                    
+                    if (previous) {
+                        if (last.value > previous.value) {
+                            trendIcon = 'trending-up';
+                            trendColorClass = ind.targetType === 'maior' ? 'text-green-600 bg-green-50' : 'text-red-600 bg-red-50';
+                        } else if (last.value < previous.value) {
+                            trendIcon = 'trending-down';
+                            trendColorClass = ind.targetType === 'maior' ? 'text-red-600 bg-red-50' : 'text-green-600 bg-green-50';
+                        }
+                    } else {
+                        trendColorClass = isMet ? 'text-green-600 bg-green-50' : 'text-red-600 bg-red-50';
+                    }
+
+                    trendHtml = `
+                        <div class="flex items-center px-2 py-1 rounded-md text-sm font-bold ${trendColorClass}">
+                            <i data-lucide="${trendIcon}" class="w-4 h-4 mr-1"></i>
+                            ${Number.isInteger(last.value) ? last.value : last.value.toFixed(2)}${ind.unit}
+                        </div>
+                    `;
+                }
+
+                htmlCharts += `
+                    <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
+                        <div class="flex justify-between items-start mb-6">
+                            <div>
+                                <h3 class="font-bold text-slate-800 text-lg uppercase">${ind.name}</h3>
+                                <p class="text-sm text-slate-500 mt-1 uppercase">${ind.frequency} • META: ${ind.target}${ind.unit}</p>
+                            </div>
+                            ${trendHtml}
+                        </div>
+                        <div class="relative h-56 w-full">
+                            <canvas id="chart-${ind.id}"></canvas>
+                        </div>
+                    </div>`;
+            });
+
+            document.getElementById('dashboard-charts').innerHTML = htmlCharts || '<div class="col-span-2 text-center text-slate-400 py-10 font-bold uppercase">Nenhum dado cadastrado.</div>';
+            
+            document.getElementById('dashboard-stats').innerHTML = `
+                <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex items-center">
+                    <div class="p-3 bg-blue-50 text-blue-500 rounded-lg mr-4">
+                        <i data-lucide="bar-chart-2" class="w-6 h-6"></i>
+                    </div>
+                    <div>
+                        <p class="text-[13px] text-slate-500 mb-1 uppercase">Total de Indicadores</p>
+                        <p class="text-2xl font-bold">${indicators.length}</p>
+                    </div>
+                </div>
+                <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex items-center">
+                    <div class="p-3 bg-green-50 text-green-500 rounded-lg mr-4">
+                        <i data-lucide="check-circle" class="w-6 h-6"></i>
+                    </div>
+                    <div>
+                        <p class="text-[13px] text-slate-500 mb-1 uppercase">Metas Atingidas (Último)</p>
+                        <p class="text-2xl font-bold">${metCount}</p>
+                    </div>
+                </div>
+                <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex items-center">
+                    <div class="p-3 bg-red-50 text-red-500 rounded-lg mr-4">
+                        <i data-lucide="alert-circle" class="w-6 h-6"></i>
+                    </div>
+                    <div>
+                        <p class="text-[13px] text-slate-500 mb-1 uppercase">Abaixo da Meta (Último)</p>
+                        <p class="text-2xl font-bold">${indicators.length - metCount}</p>
+                    </div>
+                </div>`;
+
+            setTimeout(() => {
+                if(window.lucide) lucide.createIcons();
+                if(typeof Chart !== 'undefined' && typeof ChartDataLabels !== 'undefined') {
+                    Chart.register(ChartDataLabels);
+                }
+
+                indicators.forEach(ind => {
+                    const ctx = document.getElementById(`chart-${ind.id}`);
+                    if (!ctx) return;
+
+                    const existingChart = Chart.getChart(ctx);
+                    if (existingChart) existingChart.destroy();
+
+                    const indRecs = records.filter(r => r.indicatorId === ind.id).sort((a, b) => new Date(a.date) - new Date(b.date));
+                    const labels = indRecs.map(r => r.period);
+                    const values = indRecs.map(r => r.value);
+                    const targetValues = indRecs.map(() => ind.target);
+
+                    const pointColors = values.map(val => {
+                        const isMet = ind.targetType === 'maior' ? val >= ind.target : val <= ind.target;
+                        return isMet ? '#22c55e' : '#ef4444'; 
+                    });
+
+                    const allData = [...values, ind.target];
+                    const minVal = allData.length > 0 ? Math.min(...allData) * 0.8 : 0;
+                    const maxVal = allData.length > 0 ? Math.max(...allData) * 1.2 : 100;
+
+                    window.dashboardCharts[ind.id] = new Chart(ctx, {
+                        type: 'line',
+                        data: {
+                            labels: labels,
+                            datasets: [
+                                {
+                                    data: values,
+                                    borderColor: '#3b82f6',
+                                    backgroundColor: '#3b82f6',
+                                    pointBackgroundColor: pointColors,
+                                    pointBorderColor: pointColors,
+                                    borderWidth: 2,
+                                    pointRadius: 4,
+                                    datalabels: {
+                                        align: 'top', anchor: 'end', offset: 6, color: '#1e293b',
+                                        font: { weight: 'bold', size: 10 },
+                                        formatter: (val) => (Number.isInteger(val) ? val : val.toFixed(2)) + ind.unit
+                                    }
+                                },
+                                {
+                                    data: targetValues,
+                                    borderColor: '#ef4444',
+                                    borderWidth: 1.5,
+                                    borderDash: [5, 5],
+                                    pointRadius: 0,
+                                    datalabels: {
+                                        display: (ctx) => ctx.dataIndex === ctx.dataset.data.length - 1,
+                                        align: 'right', anchor: 'end', offset: 4, color: '#ef4444',
+                                        font: { weight: 'bold', size: 10 },
+                                        formatter: () => 'META'
+                                    }
+                                }
+                            ]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            layout: { padding: { top: 20, right: 45, bottom: 5, left: 5 } },
+                            plugins: { legend: { display: false } },
+                            scales: {
+                                x: { grid: { display: false }, ticks: { font: { size: 10 }, color: '#64748b' } },
+                                y: { display: false, min: minVal, max: maxVal }
+                            }
+                        }
+                    });
+                });
+            }, 50);
+        }
+
+        function renderIndicators() {
+            let html = '';
+            indicators.forEach(ind => {
+                const indRecs = records.filter(r => r.indicatorId === ind.id);
+                html += `
+                    <div class="p-6 border-b border-slate-100 hover:bg-slate-50 transition-colors">
+                        <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-4">
+                            <div>
+                                <h3 class="font-bold text-slate-800 text-base uppercase">${ind.name}</h3>
+                                <p class="text-xs font-bold text-indigo-600 mt-1 uppercase">META: ${ind.target}${ind.unit} | ${ind.frequency}</p>
+                            </div>
+                            <div class="flex space-x-2">
+                                <button onclick="openRecordModal('${ind.id}')" class="bg-indigo-600 text-white px-4 py-2 rounded-lg text-[10px] font-black shadow-md hover:bg-indigo-700 uppercase tracking-widest">+ LANÇAR</button>
+                                <button onclick="printIndicator('${ind.id}')" class="p-2 text-slate-400 hover:text-indigo-600" title="Imprimir Relatório"><i data-lucide="printer" class="w-5 h-5"></i></button>
+                                <button onclick="openIndicatorModal('${ind.id}')" class="p-2 text-slate-400 hover:text-indigo-600"><i data-lucide="settings" class="w-5 h-5"></i></button>
+                                <button onclick="deleteIndicator('${ind.id}')" class="p-2 text-slate-400 hover:text-red-500"><i data-lucide="trash-2" class="w-5 h-5"></i></button>
+                            </div>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left text-sm uppercase">
+                                <thead class="text-xs text-slate-400 font-bold uppercase border-b border-slate-100">
+                                    <tr><th class="p-2">Período</th><th class="p-2">Valor / Memória</th><th class="p-2">Meta</th><th class="p-2">Análise</th><th class="p-2">Quem</th><th class="p-2 text-right">Ação</th></tr>
+                                </thead>
+                                <tbody>
+                                    ${indRecs.map(r => {
+                                        const isMet = (ind.targetType === 'maior' ? r.value >= ind.target : r.value <= ind.target);
+                                        return `
+                                        <tr class="border-t border-slate-50 uppercase hover:bg-slate-100 transition-colors">
+                                            <td class="p-2 font-semibold text-slate-700">${r.period}</td>
+                                            <td class="p-2">
+                                                <div class="font-bold ${ isMet ? 'text-green-600' : 'text-red-600' }">
+                                                    ${Number.isInteger(r.value) ? r.value : r.value.toFixed(2)}${ind.unit}
+                                                </div>
+                                                ${r.calcMemory ? `<div class="text-[10px] text-slate-400 mt-0.5 normal-case font-medium" title="Memória de Cálculo"><i data-lucide="calculator" class="w-3 h-3 inline-block mr-0.5 align-text-bottom"></i>${r.calcMemory}</div>` : ''}
+                                            </td>
+                                            <td class="p-2 font-semibold text-slate-500">${ind.target}${ind.unit}</td>
+                                            <td class="p-2 text-slate-500 max-w-[200px] truncate" title="${r.analysis || ''}">
+                                                ${r.analysis || '-'}
+                                                ${r.planWhat ? `<br><span class="text-[9px] font-bold text-red-500 mt-1 inline-flex items-center"><i data-lucide="alert-triangle" class="w-3 h-3 mr-1"></i> PLANO 5W2H REGISTADO</span>` : ''}
+                                            </td>
+                                            <td class="p-2 text-slate-500">${r.responsible || '-'}</td>
+                                            <td class="p-2 text-right">
+                                                <button onclick="openRecordModal('${ind.id}', '${r.id}')" class="text-slate-300 hover:text-indigo-600 mr-2"><i data-lucide="pencil" class="w-4 h-4"></i></button>
+                                                <button onclick="deleteRecord('${r.id}')" class="text-slate-300 hover:text-red-500"><i data-lucide="trash" class="w-4 h-4"></i></button>
+                                            </td>
+                                        </tr>`
+                                    }).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>`;
+            });
+            document.getElementById('indicators-list').innerHTML = html || '<p class="p-10 text-center text-slate-400 font-bold uppercase">Nenhum indicador cadastrado.</p>';
+        }
+
+        function openIndicatorModal(id = null) {
+            document.getElementById('ind-id').value = id || '';
+            document.getElementById('ind-name').value = '';
+            document.getElementById('ind-objectives').value = '';
+            document.getElementById('ind-process').value = '';
+            document.getElementById('ind-calc-base').value = '';
+            document.getElementById('ind-target').value = '';
+            document.getElementById('ind-unit').value = '';
+            document.getElementById('ind-freq').value = '';
+            
+            renderRespSelects();
+            document.getElementById('ind-responsible').value = '';
+            
+            document.getElementById('ind-calc-type').value = 'direto';
+            document.getElementById('ind-formula').value = '';
+            document.getElementById('div-formula').classList.add('hidden');
+
+            document.getElementById('modal-indicator-title').innerText = id ? "EDITAR INDICADOR" : "NOVO INDICADOR";
+            
+            if(id) {
+                const i = indicators.find(ind => ind.id === id);
+                document.getElementById('ind-name').value = i.name;
+                document.getElementById('ind-objectives').value = i.objectives || '';
+                document.getElementById('ind-process').value = i.process || '';
+                document.getElementById('ind-calc-base').value = i.calcBase || '';
+                document.getElementById('ind-responsible').value = i.responsible || '';
+                document.getElementById('ind-target').value = i.target;
+                document.getElementById('ind-unit').value = i.unit;
+                document.getElementById('ind-type').value = i.targetType;
+                document.getElementById('ind-freq').value = i.frequency;
+                
+                document.getElementById('ind-calc-type').value = i.calcType || 'direto';
+                document.getElementById('ind-formula').value = i.formula || '';
+                if(i.calcType === 'calculo') {
+                    document.getElementById('div-formula').classList.remove('hidden');
+                }
+            }
+            document.getElementById('modal-indicator').classList.remove('hidden');
+        }
+
+        function openRecordModal(indId, recId = null) {
+            document.getElementById('rec-ind-id').value = indId;
+            document.getElementById('rec-id').value = recId || '';
+            
+            const today = new Date();
+            const yyyy = today.getFullYear();
+            const mm = String(today.getMonth() + 1).padStart(2, '0');
+            document.getElementById('rec-period').value = `${yyyy}-${mm}`;
+            
+            document.getElementById('rec-analysis').value = '';
+            document.getElementById('rec-date').value = new Date().toISOString().split('T')[0];
+
+            const ind = indicators.find(i => i.id === indId);
+            window.currentEditingInd = ind;
+            
+            // LIMPA OS CAMPOS DE 5W2H
+            document.getElementById('rec-5w-what').value = '';
+            document.getElementById('rec-5w-why').value = '';
+            document.getElementById('rec-5w-where').value = '';
+            document.getElementById('rec-5w-when').value = '';
+            document.getElementById('rec-5w-who').value = '';
+            document.getElementById('rec-5w-how').value = '';
+            document.getElementById('rec-5w-howmuch').value = '';
+            
+            // CONFIGURAÇÃO DINÂMICA DA TELA BASEADA NO TIPO DE ENTRADA DO INDICADOR
+            if(ind && ind.calcType === 'percentual') {
+                document.getElementById('div-rec-direto').classList.add('hidden');
+                document.getElementById('div-rec-calculo').classList.add('hidden');
+                document.getElementById('div-rec-percentual').classList.remove('hidden');
+                
+                document.getElementById('rec-value-direto').removeAttribute('required');
+                document.getElementById('rec-calc-memory').removeAttribute('required');
+                document.getElementById('rec-perc-realizado').setAttribute('required', 'true');
+                document.getElementById('rec-perc-meta').setAttribute('required', 'true');
+            } else if(ind && ind.calcType === 'calculo') {
+                document.getElementById('div-rec-direto').classList.add('hidden');
+                document.getElementById('div-rec-calculo').classList.remove('hidden');
+                document.getElementById('div-rec-percentual').classList.add('hidden');
+                
+                document.getElementById('rec-value-direto').removeAttribute('required');
+                document.getElementById('rec-perc-realizado').removeAttribute('required');
+                document.getElementById('rec-perc-meta').removeAttribute('required');
+                document.getElementById('rec-calc-memory').setAttribute('required', 'true');
+                document.getElementById('rec-formula-display').innerText = ind.formula || 'FÓRMULA NÃO DESCRITA';
+            } else {
+                document.getElementById('div-rec-direto').classList.remove('hidden');
+                document.getElementById('div-rec-calculo').classList.add('hidden');
+                document.getElementById('div-rec-percentual').classList.add('hidden');
+                
+                document.getElementById('rec-value-direto').setAttribute('required', 'true');
+                document.getElementById('rec-calc-memory').removeAttribute('required');
+                document.getElementById('rec-perc-realizado').removeAttribute('required');
+                document.getElementById('rec-perc-meta').removeAttribute('required');
+            }
+
+            // LIMPANDO OS CAMPOS DE VALOR
+            document.getElementById('rec-value-direto').value = '';
+            document.getElementById('rec-calc-memory').value = '';
+            document.getElementById('rec-value-calculo').value = '';
+            document.getElementById('rec-perc-realizado').value = '';
+            document.getElementById('rec-perc-meta').value = '';
+            document.getElementById('rec-value-percentual').value = '';
+
+            renderRespSelects();
+            const sel = document.getElementById('rec-responsible');
+            
+            if (recId) {
+                const r = records.find(rec => rec.id === recId);
+                if (r) {
+                    let periodVal = r.period || '';
+                    if (periodVal.includes('/')) {
+                        const parts = periodVal.split('/');
+                        if (parts.length === 2) periodVal = `${parts[1]}-${parts[0]}`;
+                    }
+                    document.getElementById('rec-period').value = periodVal;
+                    
+                    if (ind.calcType === 'percentual') {
+                        document.getElementById('rec-perc-realizado').value = r.calcRealValor || '';
+                        document.getElementById('rec-perc-meta').value = r.calcMetaValor || '';
+                        document.getElementById('rec-value-percentual').value = r.value || '';
+                    } else if (ind.calcType === 'calculo') {
+                        document.getElementById('rec-calc-memory').value = r.calcMemory || '';
+                        document.getElementById('rec-value-calculo').value = r.value || '';
+                    } else {
+                        document.getElementById('rec-value-direto').value = r.value || '';
+                    }
+
+                    document.getElementById('rec-analysis').value = r.analysis || '';
+                    
+                    // RESTAURA O PLANO 5W2H SE EXISTIR
+                    document.getElementById('rec-5w-what').value = r.planWhat || '';
+                    document.getElementById('rec-5w-why').value = r.planWhy || '';
+                    document.getElementById('rec-5w-where').value = r.planWhere || '';
+                    document.getElementById('rec-5w-when').value = r.planWhen || '';
+                    document.getElementById('rec-5w-who').value = r.planWho || '';
+                    document.getElementById('rec-5w-how').value = r.planHow || '';
+                    document.getElementById('rec-5w-howmuch').value = r.planHowMuch || '';
+
+                    if (r.date) document.getElementById('rec-date').value = r.date;
+                    if (r.responsible) sel.value = r.responsible;
+                    document.getElementById('modal-record-title').innerText = "EDITAR LANÇAMENTO";
+                }
+            } else {
+                document.getElementById('modal-record-title').innerText = "LANÇAR DADOS";
+            }
+            evaluateTarget(); // Avalia para mostrar/esconder o 5W2H ao abrir
+            document.getElementById('modal-record').classList.remove('hidden');
+        }
+
+        function closeIndicatorModal() { document.getElementById('modal-indicator').classList.add('hidden'); }
+        function closeRecordModal() { document.getElementById('modal-record').classList.add('hidden'); }
+        
+        function renderRespSelects() {
+            let options = '<option value="">SELECIONE...</option>';
+            const employeeNames = employees.map(e => (e.name || '').toUpperCase());
+            
+            employees.sort((a, b) => (a.name || '').localeCompare(b.name || '')).forEach(e => {
+                const upperName = (e.name || '').toUpperCase();
+                options += `<option value="${upperName}">${upperName}</option>`;
+            });
+
+            const selInd = document.getElementById('ind-responsible');
+            const selRec = document.getElementById('rec-responsible');
+            const sel5W = document.getElementById('rec-5w-who'); // Aplica também ao 5W2H
+            
+            [selInd, selRec, sel5W].forEach(sel => {
+                if(sel) {
+                    const currentVal = sel.value;
+                    sel.innerHTML = options;
+                    // Se o valor selecionado anteriormente já não for um colaborador ativo, mantém-no e avisa
+                    if (currentVal && !employeeNames.includes(currentVal)) {
+                        sel.innerHTML += `<option value="${currentVal}">${currentVal} (INATIVO/EXCLUÍDO)</option>`;
+                    }
+                    sel.value = currentVal;
+                }
+            });
+            
+            if(window.lucide) lucide.createIcons();
+        }
+
+        function printIndicator(id) {
+            const ind = indicators.find(i => i.id === id);
+            if(!ind) return;
+            const indRecs = records.filter(r => r.indicatorId === id).sort((a, b) => new Date(a.date) - new Date(b.date));
+
+            let printArea = document.getElementById('print-area');
+            if (!printArea) {
+                printArea = document.createElement('div');
+                printArea.id = 'print-area';
+                printArea.className = 'hidden bg-white w-full h-full absolute top-0 left-0 z-[99999] p-8';
+                document.body.appendChild(printArea);
+            }
+
+            let html = `
+                <div class="max-w-5xl mx-auto font-sans uppercase">
+                    <div class="border-b-2 border-slate-200 pb-6 mb-8 flex items-center justify-between">
+                        <div>
+                            <h1 class="text-3xl font-black text-slate-800 uppercase">${ind.name}</h1>
+                            <p class="text-sm font-bold text-indigo-600 mt-2 uppercase tracking-widest">
+                                META: ${ind.target}${ind.unit} | FREQUÊNCIA: ${ind.frequency}
+                            </p>
+                        </div>
+                        <div class="text-right">
+                            <p class="text-xs font-bold text-slate-400 uppercase tracking-widest">RELATÓRIO DE INDICADOR</p>
+                            <p class="text-sm font-bold text-slate-600 mt-1">${new Date().toLocaleDateString('pt-PT')}</p>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-10 w-full relative" style="height: 350px;">
+                        <canvas id="print-chart"></canvas>
+                    </div>
+
+                    <table class="w-full text-left text-sm border-collapse uppercase">
+                        <thead class="text-xs text-slate-400 font-bold uppercase border-b-2 border-slate-200">
+                            <tr><th class="p-3">Período</th><th class="p-3">Valor / Memória</th><th class="p-3">Meta</th><th class="p-3">Análise</th><th class="p-3">Quem</th></tr>
+                        </thead>
+                        <tbody>
+                            ${indRecs.map(r => {
+                                const isMet = ind.targetType === 'maior' ? r.value >= ind.target : r.value <= ind.target;
+                                return `
+                                <tr class="border-b border-slate-100">
+                                    <td class="p-3 font-semibold text-slate-700">${r.period}</td>
+                                    <td class="p-3">
+                                        <div class="font-bold ${isMet ? 'text-green-600' : 'text-red-600'}">
+                                            ${Number.isInteger(r.value) ? r.value : r.value.toFixed(2)}${ind.unit}
+                                        </div>
+                                        ${r.calcMemory ? `<div class="text-[10px] text-slate-500 mt-0.5 normal-case">Calc: ${r.calcMemory}</div>` : ''}
+                                    </td>
+                                    <td class="p-3 font-semibold text-slate-500">${ind.target}${ind.unit}</td>
+                                    <td class="p-3 text-slate-600">${r.analysis || '-'}</td>
+                                    <td class="p-3 text-slate-500">${r.responsible || '-'}</td>
+                                </tr>`;
+                            }).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            `;
+
+            printArea.innerHTML = html;
+
+            document.getElementById('app-header').classList.add('hidden');
+            document.getElementById('app-nav').classList.add('hidden');
+            document.getElementById('app-main').classList.add('hidden');
+            printArea.classList.remove('hidden');
+
+            const ctx = document.getElementById('print-chart');
+            
+            const existingPrintChart = Chart.getChart(ctx);
+            if (existingPrintChart) existingPrintChart.destroy();
+
+            const labels = indRecs.map(r => r.period);
+            const values = indRecs.map(r => r.value);
+            const targetValues = indRecs.map(() => ind.target);
+            const pointColors = values.map(val => (ind.targetType === 'maior' ? val >= ind.target : val <= ind.target) ? '#22c55e' : '#ef4444');
+
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            data: values, borderColor: '#3b82f6', backgroundColor: '#3b82f6',
+                            pointBackgroundColor: pointColors, borderWidth: 2, pointRadius: 4,
+                            datalabels: { align: 'top', color: '#1e293b', font: { weight: 'bold' }, formatter: (v) => (Number.isInteger(v) ? v : v.toFixed(2)) + ind.unit }
+                        },
+                        {
+                            data: targetValues, borderColor: '#ef4444', borderWidth: 1.5,
+                            borderDash: [5, 5], pointRadius: 0
+                        }
+                    ]
+                },
+                options: { responsive: true, maintainAspectRatio: false, animation: false, plugins: { legend: { display: false } } }
+            });
+
+            setTimeout(() => {
+                window.print();
+                document.getElementById('app-header').classList.remove('hidden');
+                document.getElementById('app-nav').classList.remove('hidden');
+                document.getElementById('app-main').classList.remove('hidden');
+                printArea.classList.add('hidden');
+                printArea.innerHTML = ''; 
+            }, 400);
+        }
+
+        window.changeTab = changeTab;
+        window.openIndicatorModal = openIndicatorModal;
+        window.closeIndicatorModal = closeIndicatorModal;
+        window.saveIndicator = saveIndicator;
+        window.deleteIndicator = deleteIndicator;
+        window.openRecordModal = openRecordModal;
+        window.closeRecordModal = closeRecordModal;
+        window.saveRecord = saveRecord;
+        window.deleteRecord = deleteRecord;
+        window.printIndicator = printIndicator;
+        window.toggleFormulaField = toggleFormulaField;
+        window.calculatePercentual = calculatePercentual; // Função de porcentagem
+        window.calculatePreview = calculatePreview; 
+        window.evaluateTarget = evaluateTarget; // Avaliação de meta dinâmica
+
+    </script>
+</body>
+</html>

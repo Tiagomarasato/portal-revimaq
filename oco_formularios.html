@@ -1,0 +1,1151 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SGQ - Formulários de Ocorrências (ISO 9001)</title>
+    
+    <!-- Tailwind CSS para Estilização -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Lucide Icons para Ícones -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <!-- SweetAlert2 para Modais e Mensagens -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <!-- FIREBASE V8 -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-storage.js"></script>
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; }
+        .custom-scrollbar::-webkit-scrollbar { height: 8px; width: 8px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        * { text-transform: uppercase !important; }
+        input::placeholder, textarea::placeholder { text-transform: uppercase !important; }
+    </style>
+
+    <script>
+        function navigateTo(url) {
+            if (window.location.protocol === 'blob:' || window.location.origin === 'null') {
+                if (typeof Swal !== 'undefined') {
+                    Swal.fire({
+                        title: 'Navegação Simulada',
+                        html: `O redirecionamento para <br><b>${url}</b><br> funcionará perfeitamente no seu servidor real.<br><br><span class="text-xs text-gray-500">Nota: O ambiente de pré-visualização atual bloqueia a mudança direta de ficheiros HTML locais.</span>`,
+                        icon: 'info',
+                        confirmButtonColor: '#d97706'
+                    });
+                } else {
+                    console.log('Navegação para: ' + url);
+                }
+            } else {
+                try {
+                    window.location.href = url;
+                } catch (e) {
+                    console.warn("Erro de navegação:", e);
+                }
+            }
+        }
+    </script>
+</head>
+<body class="flex flex-col h-screen text-gray-800 bg-gray-50">
+
+    <!-- ========================================================================= -->
+    <!-- MENU ESPECÍFICO DO MÓDULO DE OCORRÊNCIAS -->
+    <!-- ========================================================================= -->
+    <header class="bg-white shadow-sm z-20 no-print">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <!-- Logotipo / Título Dinâmico do Menu -->
+                <div class="flex items-center flex-1">
+                    <div class="flex-shrink-0 flex items-center mr-6" id="menu-logo-container">
+                        <div class="p-2 bg-blue-100 rounded-lg mr-3"><i data-lucide="file-text" class="w-6 h-6 text-blue-700"></i></div>
+                        <h1 class="text-xl font-bold text-gray-800">Ocorrências <span class="text-blue-600">Forms</span></h1>
+                    </div>
+                    <nav class="hidden lg:flex space-x-6 h-full">
+                        <div class="relative flex items-center h-full">
+                            <a href="#" onclick="navigateTo('oco_dashboard.html')" class="inline-flex items-center px-1 h-full border-b-2 border-transparent text-sm font-medium text-gray-500 hover:text-indigo-600 transition-colors focus:outline-none">Dashboard</a>
+                        </div>
+                        <div class="relative flex items-center h-full">
+                            <a href="#" onclick="navigateTo('oco_formularios.html')" class="inline-flex items-center px-1 h-full border-b-2 border-blue-600 text-sm font-bold text-blue-700 bg-blue-50 transition-colors focus:outline-none">Formulários</a>
+                        </div>
+                        <div class="relative flex items-center h-full">
+                            <a href="#" onclick="navigateTo('oco_painel_8.7.html')" class="inline-flex items-center px-1 h-full border-b-2 border-transparent text-sm font-medium text-gray-500 hover:text-amber-600 transition-colors focus:outline-none">Painel 8.7 (NC)</a>
+                        </div>
+                        <div class="relative flex items-center h-full">
+                            <a href="#" onclick="navigateTo('oco_painel_10.2.html')" class="inline-flex items-center px-1 h-full border-b-2 border-transparent text-sm font-medium text-gray-500 hover:text-emerald-600 transition-colors focus:outline-none">Painel 10.2 (AC)</a>
+                        </div>
+                        <div class="relative flex items-center h-full">
+                            <a href="#" onclick="navigateTo('oco_relatorio_impressao.html')" class="inline-flex items-center px-1 h-full border-b-2 border-transparent text-sm font-medium text-gray-500 hover:text-slate-800 transition-colors focus:outline-none">Relatórios</a>
+                        </div>
+                        <div class="relative group h-full flex items-center">
+                            <button class="inline-flex items-center px-1 h-full border-b-2 border-transparent text-sm font-medium text-gray-500 hover:text-indigo-600 transition-colors focus:outline-none">
+                                Aplicativos <i data-lucide="layout-grid" class="w-4 h-4 ml-1"></i>
+                            </button>
+                            <div class="absolute right-0 top-16 w-64 bg-white border border-gray-200 rounded-b-lg shadow-xl hidden group-hover:block transition-all z-50">
+                                <div class="px-4 py-2 text-[10px] font-black text-indigo-500 uppercase tracking-widest bg-indigo-50 border-b border-indigo-100">Outros Sistemas</div>
+                                <a href="#" onclick="navigateTo('oco_dashboard.html')" class="block px-5 py-3 text-sm font-medium text-gray-600 hover:bg-gray-50 hover:text-indigo-600 border-l-4 border-transparent transition-colors flex items-center"><i data-lucide="shield-alert" class="w-4 h-4 mr-2 text-indigo-500"></i> Gestão de Ocorrências</a>
+                                <a href="#" onclick="navigateTo('calibracao.html')" class="block px-5 py-3 text-sm font-medium text-gray-600 hover:bg-gray-50 hover:text-indigo-600 border-l-4 border-transparent transition-colors flex items-center"><i data-lucide="scale" class="w-4 h-4 mr-2 text-indigo-500"></i> Ativos e Calibração</a>
+                                <a href="#" onclick="navigateTo('Indicador.html')" class="block px-5 py-3 text-sm font-medium text-gray-600 hover:bg-gray-50 hover:text-indigo-600 border-l-4 border-transparent transition-colors flex items-center"><i data-lucide="line-chart" class="w-4 h-4 mr-2 text-indigo-500"></i> Painel de Indicadores</a>
+                                <a href="#" onclick="navigateTo('dashboard.html')" class="block px-5 py-3 text-sm font-medium text-gray-600 hover:bg-gray-50 hover:text-indigo-600 border-l-4 border-transparent transition-colors flex items-center"><i data-lucide="users" class="w-4 h-4 mr-2 text-indigo-500"></i> Gestão de Pessoas</a>
+                            </div>
+                        </div>
+                    </nav>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <a href="#" onclick="navigateTo('index.html')" class="hidden lg:inline-flex items-center px-4 py-2 border border-transparent text-sm font-bold rounded-md shadow-sm text-white bg-slate-800 hover:bg-slate-700 focus:outline-none transition-colors">
+                        <i data-lucide="arrow-left" class="w-4 h-4 mr-2"></i> PORTAL
+                    </a>
+                    <button class="text-gray-400 hover:text-gray-600 relative transition-colors" onclick="showDevInfo()"><i data-lucide="info" class="w-5 h-5"></i></button>
+                    <div class="h-8 w-8 rounded-full bg-blue-600 flex items-center justify-center text-white font-bold text-sm shadow-sm" id="user-avatar">--</div>
+                    <button type="button" onclick="document.getElementById('mobile-menu').classList.toggle('hidden')" class="lg:hidden p-2 rounded-md text-gray-400 hover:bg-gray-100">
+                        <i data-lucide="menu" class="w-6 h-6"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+        <div class="hidden lg:hidden absolute w-full bg-white z-50 border-t shadow-lg max-h-[80vh] overflow-y-auto" id="mobile-menu">
+            <div class="pt-2 pb-3 space-y-1">
+                <a href="#" onclick="navigateTo('oco_dashboard.html')" class="block pl-6 py-3 border-l-4 border-transparent text-gray-800 font-bold hover:bg-gray-50 text-sm flex items-center mb-1">
+                    <i data-lucide="layout-dashboard" class="w-5 h-5 mr-2 text-indigo-600"></i> Dashboard
+                </a>
+                <a href="#" onclick="navigateTo('oco_formularios.html')" class="block pl-6 py-2 border-l-4 border-blue-600 text-blue-700 bg-blue-50 font-bold text-sm">Formulários</a>
+                <a href="#" onclick="navigateTo('oco_painel_8.7.html')" class="block pl-6 py-2 border-l-4 border-transparent text-gray-600 font-medium hover:bg-gray-50 text-sm">Painel 8.7 (NC)</a>
+                <a href="#" onclick="navigateTo('oco_painel_10.2.html')" class="block pl-6 py-2 border-l-4 border-transparent text-gray-600 font-medium hover:bg-gray-50 text-sm">Painel 10.2 (AC)</a>
+                <a href="#" onclick="navigateTo('oco_relatorio_impressao.html')" class="block pl-6 py-2 border-l-4 border-transparent text-gray-600 font-medium hover:bg-gray-50 text-sm">Relatórios</a>
+                <div class="border-t border-gray-100 mt-3 pt-2">
+                    <a href="#" onclick="navigateTo('index.html')" class="block pl-6 py-3 text-white bg-slate-800 hover:bg-slate-700 font-bold"><i data-lucide="arrow-left" class="w-5 h-5 inline mr-2"></i> PORTAL</a>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="flex-1 overflow-auto bg-gray-50 p-4 md:p-6" id="main-container">
+        <div class="max-w-4xl mx-auto">
+            <!-- Tabs -->
+            <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-2 flex mb-6">
+                <button onclick="switchTab('nc')" id="tab-nc" class="flex-1 py-3 text-sm font-bold rounded-lg transition-all bg-amber-50 text-amber-700 border border-amber-200 shadow-sm uppercase">
+                    <i data-lucide="alert-triangle" class="w-4 h-4 inline mr-2"></i> Nova Não Conformidade (8.7)
+                </button>
+                <button onclick="switchTab('ac')" id="tab-ac" class="flex-1 py-3 text-sm font-bold rounded-lg transition-all text-gray-500 hover:bg-gray-50 ml-2 border border-transparent uppercase">
+                    <i data-lucide="check-circle" class="w-4 h-4 inline mr-2"></i> Nova Ação Corretiva (10.2)
+                </button>
+            </div>
+
+            <!-- FORMULÁRIO 1: NÃO CONFORMIDADE (8.7) -->
+            <div id="form-nc" class="bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden transition-opacity duration-300">
+                <div class="bg-amber-600 px-6 py-4 border-b border-amber-700 flex justify-between items-center">
+                    <h2 class="text-lg font-bold text-white flex items-center uppercase" id="nc-form-title"><i data-lucide="file-warning" class="w-5 h-5 mr-2"></i> Registo de Não Conformidade (Saída Não Conforme)</h2>
+                </div>
+                <form id="form-nc-element" onsubmit="saveNC(event)" class="p-6 space-y-5">
+                    <input type="hidden" id="nc-id">
+                    <input type="hidden" id="nc-codigo">
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+                        <div>
+                            <label class="block text-[10px] font-black text-slate-400 mb-1 uppercase">Origem da Ocorrência *</label>
+                            <select id="nc-origem" required class="w-full border border-gray-300 p-3 rounded-xl outline-none focus:ring-2 focus:ring-amber-500 bg-gray-50 uppercase font-bold text-sm">
+                                <option value="PROCESSO INTERNO">PROCESSO INTERNO</option>
+                                <option value="AUDITORIA INTERNA">AUDITORIA INTERNA</option>
+                                <option value="AUDITORIA EXTERNA">AUDITORIA EXTERNA</option>
+                                <option value="RECLAMAÇÃO CLIENTE">RECLAMAÇÃO DE CLIENTE</option>
+                                <option value="FORNECEDOR">FORNECEDOR</option>
+                                <option value="INSPEÇÃO">INSPEÇÃO/ENSAIO</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-black text-slate-400 mb-1 uppercase">Data da Identificação *</label>
+                            <input type="date" id="nc-data" required class="w-full border border-gray-300 p-3 rounded-xl outline-none focus:ring-2 focus:ring-amber-500 bg-gray-50 uppercase font-bold text-sm">
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-black text-slate-400 mb-1 uppercase">Referência</label>
+                            <input type="text" id="nc-referencia" placeholder="Ex: NF, Lote, Pedido..." class="w-full border border-gray-300 p-3 rounded-xl outline-none focus:ring-2 focus:ring-amber-500 uppercase text-sm">
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+                        <div>
+                            <label class="block text-[10px] font-black text-slate-400 mb-1 uppercase">Setor / Área *</label>
+                            <select id="nc-setor" required class="w-full border border-gray-300 p-3 rounded-xl outline-none focus:ring-2 focus:ring-amber-500 bg-gray-50 uppercase font-bold text-sm">
+                                <option value="">A carregar...</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-black text-slate-400 mb-1 uppercase">Processo</label>
+                            <select id="nc-processo" class="w-full border border-gray-300 p-3 rounded-xl outline-none focus:ring-2 focus:ring-amber-500 bg-gray-50 uppercase font-bold text-sm">
+                                <option value="">A carregar...</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-black text-slate-400 mb-1 uppercase">Cliente</label>
+                            <select id="nc-cliente" onchange="handleDropdownSelectChange(this, 'nc-cliente')" class="w-full border border-gray-300 p-3 rounded-xl outline-none focus:ring-2 focus:ring-amber-500 bg-gray-50 uppercase font-bold text-sm">
+                                <option value="">A carregar...</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                        <div>
+                            <label class="block text-[10px] font-black text-slate-400 mb-1 uppercase">Produto / Item</label>
+                            <input type="text" id="nc-produto" placeholder="Qual o produto ou item afetado?" class="w-full border border-gray-300 p-3 rounded-xl outline-none focus:ring-2 focus:ring-amber-500 uppercase text-sm">
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-black text-slate-400 mb-1 uppercase">Título / Resumo Curto *</label>
+                            <select id="nc-titulo" onchange="handleDropdownSelectChange(this, 'nc-titulo')" required class="w-full border border-gray-300 p-3 rounded-xl outline-none focus:ring-2 focus:ring-amber-500 bg-gray-50 uppercase font-bold text-sm">
+                                <option value="">A carregar...</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-[10px] font-black text-slate-400 mb-1 uppercase">Descrição Detalhada do Problema *</label>
+                        <textarea id="nc-descricao" required rows="3" placeholder="Descreva o que aconteceu, onde e quando..." class="w-full border border-gray-300 p-3 rounded-xl outline-none focus:ring-2 focus:ring-amber-500 custom-scrollbar uppercase text-sm"></textarea>
+                    </div>
+
+                    <div class="border-t border-gray-200 pt-5 mt-2">
+                        <h3 class="text-sm font-bold text-amber-700 mb-3 flex items-center uppercase tracking-widest"><i data-lucide="zap" class="w-4 h-4 mr-2"></i> Disposição Imediata (Correção)</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                            <div>
+                                <label class="block text-[10px] font-black text-slate-400 mb-1 uppercase">Ação Tomada / Disposição</label>
+                                <select id="nc-tipo-disp" onchange="handleDropdownSelectChange(this, 'nc-tipo-disp')" class="w-full border border-gray-300 p-3 rounded-xl outline-none focus:ring-2 focus:ring-amber-500 bg-gray-50 mb-3 uppercase font-bold text-sm">
+                                    <option value="">A carregar...</option>
+                                </select>
+                                <textarea id="nc-detalhe-disp" rows="2" placeholder="Detalhes da ação corretiva imediata..." class="w-full border border-gray-300 p-3 rounded-xl outline-none focus:ring-2 focus:ring-amber-500 custom-scrollbar uppercase text-sm"></textarea>
+                            </div>
+                            <div>
+                                <label class="block text-[10px] font-black text-slate-400 mb-1 uppercase">Responsável pela Disposição</label>
+                                <select id="nc-resp" class="w-full border border-gray-300 p-3 rounded-xl outline-none focus:ring-2 focus:ring-amber-500 mb-3 uppercase font-bold text-sm bg-gray-50">
+                                    <option value="">A carregar...</option>
+                                </select>
+                                <div class="grid grid-cols-2 gap-3">
+                                    <div>
+                                        <label class="block text-[10px] font-black text-slate-400 mb-1 uppercase mt-2">CUSTO ESTIMADO (€)</label>
+                                        <input type="number" step="0.01" id="nc-custo" placeholder="0.00" class="w-full border border-gray-300 p-3 rounded-xl outline-none focus:ring-2 focus:ring-amber-500 text-sm font-bold text-red-600">
+                                    </div>
+                                    <div>
+                                        <label class="block text-[10px] font-black text-slate-400 mb-1 uppercase mt-2">Anexos / Evidências</label>
+                                        <input type="file" id="nc-anexos" class="w-full border border-gray-300 p-2 rounded-xl outline-none focus:ring-2 focus:ring-amber-500 text-xs bg-white uppercase">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- BLOCO: NECESSITA DE RNC (10.2) COM GERAÇÃO AUTOMÁTICA -->
+                    <div class="border-t border-gray-200 pt-5 mt-4">
+                        <h3 class="text-sm font-bold text-amber-700 mb-3 flex items-center uppercase tracking-widest"><i data-lucide="git-branch" class="w-4 h-4 mr-2"></i> Avaliação de Ação Corretiva (10.2)</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-5 bg-amber-50 p-4 rounded-xl border border-amber-100">
+                            <div>
+                                <label class="block text-[10px] font-black text-amber-900 mb-1 uppercase">Necessário abertura de RNC?</label>
+                                <select id="nc-necessita-rnc" onchange="handleNecessitaRncChange(this)" class="w-full border border-amber-300 p-3 rounded-xl outline-none focus:ring-2 focus:ring-amber-500 bg-white uppercase font-bold text-sm text-amber-900 shadow-sm">
+                                    <option value="NÃO AVALIADO">AINDA NÃO AVALIADO</option>
+                                    <option value="SIM">SIM (GERAR RNC 10.2 AUTOMATICAMENTE)</option>
+                                    <option value="NÃO">NÃO (DESVIO ISOLADO)</option>
+                                </select>
+                            </div>
+                            <div class="flex flex-col justify-center">
+                                <div id="rnc-number-display" class="hidden">
+                                     <span class="block text-[10px] font-black text-amber-900 mb-1 uppercase">NÚMERO DA RNC VINCULADA</span>
+                                     <div class="text-lg font-black text-red-600 bg-white border border-red-200 px-4 py-2 rounded-xl shadow-sm inline-block tracking-widest" id="rnc-id-text">--</div>
+                                </div>
+                                <div id="rnc-info-text" class="flex items-center text-[11px] text-amber-700 font-medium leading-tight">
+                                    <i data-lucide="info" class="w-8 h-8 mr-3 flex-shrink-0"></i>
+                                    Se selecionar "SIM", a ocorrência será salva e o formulário avançará imediatamente para o preenchimento da Ação Corretiva (RNC).
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flex justify-end pt-6 border-t border-gray-100 space-x-3">
+                        <button type="button" id="btn-delete-nc" onclick="deleteNC()" class="hidden bg-red-50 text-red-600 border border-red-200 px-6 py-3 rounded-xl font-bold shadow-sm hover:bg-red-100 transition items-center uppercase tracking-widest text-sm">
+                            <i data-lucide="trash-2" class="w-5 h-5 mr-2"></i> Excluir Ocorrência
+                        </button>
+                        <button type="submit" id="btn-save-nc" class="bg-amber-600 text-white px-8 py-3 rounded-xl font-bold shadow-md hover:bg-amber-700 transition flex items-center uppercase tracking-widest text-sm">
+                            <i data-lucide="save" class="w-5 h-5 mr-2"></i> Gravar Registo
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- FORMULÁRIO 2: AÇÃO CORRETIVA (10.2) -->
+            <div id="form-ac" class="bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden hidden transition-opacity duration-300">
+                <div class="bg-emerald-600 px-6 py-4 border-b border-emerald-700">
+                    <h2 class="text-lg font-bold text-white flex items-center uppercase"><i data-lucide="file-check" class="w-5 h-5 mr-2"></i> Registo de Ação Corretiva (Causa Raiz e Planos)</h2>
+                </div>
+                <form onsubmit="saveAC(event)" class="p-6 space-y-5">
+                    <div class="bg-emerald-50 border border-emerald-100 p-4 rounded-lg mb-4 text-sm text-emerald-800 uppercase font-medium">
+                        <i data-lucide="info" class="w-4 h-4 inline mr-1"></i> A Ação Corretiva destina-se a eliminar a <strong>causa</strong> de uma não conformidade para evitar a sua recorrência.
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                        <div>
+                            <label class="block text-[10px] font-black text-slate-400 mb-1 uppercase">Vincular a uma NC (Obrigatório)</label>
+                            <select id="ac-nc-link" onchange="handleROSelect(this)" required class="w-full border border-emerald-300 p-3 rounded-xl outline-none focus:ring-2 focus:ring-emerald-500 uppercase text-sm font-bold text-emerald-700 bg-emerald-50 shadow-sm cursor-pointer disabled:bg-gray-100 disabled:opacity-80 disabled:cursor-not-allowed">
+                                <option value="">A carregar Ocorrências...</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-black text-slate-400 mb-1 uppercase">Data de Abertura *</label>
+                            <input type="date" id="ac-data" required class="w-full border border-gray-300 p-3 rounded-xl outline-none focus:ring-2 focus:ring-emerald-500 bg-gray-50 text-sm font-bold">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-black text-slate-400 mb-1 uppercase">Descrição do Problema / Ocorrência *</label>
+                        <input type="text" id="ac-titulo" readonly placeholder="Preenchido automaticamente ao selecionar a RO..." class="w-full border border-gray-200 p-3 rounded-xl outline-none bg-gray-100 text-gray-500 uppercase text-sm cursor-not-allowed">
+                    </div>
+                    
+                    <div class="border-t border-gray-200 pt-5 mt-2">
+                        <h3 class="text-sm font-bold text-emerald-700 mb-3 flex items-center uppercase tracking-widest"><i data-lucide="search" class="w-4 h-4 mr-2"></i> Análise de Causa Raiz</h3>
+                        
+                        <!-- Diagrama de Ishikawa (6M) -->
+                        <div class="bg-gray-50 p-4 rounded-xl border border-gray-200 mb-5">
+                            <h4 class="text-xs font-black text-gray-600 mb-3 uppercase tracking-widest border-b border-gray-200 pb-2">Diagrama de Ishikawa (6M)</h4>
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <div>
+                                    <div class="flex justify-between items-end mb-1">
+                                        <label class="block text-[9px] font-black text-slate-400 uppercase">1. Método</label>
+                                        <button type="button" onclick="setAsRootCause('ac-metodo', 'MÉTODO')" class="text-[8px] bg-red-50 text-red-600 hover:bg-red-100 px-2 py-0.5 rounded font-bold uppercase transition-colors flex items-center" title="Marcar como Causa Raiz"><i data-lucide="flag" class="w-3 h-3 mr-1"></i> Causa Raiz</button>
+                                    </div>
+                                    <textarea id="ac-metodo" rows="2" class="w-full border border-gray-300 p-2 rounded-lg outline-none focus:ring-2 focus:ring-emerald-500 custom-scrollbar uppercase text-xs"></textarea>
+                                </div>
+                                <div>
+                                    <div class="flex justify-between items-end mb-1">
+                                        <label class="block text-[9px] font-black text-slate-400 uppercase">2. Máquina</label>
+                                        <button type="button" onclick="setAsRootCause('ac-maquina', 'MÁQUINA')" class="text-[8px] bg-red-50 text-red-600 hover:bg-red-100 px-2 py-0.5 rounded font-bold uppercase transition-colors flex items-center" title="Marcar como Causa Raiz"><i data-lucide="flag" class="w-3 h-3 mr-1"></i> Causa Raiz</button>
+                                    </div>
+                                    <textarea id="ac-maquina" rows="2" class="w-full border border-gray-300 p-2 rounded-lg outline-none focus:ring-2 focus:ring-emerald-500 custom-scrollbar uppercase text-xs"></textarea>
+                                </div>
+                                <div>
+                                    <div class="flex justify-between items-end mb-1">
+                                        <label class="block text-[9px] font-black text-slate-400 uppercase">3. Medida</label>
+                                        <button type="button" onclick="setAsRootCause('ac-medida', 'MEDIDA')" class="text-[8px] bg-red-50 text-red-600 hover:bg-red-100 px-2 py-0.5 rounded font-bold uppercase transition-colors flex items-center" title="Marcar como Causa Raiz"><i data-lucide="flag" class="w-3 h-3 mr-1"></i> Causa Raiz</button>
+                                    </div>
+                                    <textarea id="ac-medida" rows="2" class="w-full border border-gray-300 p-2 rounded-lg outline-none focus:ring-2 focus:ring-emerald-500 custom-scrollbar uppercase text-xs"></textarea>
+                                </div>
+                                <div>
+                                    <div class="flex justify-between items-end mb-1">
+                                        <label class="block text-[9px] font-black text-slate-400 uppercase">4. Meio Ambiente</label>
+                                        <button type="button" onclick="setAsRootCause('ac-meioambiente', 'MEIO AMBIENTE')" class="text-[8px] bg-red-50 text-red-600 hover:bg-red-100 px-2 py-0.5 rounded font-bold uppercase transition-colors flex items-center" title="Marcar como Causa Raiz"><i data-lucide="flag" class="w-3 h-3 mr-1"></i> Causa Raiz</button>
+                                    </div>
+                                    <textarea id="ac-meioambiente" rows="2" class="w-full border border-gray-300 p-2 rounded-lg outline-none focus:ring-2 focus:ring-emerald-500 custom-scrollbar uppercase text-xs"></textarea>
+                                </div>
+                                <div>
+                                    <div class="flex justify-between items-end mb-1">
+                                        <label class="block text-[9px] font-black text-slate-400 uppercase">5. Mão de Obra</label>
+                                        <button type="button" onclick="setAsRootCause('ac-maodeobra', 'MÃO DE OBRA')" class="text-[8px] bg-red-50 text-red-600 hover:bg-red-100 px-2 py-0.5 rounded font-bold uppercase transition-colors flex items-center" title="Marcar como Causa Raiz"><i data-lucide="flag" class="w-3 h-3 mr-1"></i> Causa Raiz</button>
+                                    </div>
+                                    <textarea id="ac-maodeobra" rows="2" class="w-full border border-gray-300 p-2 rounded-lg outline-none focus:ring-2 focus:ring-emerald-500 custom-scrollbar uppercase text-xs"></textarea>
+                                </div>
+                                <div>
+                                    <div class="flex justify-between items-end mb-1">
+                                        <label class="block text-[9px] font-black text-slate-400 uppercase">6. Material</label>
+                                        <button type="button" onclick="setAsRootCause('ac-material', 'MATERIAL')" class="text-[8px] bg-red-50 text-red-600 hover:bg-red-100 px-2 py-0.5 rounded font-bold uppercase transition-colors flex items-center" title="Marcar como Causa Raiz"><i data-lucide="flag" class="w-3 h-3 mr-1"></i> Causa Raiz</button>
+                                    </div>
+                                    <textarea id="ac-material" rows="2" class="w-full border border-gray-300 p-2 rounded-lg outline-none focus:ring-2 focus:ring-emerald-500 custom-scrollbar uppercase text-xs"></textarea>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 5 Porquês com Botão de Adicionar -->
+                        <div class="bg-gray-50 p-4 rounded-xl border border-gray-200 mb-5">
+                            <div class="flex justify-between items-center border-b border-gray-200 pb-2 mb-3">
+                                <h4 class="text-xs font-black text-gray-600 uppercase tracking-widest">Técnica dos 5 Porquês</h4>
+                                <button type="button" onclick="addWhyField()" id="btn-add-why" class="text-[10px] bg-emerald-100 text-emerald-700 hover:bg-emerald-200 px-3 py-1.5 rounded font-bold flex items-center transition-colors shadow-sm">
+                                    <i data-lucide="plus" class="w-3 h-3 mr-1"></i> Adicionar Porquê
+                                </button>
+                            </div>
+                            <div class="space-y-2" id="whys-container">
+                                <div class="flex items-center hidden" id="pq-row-1">
+                                    <span class="font-black text-emerald-600 mr-3 w-6 text-right">1º</span>
+                                    <input type="text" id="ac-pq1" placeholder="Porquê?" class="w-full border border-gray-300 p-2 rounded-lg outline-none focus:ring-2 focus:ring-emerald-500 uppercase text-xs">
+                                    <button type="button" onclick="setAsRootCause('ac-pq1', '1º PORQUÊ')" class="ml-2 text-red-500 hover:text-red-700 bg-red-50 hover:bg-red-100 p-1.5 rounded-lg transition-colors flex-shrink-0" title="Marcar como Causa Raiz"><i data-lucide="flag" class="w-4 h-4"></i></button>
+                                </div>
+                                <div class="flex items-center hidden" id="pq-row-2">
+                                    <span class="font-black text-emerald-600 mr-3 w-6 text-right">2º</span>
+                                    <input type="text" id="ac-pq2" placeholder="Porquê?" class="w-full border border-gray-300 p-2 rounded-lg outline-none focus:ring-2 focus:ring-emerald-500 uppercase text-xs">
+                                    <button type="button" onclick="setAsRootCause('ac-pq2', '2º PORQUÊ')" class="ml-2 text-red-500 hover:text-red-700 bg-red-50 hover:bg-red-100 p-1.5 rounded-lg transition-colors flex-shrink-0" title="Marcar como Causa Raiz"><i data-lucide="flag" class="w-4 h-4"></i></button>
+                                </div>
+                                <div class="flex items-center hidden" id="pq-row-3">
+                                    <span class="font-black text-emerald-600 mr-3 w-6 text-right">3º</span>
+                                    <input type="text" id="ac-pq3" placeholder="Porquê?" class="w-full border border-gray-300 p-2 rounded-lg outline-none focus:ring-2 focus:ring-emerald-500 uppercase text-xs">
+                                    <button type="button" onclick="setAsRootCause('ac-pq3', '3º PORQUÊ')" class="ml-2 text-red-500 hover:text-red-700 bg-red-50 hover:bg-red-100 p-1.5 rounded-lg transition-colors flex-shrink-0" title="Marcar como Causa Raiz"><i data-lucide="flag" class="w-4 h-4"></i></button>
+                                </div>
+                                <div class="flex items-center hidden" id="pq-row-4">
+                                    <span class="font-black text-emerald-600 mr-3 w-6 text-right">4º</span>
+                                    <input type="text" id="ac-pq4" placeholder="Porquê?" class="w-full border border-gray-300 p-2 rounded-lg outline-none focus:ring-2 focus:ring-emerald-500 uppercase text-xs">
+                                    <button type="button" onclick="setAsRootCause('ac-pq4', '4º PORQUÊ')" class="ml-2 text-red-500 hover:text-red-700 bg-red-50 hover:bg-red-100 p-1.5 rounded-lg transition-colors flex-shrink-0" title="Marcar como Causa Raiz"><i data-lucide="flag" class="w-4 h-4"></i></button>
+                                </div>
+                                <div class="flex items-center hidden" id="pq-row-5">
+                                    <span class="font-black text-emerald-600 mr-3 w-6 text-right">5º</span>
+                                    <input type="text" id="ac-pq5" placeholder="Porquê?" class="w-full border border-gray-300 p-2 rounded-lg outline-none focus:ring-2 focus:ring-emerald-500 uppercase text-xs">
+                                    <button type="button" onclick="setAsRootCause('ac-pq5', '5º PORQUÊ')" class="ml-2 text-red-500 hover:text-red-700 bg-red-50 hover:bg-red-100 p-1.5 rounded-lg transition-colors flex-shrink-0" title="Marcar como Causa Raiz"><i data-lucide="flag" class="w-4 h-4"></i></button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <label class="block text-[10px] font-black text-slate-400 mb-1 uppercase">Conclusão: Causa Raiz Identificada *</label>
+                        <textarea id="ac-causa" required rows="3" placeholder="Com base nas ferramentas acima, qual é a causa raiz fundamental?" class="w-full border border-gray-300 p-3 rounded-xl outline-none focus:ring-2 focus:ring-emerald-500 custom-scrollbar uppercase text-sm font-bold text-emerald-800 bg-emerald-50 border-emerald-200 transition-all duration-300"></textarea>
+                    </div>
+                        </div>
+
+                        <!-- 5 Porquês com Botão de Adicionar -->
+                        <div class="bg-gray-50 p-4 rounded-xl border border-gray-200 mb-5">
+                            <div class="flex justify-between items-center border-b border-gray-200 pb-2 mb-3">
+                                <h4 class="text-xs font-black text-gray-600 uppercase tracking-widest">Técnica dos 5 Porquês</h4>
+                                <button type="button" onclick="addWhyField()" id="btn-add-why" class="text-[10px] bg-emerald-100 text-emerald-700 hover:bg-emerald-200 px-3 py-1.5 rounded font-bold flex items-center transition-colors shadow-sm">
+                                    <i data-lucide="plus" class="w-3 h-3 mr-1"></i> Adicionar Porquê
+                                </button>
+                            </div>
+                            <div class="space-y-2" id="whys-container">
+                                <div class="flex items-center hidden" id="pq-row-1"><span class="font-black text-emerald-600 mr-3 w-6 text-right">1º</span><input type="text" id="ac-pq1" placeholder="Porquê?" class="w-full border border-gray-300 p-2 rounded-lg outline-none focus:ring-2 focus:ring-emerald-500 uppercase text-xs"></div>
+                                <div class="flex items-center hidden" id="pq-row-2"><span class="font-black text-emerald-600 mr-3 w-6 text-right">2º</span><input type="text" id="ac-pq2" placeholder="Porquê?" class="w-full border border-gray-300 p-2 rounded-lg outline-none focus:ring-2 focus:ring-emerald-500 uppercase text-xs"></div>
+                                <div class="flex items-center hidden" id="pq-row-3"><span class="font-black text-emerald-600 mr-3 w-6 text-right">3º</span><input type="text" id="ac-pq3" placeholder="Porquê?" class="w-full border border-gray-300 p-2 rounded-lg outline-none focus:ring-2 focus:ring-emerald-500 uppercase text-xs"></div>
+                                <div class="flex items-center hidden" id="pq-row-4"><span class="font-black text-emerald-600 mr-3 w-6 text-right">4º</span><input type="text" id="ac-pq4" placeholder="Porquê?" class="w-full border border-gray-300 p-2 rounded-lg outline-none focus:ring-2 focus:ring-emerald-500 uppercase text-xs"></div>
+                                <div class="flex items-center hidden" id="pq-row-5"><span class="font-black text-emerald-600 mr-3 w-6 text-right">5º</span><input type="text" id="ac-pq5" placeholder="Porquê?" class="w-full border border-gray-300 p-2 rounded-lg outline-none focus:ring-2 focus:ring-emerald-500 uppercase text-xs"></div>
+                            </div>
+                        </div>
+
+                        <label class="block text-[10px] font-black text-slate-400 mb-1 uppercase">Conclusão: Causa Raiz Identificada *</label>
+                        <textarea id="ac-causa" required rows="3" placeholder="Com base nas ferramentas acima, qual é a causa raiz fundamental?" class="w-full border border-gray-300 p-3 rounded-xl outline-none focus:ring-2 focus:ring-emerald-500 custom-scrollbar uppercase text-sm font-bold text-emerald-800 bg-emerald-50 border-emerald-200"></textarea>
+                    </div>
+                    
+                    <div class="border-t border-gray-200 pt-5 mt-4">
+                        <h3 class="text-sm font-bold text-emerald-700 mb-3 flex items-center uppercase tracking-widest"><i data-lucide="list-checks" class="w-4 h-4 mr-2"></i> Plano de Ação</h3>
+                        <div class="grid grid-cols-1 gap-4">
+                            <div>
+                                <label class="block text-[10px] font-black text-slate-400 mb-1 uppercase">O que será feito? (Ação Proposta) *</label>
+                                <textarea id="ac-acao" required rows="3" placeholder="Descreva as ações que eliminarão a causa raiz..." class="w-full border border-gray-300 p-3 rounded-xl outline-none focus:ring-2 focus:ring-emerald-500 custom-scrollbar uppercase text-sm"></textarea>
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-5 mt-4">
+                            <div>
+                                <label class="block text-[10px] font-black text-slate-400 mb-1 uppercase">Quem fará? (Responsável) *</label>
+                                <select id="ac-resp" required class="w-full border border-gray-300 p-3 rounded-xl outline-none focus:ring-2 focus:ring-emerald-500 uppercase font-bold text-sm bg-gray-50">
+                                    <option value="">A carregar...</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-[10px] font-black text-slate-400 mb-1 uppercase">Quando? (Prazo Previsto) *</label>
+                                <input type="date" id="ac-prazo" required class="w-full border border-gray-300 p-3 rounded-xl outline-none focus:ring-2 focus:ring-emerald-500 bg-gray-50 text-sm font-bold">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flex justify-end pt-4 border-t border-gray-100">
+                        <button type="submit" class="bg-emerald-600 text-white px-8 py-3 rounded-xl font-bold shadow-md hover:bg-emerald-700 transition flex items-center uppercase tracking-widest text-sm">
+                            <i data-lucide="save" class="w-5 h-5 mr-2"></i> Registar Ação Corretiva
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // --- FIREBASE CONFIG ---
+        const firebaseConfig = {
+            apiKey: "AIzaSyBqV0KOQMAYR4z6P_RKnrQPDfkAR2CsXBI",
+            authDomain: "gestao-de-pessoas-49200.firebaseapp.com",
+            projectId: "gestao-de-pessoas-49200",
+            storageBucket: "gestao-de-pessoas-49200.firebasestorage.app",
+            messagingSenderId: "615097388185",
+            appId: "1:615097388185:web:ef87969b64f4a886f23c08"
+        };
+        
+        if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth(); const db = firebase.firestore(); const storage = firebase.storage();
+        db.settings({ experimentalForceLongPolling: true });
+
+        const appId = 'gestao-de-pessoas-49200';
+        let currentUser = null;
+        let clientesData = [];
+        let areasData = [];
+        let processosData = [];
+        let titulosData = [];
+        let colaboradoresData = [];
+        let allOcorrencias = [];
+        let disposicoesData = [];
+        
+        // Variável para controlo de visibilidade dos 5 Porquês
+        let visibleWhys = 0;
+
+        function showDevInfo() { Swal.fire({ title: 'Formulários de Ocorrência', text: 'Entrada de dados para Não Conformidades (8.7) e Ações Corretivas (10.2).', icon: 'info' }); }
+
+        // Função que é acionada ao clicar na Flag de Causa Raiz
+        function setAsRootCause(fieldId, sourceName) {
+            const val = document.getElementById(fieldId).value.trim();
+            if (!val) {
+                Swal.fire('Atenção', 'Preencha a descrição antes de a marcar como causa raiz definitiva.', 'warning');
+                return;
+            }
+            const causaElement = document.getElementById('ac-causa');
+            causaElement.value = `[${sourceName}] ${val}`;
+            
+            // Dá um scroll suave para a caixa de conclusão e pisca a vermelho
+            causaElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            causaElement.classList.add('ring-4', 'ring-red-200', 'bg-red-50');
+            setTimeout(() => {
+                causaElement.classList.remove('ring-4', 'ring-red-200', 'bg-red-50');
+            }, 1500);
+        }
+
+        // Função para mostrar novos campos de Porquê
+        function addWhyField() {
+            if (visibleWhys < 5) {
+                visibleWhys++;
+                document.getElementById(`pq-row-${visibleWhys}`).classList.remove('hidden');
+            }
+            if (visibleWhys >= 5) {
+                document.getElementById('btn-add-why').classList.add('hidden');
+            }
+        }
+
+        // Função para restaurar a visibilidade baseada nos dados já preenchidos
+        function restoreWhysVisibility() {
+            visibleWhys = 0;
+            for (let i = 1; i <= 5; i++) {
+                const val = document.getElementById(`ac-pq${i}`).value.trim();
+                if (val !== '') {
+                    visibleWhys = i;
+                }
+            }
+            for (let i = 1; i <= 5; i++) {
+                if (i <= visibleWhys) {
+                    document.getElementById(`pq-row-${i}`).classList.remove('hidden');
+                } else {
+                    document.getElementById(`pq-row-${i}`).classList.add('hidden');
+                }
+            }
+            if (visibleWhys >= 5) {
+                document.getElementById('btn-add-why').classList.add('hidden');
+            } else {
+                document.getElementById('btn-add-why').classList.remove('hidden');
+            }
+        }
+
+        function loadDropdowns() {
+            db.collection("clientes").onSnapshot(snap => {
+                clientesData = snap.docs.map(d => ({id: d.id, ...d.data()}));
+                renderSelect('nc-cliente', clientesData);
+            });
+            db.collection("titulos").onSnapshot(snap => {
+                titulosData = snap.docs.map(d => ({id: d.id, ...d.data()}));
+                renderSelect('nc-titulo', titulosData);
+            });
+            db.collection(`artifacts/${appId}/public/data/sectors`).onSnapshot(snap => {
+                areasData = snap.docs.map(d => ({id: d.id, ...d.data()}));
+                renderSelect('nc-setor', areasData);
+            });
+            db.collection(`artifacts/${appId}/public/data/processes`).onSnapshot(snap => {
+                processosData = snap.docs.map(d => ({id: d.id, ...d.data()}));
+                renderSelect('nc-processo', processosData);
+            });
+            db.collection(`artifacts/${appId}/public/data/employees`).onSnapshot(snap => {
+                colaboradoresData = snap.docs.map(d => ({id: d.id, ...d.data()})).filter(c => c.status === 'Ativo');
+                renderSelect('nc-resp', colaboradoresData);
+                renderSelect('ac-resp', colaboradoresData);
+            });
+
+            // Carrega novas disposições personalizadas
+            db.collection("disposicoes").onSnapshot(snap => {
+                disposicoesData = snap.docs.map(d => ({id: d.id, ...d.data()}));
+                renderDisposicoes();
+            });
+            
+            // Lendo a coleção principal de ocorrências para controle de ID seguro e para o dropdown de RO
+            db.collection("ocorrencias").onSnapshot(snap => {
+                allOcorrencias = snap.docs.map(d => ({idDb: d.id, ...d.data()}));
+                
+                // Preencher o select de vínculo de RO na aba de Ação Corretiva
+                const acLinkSelect = document.getElementById('ac-nc-link');
+                if (acLinkSelect) {
+                    const currentVal = acLinkSelect.value;
+                    const roList = allOcorrencias.filter(o => o.id && o.id.startsWith('RO')).sort((a, b) => b.id.localeCompare(a.id));
+                    
+                    let options = '<option value="">SELECIONE UMA OCORRÊNCIA (RO)...</option>';
+                    roList.forEach(ro => {
+                        const hasRNC = (ro.necessitaRNC === 'SIM' && ro.rncId) ? ' [JÁ POSSUI RNC]' : '';
+                        options += `<option value="${ro.id}">${ro.id}${hasRNC}</option>`;
+                    });
+                    
+                    acLinkSelect.innerHTML = options;
+                    
+                    // Mantém o valor se já estiver preenchido (ou restaura após timeout do checkEditMode)
+                    if (currentVal && roList.some(ro => ro.id === currentVal)) {
+                        acLinkSelect.value = currentVal;
+                    } else if (acLinkSelect.getAttribute('data-preset-value')) {
+                        acLinkSelect.value = acLinkSelect.getAttribute('data-preset-value');
+                    }
+                }
+            });
+        }
+
+        // Deteta a transição para gerar RNC no próprio formulário NC
+        function handleNecessitaRncChange(select) {
+            if (select.value === 'SIM') {
+                const form = document.getElementById('form-nc-element');
+                // Valida primeiro os campos obrigatórios da NC antes de avançar
+                if (!form.reportValidity()) {
+                    Swal.fire('Atenção', 'Por favor, preencha todos os campos obrigatórios da Ocorrência antes de gerar a RNC.', 'warning');
+                    select.value = 'NÃO AVALIADO';
+                    return;
+                }
+
+                Swal.fire({
+                    title: 'Gerar Ação Corretiva?',
+                    text: 'A Ocorrência (8.7) será guardada agora e o sistema abrirá automaticamente a RNC (10.2) para que possa concluir a Análise de Causa Raiz.',
+                    icon: 'question',
+                    showCancelButton: true,
+                    confirmButtonText: 'Sim, Guardar e Abrir RNC',
+                    cancelButtonText: 'Continuar a preencher a NC'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        // Clica no botão de guardar de forma programática
+                        document.getElementById('btn-save-nc').click();
+                    } else {
+                        // Reverte se a pessoa decidir não avançar já
+                        select.value = 'NÃO AVALIADO';
+                    }
+                });
+            }
+        }
+
+        // Função para atualizar o título automaticamente quando escolhe uma RO
+        function handleROSelect(select) {
+            const roId = select.value;
+            const tituloInput = document.getElementById('ac-titulo');
+            if (!roId) {
+                tituloInput.value = '';
+                return;
+            }
+            const targetNC = allOcorrencias.find(o => o.id === roId);
+            if (targetNC) {
+                tituloInput.value = targetNC.titulo || 'SEM TÍTULO CADASTRADO';
+            }
+        }
+
+        // Função exclusiva para renderizar Disposições (mescla as padrão com as criadas)
+        function renderDisposicoes() {
+            const el = document.getElementById('nc-tipo-disp');
+            if (!el) return;
+            const currentVal = el.value;
+            
+            const defaultOptions = [
+                "RETRABALHO / REPARAÇÃO",
+                "RECLASSIFICAÇÃO (ACEITAÇÃO COM CONCESSÃO)",
+                "SUCATA / REFUGO",
+                "DEVOLUÇÃO AO FORNECEDOR"
+            ];
+            
+            // Mesclar as padrão com as personalizadas salvas na base
+            const dbOptions = disposicoesData.map(d => (d.nome || d.name || '').toUpperCase()).filter(n => n);
+            const allOptions = [...new Set([...defaultOptions, ...dbOptions])].sort();
+            
+            let optionsHtml = '<option value="">SELECIONE...</option>';
+            allOptions.forEach(opt => {
+                optionsHtml += `<option value="${opt}">${opt}</option>`;
+            });
+            optionsHtml += '<option value="ADD_NEW" style="background-color: #fef3c7; font-weight: bold; color: #b45309;">++ ADICIONAR NOVA DISPOSIÇÃO ++</option>';
+            
+            el.innerHTML = optionsHtml;
+            
+            if (currentVal && (allOptions.includes(currentVal.toUpperCase()) || currentVal === 'ADD_NEW')) {
+                el.value = currentVal;
+            } else if (currentVal) {
+                el.innerHTML += `<option value="${currentVal}">${currentVal}</option>`;
+                el.value = currentVal;
+            }
+        }
+
+        function renderSelect(elementId, items) {
+            const el = document.getElementById(elementId);
+            if (!el) return;
+            const currentVal = el.value;
+            
+            const getBestLabel = (obj) => {
+                const label = obj.nome || obj.name || obj.processo || obj.title || obj.sector || obj.label || "";
+                return label.toString().trim().toUpperCase();
+            };
+
+            const sortedItems = items
+                .filter(i => getBestLabel(i) !== "")
+                .sort((a,b) => getBestLabel(a).localeCompare(getBestLabel(b)));
+
+            let optionsHtml = '<option value="">SELECIONE...</option>';
+            
+            optionsHtml += sortedItems.map(i => {
+                const label = getBestLabel(i);
+                return `<option value="${label}">${label}</option>`;
+            }).join('');
+
+            if (elementId === 'nc-cliente') {
+                optionsHtml += '<option value="ADD_NEW" style="background-color: #fef3c7; font-weight: bold;">++ ADICIONAR NOVO CLIENTE ++</option>';
+            } else if (elementId === 'nc-titulo') {
+                optionsHtml += '<option value="ADD_NEW" style="background-color: #fef3c7; font-weight: bold;">++ ADICIONAR NOVO TÍTULO ++</option>';
+            }
+
+            el.innerHTML = optionsHtml;
+            
+            if (currentVal && (sortedItems.some(i => getBestLabel(i) === currentVal.toUpperCase()) || currentVal === 'ADD_NEW')) {
+                el.value = currentVal;
+            }
+        }
+
+        function handleDropdownSelectChange(select, fieldId) {
+            if (select.value === 'ADD_NEW') {
+                if (fieldId === 'nc-cliente') handleAddCliente();
+                else if (fieldId === 'nc-titulo') handleAddTitle();
+                else if (fieldId === 'nc-tipo-disp') handleAddDisposicao();
+                select.value = ""; 
+            }
+        }
+
+        async function handleAddDisposicao() {
+            const { value: novaDisp } = await Swal.fire({
+                title: 'Nova Disposição / Ação',
+                input: 'text',
+                inputLabel: 'Descreva a nova opção de disposição',
+                inputPlaceholder: 'Ex: SEGREGAÇÃO ESPECIAL',
+                showCancelButton: true,
+                confirmButtonColor: '#d97706',
+                cancelButtonText: 'Cancelar'
+            });
+
+            if (novaDisp && novaDisp.trim() !== "") {
+                const uppercaseName = novaDisp.trim().toUpperCase();
+                const defaultOptions = ["RETRABALHO / REPARAÇÃO", "RECLASSIFICAÇÃO (ACEITAÇÃO COM CONCESSÃO)", "SUCATA / REFUGO", "DEVOLUÇÃO AO FORNECEDOR"];
+                
+                if (defaultOptions.includes(uppercaseName) || disposicoesData.some(d => (d.nome || d.name || "").toUpperCase() === uppercaseName)) {
+                    return Swal.fire('Aviso', 'Esta disposição já existe na lista.', 'warning');
+                }
+                try {
+                    await db.collection("disposicoes").add({ nome: uppercaseName });
+                    Swal.fire({ title: 'Sucesso!', text: 'Nova disposição cadastrada.', icon: 'success', timer: 1500, showConfirmButton: false });
+                    setTimeout(() => { document.getElementById('nc-tipo-disp').value = uppercaseName; }, 500);
+                } catch (error) { Swal.fire('Erro', 'Falha ao salvar a disposição.', 'error'); }
+            }
+        }
+
+        async function handleAddCliente() {
+            const { value: novoNome } = await Swal.fire({
+                title: 'Novo Cliente',
+                input: 'text',
+                inputLabel: 'Nome do novo cliente',
+                inputPlaceholder: 'Digite o nome...',
+                showCancelButton: true,
+                confirmButtonColor: '#d97706',
+                cancelButtonText: 'Cancelar'
+            });
+
+            if (novoNome && novoNome.trim() !== "") {
+                const uppercaseName = novoNome.trim().toUpperCase();
+                if (clientesData.some(c => (c.nome || c.name || "").toUpperCase() === uppercaseName)) {
+                    return Swal.fire('Aviso', 'Este cliente já está cadastrado.', 'warning');
+                }
+                try {
+                    await db.collection("clientes").add({ nome: uppercaseName });
+                    Swal.fire({ title: 'Sucesso!', text: 'Cliente cadastrado.', icon: 'success', timer: 1500, showConfirmButton: false });
+                    setTimeout(() => { document.getElementById('nc-cliente').value = uppercaseName; }, 500);
+                } catch (error) { Swal.fire('Erro', 'Falha ao salvar cliente.', 'error'); }
+            }
+        }
+
+        async function handleAddTitle() {
+            const { value: novoTitulo } = await Swal.fire({
+                title: 'Novo Título de Ocorrência',
+                input: 'text',
+                inputLabel: 'Descreva um resumo curto e padrão',
+                inputPlaceholder: 'Ex: PEÇAS FORA DA TOLERÂNCIA',
+                showCancelButton: true,
+                confirmButtonColor: '#d97706',
+                cancelButtonText: 'Cancelar'
+            });
+
+            if (novoTitulo && novoTitulo.trim() !== "") {
+                const uppercaseTitle = novoTitulo.trim().toUpperCase();
+                if (titulosData.some(t => (t.nome || t.title || "").toUpperCase() === uppercaseTitle)) {
+                    return Swal.fire('Aviso', 'Este título já existe na lista.', 'warning');
+                }
+                try {
+                    await db.collection("titulos").add({ nome: uppercaseTitle });
+                    Swal.fire({ title: 'Sucesso!', text: 'Título cadastrado.', icon: 'success', timer: 1500, showConfirmButton: false });
+                    setTimeout(() => { document.getElementById('nc-titulo').value = uppercaseTitle; }, 500);
+                } catch (error) { Swal.fire('Erro', 'Falha ao salvar título.', 'error'); }
+            }
+        }
+
+        function checkEditMode() {
+            const params = new URLSearchParams(window.location.search);
+            const editId = params.get('edit');
+            const tab = params.get('tab') || 'nc';
+            
+            switchTab(tab); // Força a aba correta com base no link recebido
+            
+            if (editId) {
+                db.collection("ocorrencias").doc(editId).get().then(doc => {
+                    if (doc.exists) {
+                        const data = doc.data();
+                        
+                        // Mostra Botões de Excluir apenas em edição
+                        const btnDelNc = document.getElementById('btn-delete-nc');
+                        if(btnDelNc) { btnDelNc.classList.remove('hidden'); btnDelNc.classList.add('flex'); }
+
+                        // ----------------------------------------------------
+                        // PREENCHIMENTO OBRIGATÓRIO DE AMBAS AS ABAS (NC + AC)
+                        // ----------------------------------------------------
+                        
+                        // ABA 8.7 (NC)
+                        document.getElementById('nc-id').value = doc.id;
+                        document.getElementById('nc-codigo').value = data.id || data.codigo || '';
+                        document.getElementById('nc-origem').value = data.origem || 'PROCESSO INTERNO';
+                        document.getElementById('nc-data').value = data.dataOcorrencia || data.dataAbertura || '';
+                        document.getElementById('nc-referencia').value = data.referencia || '';
+                        document.getElementById('nc-necessita-rnc').value = data.necessitaRNC || 'NÃO AVALIADO';
+                        document.getElementById('nc-produto').value = data.produto || '';
+                        document.getElementById('nc-descricao').value = data.descricao || '';
+                        document.getElementById('nc-tipo-disp').value = (data.disposicao || data.disposicaoTipo || "").toUpperCase();
+                        document.getElementById('nc-detalhe-disp').value = data.acaoImediata || data.disposicaoDetalhe || '';
+                        document.getElementById('nc-custo').value = data.custo || '';
+
+                        // Mostra visualmente o ID da RNC vinculada se ela existir e estivermos na aba NC
+                        const rncDisplay = document.getElementById('rnc-number-display');
+                        const rncInfo = document.getElementById('rnc-info-text');
+                        if (rncDisplay && rncInfo) {
+                            if (data.rncId) {
+                                rncDisplay.classList.remove('hidden');
+                                rncInfo.classList.add('hidden');
+                                document.getElementById('rnc-id-text').innerText = data.rncId;
+                            } else {
+                                rncDisplay.classList.add('hidden');
+                                rncInfo.classList.remove('hidden');
+                            }
+                        }
+
+                        // ABA 10.2 (AC)
+                        document.getElementById('ac-data').value = data.rncDataRiscos || data.dataOcorrencia || data.dataAbertura || '';
+                        document.getElementById('ac-titulo').value = data.titulo || '';
+                        document.getElementById('ac-causa').value = data.rncCausaRaiz || '';
+                        
+                        // Ferramentas de Qualidade (Ishikawa e 5 Porquês)
+                        document.getElementById('ac-metodo').value = data.rncMetodo || '';
+                        document.getElementById('ac-maquina').value = data.rncMaquina || '';
+                        document.getElementById('ac-medida').value = data.rncMedida || '';
+                        document.getElementById('ac-meioambiente').value = data.rncMeioAmbiente || '';
+                        document.getElementById('ac-maodeobra').value = data.rncMaoDeObra || '';
+                        document.getElementById('ac-material').value = data.rncMaterial || '';
+                        document.getElementById('ac-pq1').value = data.rncPq1 || '';
+                        document.getElementById('ac-pq2').value = data.rncPq2 || '';
+                        document.getElementById('ac-pq3').value = data.rncPq3 || '';
+                        document.getElementById('ac-pq4').value = data.rncPq4 || '';
+                        document.getElementById('ac-pq5').value = data.rncPq5 || '';
+                        
+                        // Atualiza a visibilidade dos campos dos 5 Porquês preenchidos
+                        restoreWhysVisibility();
+
+                        document.getElementById('ac-acao').value = data.rncAcaoCorretiva || '';
+                        document.getElementById('ac-prazo').value = data.rncPrevisao || '';
+
+                        // Marca um Preset para o dropdown do vínculo para garantir o auto-selecionar
+                        const acLink = document.getElementById('ac-nc-link');
+                        if (acLink) {
+                            acLink.setAttribute('data-preset-value', data.id || '');
+                        }
+
+                        // Ajuste Títulos Conforme a Aba Selecionada
+                        if (tab === 'ac') {
+                            const titleEl = document.querySelector('#form-ac h2');
+                            if(titleEl) titleEl.innerHTML = `<i data-lucide="edit" class="w-5 h-5 mr-2"></i> Edição de Ação Corretiva: ${data.rncId || 'S/C'}`;
+                        } else {
+                            const titleEl = document.getElementById('nc-form-title');
+                            if(titleEl) titleEl.innerHTML = `<i data-lucide="edit" class="w-5 h-5 mr-2"></i> Edição de Ocorrência: ${data.id || data.codigo || ''}`;
+                        }
+                        
+                        // Espera Carregar Dropdowns para aplicar os valores corretamente
+                        setTimeout(() => {
+                            if(data.area || data.setor) document.getElementById('nc-setor').value = (data.area || data.setor).toUpperCase();
+                            if(data.processo) document.getElementById('nc-processo').value = data.processo.toUpperCase();
+                            if(data.cliente) document.getElementById('nc-cliente').value = data.cliente.toUpperCase();
+                            if(data.titulo) document.getElementById('nc-titulo').value = data.titulo.toUpperCase();
+                            if(data.respDisposicao || data.responsavel) document.getElementById('nc-resp').value = (data.respDisposicao || data.responsavel).toUpperCase();
+                            if(data.rncResponsavelAcao) document.getElementById('ac-resp').value = data.rncResponsavelAcao.toUpperCase();
+                            
+                            // BLOQUEIO OBRIGATÓRIO DO CAMPO DE VÍNCULO SE ELE ESTIVER NA ABA RNC
+                            if (acLink) {
+                                acLink.value = data.id || '';
+                                acLink.disabled = true; // Trava o campo na edição
+                                acLink.classList.add('bg-gray-100', 'cursor-not-allowed', 'opacity-80');
+                                handleROSelect(acLink); // Auto-preenche o título correspondente
+                            }
+                        }, 1200);
+
+                        if(window.lucide) window.lucide.createIcons();
+                    }
+                });
+            }
+        }
+
+        function switchTab(tab) {
+            const formNC = document.getElementById('form-nc');
+            const formAC = document.getElementById('form-ac');
+            const btnNC = document.getElementById('tab-nc');
+            const btnAC = document.getElementById('tab-ac');
+            if(tab === 'nc') {
+                formNC.classList.remove('hidden'); formAC.classList.add('hidden');
+                btnNC.className = "flex-1 py-3 text-sm font-bold rounded-lg transition-all bg-amber-50 text-amber-700 border border-amber-200 shadow-sm uppercase";
+                btnAC.className = "flex-1 py-3 text-sm font-bold rounded-lg transition-all text-gray-500 hover:bg-gray-50 ml-2 border border-transparent uppercase";
+            } else {
+                formAC.classList.remove('hidden'); formNC.classList.add('hidden');
+                btnAC.className = "flex-1 py-3 text-sm font-bold rounded-lg transition-all bg-emerald-50 text-emerald-700 border border-emerald-200 shadow-sm ml-2 uppercase";
+                btnAC.className = "flex-1 py-3 text-sm font-bold rounded-lg transition-all text-gray-500 hover:bg-gray-50 border border-transparent uppercase";
+            }
+        }
+
+        // Sistema Inteligente de Geração Sequencial corrigido
+        async function generateSequentialId(prefix) {
+            const year = new Date().getFullYear();
+            const yearPrefix = `${prefix}-${year}-`;
+            
+            try {
+                const snapshot = await db.collection("ocorrencias").get();
+                let numbers = [];
+
+                snapshot.docs.forEach(doc => {
+                    const data = doc.data();
+                    const idToCheck = prefix === 'RO' ? data.id : data.rncId;
+                    
+                    if (idToCheck && typeof idToCheck === 'string' && idToCheck.startsWith(yearPrefix)) {
+                        const parts = idToCheck.split('-');
+                        const num = parseInt(parts[parts.length - 1], 10);
+                        if (!isNaN(num)) {
+                            numbers.push(num);
+                        }
+                    }
+                });
+
+                if (snapshot.docs.length < 80) {
+                    numbers = numbers.filter(n => n < 100);
+                }
+
+                if (numbers.length === 0) return `${yearPrefix}001`;
+
+                const maxNum = Math.max(...numbers);
+                return `${yearPrefix}${(maxNum + 1).toString().padStart(3, '0')}`;
+            } catch (error) {
+                console.error("Erro ao gerar ID:", error);
+                return `${yearPrefix}${Math.floor(Math.random() * 900) + 100}`;
+            }
+        }
+
+        async function saveNC(event) {
+            event.preventDefault();
+            if (!currentUser) return;
+            
+            const editId = document.getElementById('nc-id').value;
+            let ncCode = document.getElementById('nc-codigo').value;
+
+            const data = {
+                tipo: 'NC',
+                origem: document.getElementById('nc-origem').value.toUpperCase(),
+                dataOcorrencia: document.getElementById('nc-data').value,
+                referencia: document.getElementById('nc-referencia').value.toUpperCase(),
+                area: document.getElementById('nc-setor').value.toUpperCase(),
+                processo: document.getElementById('nc-processo').value.toUpperCase(),
+                cliente: document.getElementById('nc-cliente').value.toUpperCase(),
+                produto: document.getElementById('nc-produto').value.toUpperCase(),
+                titulo: document.getElementById('nc-titulo').value.toUpperCase(),
+                descricao: document.getElementById('nc-descricao').value.toUpperCase(),
+                disposicao: document.getElementById('nc-tipo-disp').value.toUpperCase(),
+                acaoImediata: document.getElementById('nc-detalhe-disp').value.toUpperCase(),
+                respDisposicao: document.getElementById('nc-resp').value.toUpperCase(),
+                custo: document.getElementById('nc-custo').value || 0,
+                necessitaRNC: document.getElementById('nc-necessita-rnc').value.toUpperCase(),
+                atualizadoPor: currentUser.email || 'Sistema',
+                timestamp: new Date().toISOString()
+            };
+
+            try {
+                Swal.fire({ title: 'A gravar...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+                
+                const fileInput = document.getElementById('nc-anexos');
+                if (fileInput && fileInput.files.length > 0) {
+                    const file = fileInput.files[0];
+                    const storageRef = storage.ref(`anexos_ocorrencias/${Date.now()}_${file.name}`);
+                    await storageRef.put(file);
+                    data.anexos = await storageRef.getDownloadURL();
+                }
+
+                let acGeneratedMessage = "";
+                let redirecionarParaAc = false;
+
+                if (editId) {
+                    const existingDoc = await db.collection("ocorrencias").doc(editId).get();
+                    const existingData = existingDoc.exists ? existingDoc.data() : {};
+                    
+                    // Unifica RNC ao documento se necessário e marca para redirecionamento
+                    if (data.necessitaRNC === 'SIM' && !existingData.rncId) {
+                        data.rncId = await generateSequentialId('RNC');
+                        data.rncStatusAcao = 'PENDENTE';
+                        data.rncRiscoPotencial = 'NÃO';
+                        data.rncAtualizarRiscos = 'NÃO';
+                        data.rncResponsavelRiscos = '';
+                        data.rncDataRiscos = '';
+                        data.rncMetodo = ''; data.rncMaquina = ''; data.rncMedida = '';
+                        data.rncMeioAmbiente = ''; data.rncMaoDeObra = ''; data.rncMaterial = '';
+                        data.rncPq1 = ''; data.rncPq2 = ''; data.rncPq3 = ''; data.rncPq4 = ''; data.rncPq5 = '';
+                        data.rncCausaRaiz = '';
+                        data.rncAcaoCorretiva = '';
+                        acGeneratedMessage = `\nUma RNC (${data.rncId}) foi gerada. Vai ser encaminhado para preenchê-la.`;
+                        redirecionarParaAc = true;
+                    } else if (data.necessitaRNC !== 'SIM' && existingData.rncId) {
+                        data.rncId = ''; 
+                    }
+
+                    await db.collection("ocorrencias").doc(editId).update(data);
+                    
+                    if (redirecionarParaAc) {
+                        Swal.fire('Sucesso!', 'Registo atualizado com sucesso.' + acGeneratedMessage, 'success').then(() => { navigateTo(`oco_formularios.html?edit=${editId}&tab=ac`); });
+                    } else {
+                        Swal.fire('Sucesso!', 'Registo atualizado com sucesso.', 'success').then(() => { navigateTo('oco_painel_8.7.html'); });
+                    }
+                } else {
+                    ncCode = await generateSequentialId('RO');
+                    data.id = ncCode;
+                    data.status = 'ABERTO';
+                    data.dataCriacao = new Date().toISOString();
+                    data.criadoPor = currentUser.email || 'Sistema';
+
+                    let newDocRef;
+
+                    if (data.necessitaRNC === 'SIM') {
+                        data.rncId = await generateSequentialId('RNC');
+                        data.rncStatusAcao = 'PENDENTE';
+                        data.rncRiscoPotencial = 'NÃO';
+                        data.rncAtualizarRiscos = 'NÃO';
+                        data.rncResponsavelRiscos = '';
+                        data.rncDataRiscos = '';
+                        data.rncMetodo = ''; data.rncMaquina = ''; data.rncMedida = '';
+                        data.rncMeioAmbiente = ''; data.rncMaoDeObra = ''; data.rncMaterial = '';
+                        data.rncPq1 = ''; data.rncPq2 = ''; data.rncPq3 = ''; data.rncPq4 = ''; data.rncPq5 = '';
+                        data.rncCausaRaiz = '';
+                        data.rncAcaoCorretiva = '';
+                        acGeneratedMessage = `\nUma RNC (${data.rncId}) foi gerada. Vai ser encaminhado para preenchê-la.`;
+                        redirecionarParaAc = true;
+                    } else {
+                        data.rncId = '';
+                    }
+
+                    newDocRef = await db.collection("ocorrencias").add(data);
+                    
+                    if (redirecionarParaAc) {
+                        Swal.fire('Sucesso!', `Não Conformidade registada: ${data.id}` + acGeneratedMessage, 'success').then(() => { navigateTo(`oco_formularios.html?edit=${newDocRef.id}&tab=ac`); });
+                    } else {
+                        Swal.fire('Sucesso!', `Não Conformidade registada: ${data.id}`, 'success').then(() => { navigateTo('oco_painel_8.7.html'); });
+                    }
+                }
+            } catch (error) { 
+                console.error(error); 
+                Swal.fire('Erro', 'Falha ao gravar. Tente novamente.', 'error'); 
+            }
+        }
+
+        async function deleteNC() {
+            const editId = document.getElementById('nc-id').value;
+            if (!editId) return;
+
+            const result = await Swal.fire({
+                title: 'Excluir Ocorrência?',
+                text: "Esta ação é irreversível e removerá este registo da base de dados.",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#94a3b8',
+                confirmButtonText: 'Sim, excluir!',
+                cancelButtonText: 'Cancelar'
+            });
+
+            if (result.isConfirmed) {
+                try {
+                    Swal.fire({ title: 'A excluir...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+                    await db.collection("ocorrencias").doc(editId).delete();
+                    Swal.fire('Excluído!', 'A ocorrência foi removida permanentemente.', 'success').then(() => {
+                        navigateTo('oco_painel_8.7.html');
+                    });
+                } catch (err) {
+                    console.error(err);
+                    Swal.fire('Erro', 'Ocorreu um problema ao excluir o registo.', 'error');
+                }
+            }
+        }
+
+        async function saveAC(event) {
+            event.preventDefault();
+            // Acede ao valor do select bloqueado diretamente, sem perigo de erros
+            const roVinculado = document.getElementById('ac-nc-link').value.toUpperCase().trim();
+            
+            if (!roVinculado) {
+                return Swal.fire('Atenção', 'É obrigatório selecionar uma Ocorrência (RO) existente para registar a Ação Corretiva.', 'warning');
+            }
+
+            try {
+                Swal.fire({ title: 'A gravar...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+                
+                const targetNC = allOcorrencias.find(o => o.id === roVinculado || o.codigo === roVinculado);
+                if (!targetNC) {
+                    return Swal.fire('Erro', `A ocorrência ${roVinculado} não foi encontrada no sistema.`, 'error');
+                }
+                
+                let novoRncId = targetNC.rncId;
+                if (!novoRncId) novoRncId = await generateSequentialId('RNC');
+
+                const acData = {
+                    necessitaRNC: 'SIM',
+                    rncId: novoRncId,
+                    rncDataRiscos: document.getElementById('ac-data').value,
+                    
+                    // Ferramentas de Análise
+                    rncMetodo: document.getElementById('ac-metodo').value.toUpperCase(),
+                    rncMaquina: document.getElementById('ac-maquina').value.toUpperCase(),
+                    rncMedida: document.getElementById('ac-medida').value.toUpperCase(),
+                    rncMeioAmbiente: document.getElementById('ac-meioambiente').value.toUpperCase(),
+                    rncMaoDeObra: document.getElementById('ac-maodeobra').value.toUpperCase(),
+                    rncMaterial: document.getElementById('ac-material').value.toUpperCase(),
+                    rncPq1: document.getElementById('ac-pq1').value.toUpperCase(),
+                    rncPq2: document.getElementById('ac-pq2').value.toUpperCase(),
+                    rncPq3: document.getElementById('ac-pq3').value.toUpperCase(),
+                    rncPq4: document.getElementById('ac-pq4').value.toUpperCase(),
+                    rncPq5: document.getElementById('ac-pq5').value.toUpperCase(),
+                    
+                    rncCausaRaiz: document.getElementById('ac-causa').value.toUpperCase(),
+                    rncAcaoCorretiva: document.getElementById('ac-acao').value.toUpperCase(),
+                    rncResponsavelAcao: document.getElementById('ac-resp').value.toUpperCase(),
+                    rncPrevisao: document.getElementById('ac-prazo').value,
+                    rncStatusAcao: document.querySelector('#form-ac select[name="rncStatusAcao"]')?.value || 'EM ANDAMENTO', // Pega o status se existir no form, senao default
+                    timestamp: new Date().toISOString()
+                };
+
+                await db.collection("ocorrencias").doc(targetNC.idDb).update(acData);
+                Swal.fire('Sucesso!', `Ação Corretiva ${novoRncId} vinculada à ocorrência ${roVinculado}.`, 'success').then(() => { navigateTo('oco_painel_10.2.html'); });
+            } catch (error) { 
+                console.error(error); 
+                Swal.fire('Erro', 'Falha ao gravar a ação corretiva.', 'error'); 
+            }
+        }
+
+        auth.onAuthStateChanged((user) => { 
+            if (user) { 
+                currentUser = user; 
+                document.getElementById('user-avatar').innerText = user.email ? user.email.charAt(0).toUpperCase() : 'U'; 
+                loadDropdowns(); checkEditMode();
+                if(window.lucide) window.lucide.createIcons();
+            } else {
+                auth.signInAnonymously().then(() => { currentUser = { email: 'Local' }; loadDropdowns(); checkEditMode(); }); 
+            }
+        });
+    </script>
+</body>
+</html>
