@@ -6,8 +6,14 @@
     <title>Sistema de Gestão de Calibração - ISO 9001</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- FontAwesome para Ícones -->
+    <!-- FontAwesome para Ícones (Conteúdo Interno) -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Lucide Icons para Menu Unificado -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Chart.js para os gráficos -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
+    
     <script>
         tailwind.config = {
             theme: {
@@ -18,7 +24,18 @@
                 }
             }
         }
+
+        // Função de navegação segura para os links do menu
+        function navigateTo(url) {
+            if (window.location.protocol === 'blob:' || window.location.origin === 'null') {
+                alert(`Navegação Simulada: O redirecionamento para ${url} funcionará no seu servidor real.`);
+            } else {
+                try { window.location.href = url; } catch (e) { console.warn("Erro de navegação:", e); }
+            }
+        }
+        function showDevInfo() { alert('Módulo de Calibração em operação. Acompanhamento ISO 9001 (Req 7.1.5).'); }
     </script>
+    
     <style>
         /* Estilos personalizados para scrollbar e transições */
         ::-webkit-scrollbar { width: 8px; height: 8px; }
@@ -30,58 +47,107 @@
         
         /* Forçar caixa alta em inputs de texto e textareas visualmente */
         input[type="text"], textarea { text-transform: uppercase; }
+        
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #f8fafc; border-radius: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
     </style>
 </head>
 <body class="bg-gray-50 text-gray-800 font-sans min-h-screen flex flex-col uppercase">
 
-    <!-- Header/Navbar -->
-    <header class="bg-isoBlue text-white shadow-md">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
-            <div class="flex items-center gap-3">
-                <i class="fa-solid fa-ruler-combined text-2xl"></i>
-                <div>
-                    <h1 class="text-xl font-bold tracking-wide">MetroGestão ISO 9001</h1>
-                    <p class="text-xs text-blue-200">Controle de Patrimônio e Calibração</p>
+    <!-- ========================================================================= -->
+    <!-- MENU PADRÃO SGQ UNIFICADO -->
+    <!-- ========================================================================= -->
+    <header class="bg-white shadow-sm z-40 sticky top-0 print:hidden">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <!-- Logotipo / Título Dinâmico do Menu -->
+                <div class="flex items-center flex-1">
+                    <div class="flex-shrink-0 flex items-center mr-6" id="menu-logo-container">
+                        <div class="p-2 bg-amber-100 rounded-lg mr-3"><i data-lucide="scale" class="w-6 h-6 text-amber-700"></i></div>
+                        <h1 class="text-xl font-bold text-gray-800">SGQ <span class="text-amber-600">Calibração</span></h1>
+                    </div>
+                    
+                    <!-- Desktop Menu -->
+                    <nav class="hidden lg:flex space-x-2 h-full">
+                        <div class="relative flex items-center h-full">
+                            <button onclick="switchTab('dashboard')" id="nav-dashboard" class="inline-flex items-center px-3 h-full border-b-2 border-amber-600 text-sm font-bold text-amber-700 bg-amber-50 transition-colors focus:outline-none uppercase">Dashboard</button>
+                        </div>
+                        <div class="relative flex items-center h-full">
+                            <button onclick="switchTab('cadastro')" id="nav-cadastro" class="inline-flex items-center px-3 h-full border-b-2 border-transparent text-sm font-medium text-gray-500 hover:text-amber-600 transition-colors focus:outline-none uppercase">Cadastro</button>
+                        </div>
+                        <div class="relative flex items-center h-full">
+                            <button onclick="switchTab('calibracao')" id="nav-calibracao" class="inline-flex items-center px-3 h-full border-b-2 border-transparent text-sm font-medium text-gray-500 hover:text-amber-600 transition-colors focus:outline-none uppercase">Calibração</button>
+                        </div>
+                        <div class="relative flex items-center h-full">
+                            <button onclick="switchTab('historico')" id="nav-historico" class="inline-flex items-center px-3 h-full border-b-2 border-transparent text-sm font-medium text-gray-500 hover:text-amber-600 transition-colors focus:outline-none uppercase">Histórico</button>
+                        </div>
+                        <div class="relative flex items-center h-full">
+                            <button onclick="switchTab('manutencao')" id="nav-manutencao" class="inline-flex items-center px-3 h-full border-b-2 border-transparent text-sm font-medium text-gray-500 hover:text-amber-600 transition-colors focus:outline-none uppercase">Manutenção</button>
+                        </div>
+                        <div class="relative flex items-center h-full">
+                            <button onclick="switchTab('logs')" id="nav-logs" class="inline-flex items-center px-3 h-full border-b-2 border-transparent text-sm font-medium text-gray-500 hover:text-amber-600 transition-colors focus:outline-none uppercase">Logs</button>
+                        </div>
+
+                        <!-- Menu Aplicativos Externos -->
+                        <div class="relative group h-full flex items-center ml-4">
+                            <button class="inline-flex items-center px-2 h-full border-b-2 border-transparent text-sm font-medium text-gray-500 hover:text-indigo-600 transition-colors focus:outline-none uppercase">
+                                Aplicativos <i data-lucide="layout-grid" class="w-4 h-4 ml-1"></i>
+                            </button>
+                            <div class="absolute right-0 top-16 w-64 bg-white border border-gray-200 rounded-b-lg shadow-xl hidden group-hover:block transition-all z-50">
+                                <div class="px-4 py-2 text-[10px] font-black text-indigo-500 uppercase tracking-widest bg-indigo-50 border-b border-indigo-100">Outros Sistemas</div>
+                                <a href="#" onclick="navigateTo('oco_dashboard.html')" class="block px-5 py-3 text-sm font-medium text-gray-600 hover:bg-gray-50 hover:text-indigo-600 border-l-4 border-transparent transition-colors flex items-center"><i data-lucide="shield-alert" class="w-4 h-4 mr-2 text-indigo-500"></i> Gestão de Ocorrências</a>
+                                <a href="#" onclick="navigateTo('calibracao.html')" class="block px-5 py-3 text-sm font-medium text-gray-600 hover:bg-gray-50 hover:text-indigo-600 border-l-4 border-transparent transition-colors flex items-center"><i data-lucide="scale" class="w-4 h-4 mr-2 text-indigo-500"></i> Ativos e Calibração</a>
+                                <a href="#" onclick="navigateTo('Indicador.html')" class="block px-5 py-3 text-sm font-medium text-gray-600 hover:bg-gray-50 hover:text-indigo-600 border-l-4 border-transparent transition-colors flex items-center"><i data-lucide="line-chart" class="w-4 h-4 mr-2 text-indigo-500"></i> Painel de Indicadores</a>
+                                <a href="#" onclick="navigateTo('dashboard.html')" class="block px-5 py-3 text-sm font-medium text-gray-600 hover:bg-gray-50 hover:text-indigo-600 border-l-4 border-transparent transition-colors flex items-center"><i data-lucide="users" class="w-4 h-4 mr-2 text-indigo-500"></i> Gestão de Pessoas</a>
+                            </div>
+                        </div>
+                    </nav>
+                </div>
+                
+                <!-- Ações do Utilizador -->
+                <div class="flex items-center space-x-4">
+                    <a href="#" onclick="navigateTo('index.html')" class="hidden lg:inline-flex items-center px-4 py-2 border border-transparent text-sm font-bold rounded-md shadow-sm text-white bg-slate-800 hover:bg-slate-700 focus:outline-none transition-colors uppercase">
+                        <i data-lucide="arrow-left" class="w-4 h-4 mr-2"></i> PORTAL
+                    </a>
+                    <button class="text-gray-400 hover:text-gray-600 relative transition-colors" onclick="showDevInfo()"><i data-lucide="info" class="w-5 h-5"></i></button>
+                    <div class="h-8 w-8 rounded-full bg-amber-600 flex items-center justify-center text-white font-bold text-sm shadow-sm uppercase" id="user-avatar">U</div>
+                    <!-- Mobile menu button -->
+                    <button type="button" onclick="document.getElementById('mobile-menu').classList.toggle('hidden')" class="lg:hidden p-2 rounded-md text-gray-400 hover:bg-gray-100">
+                        <i data-lucide="menu" class="w-6 h-6"></i>
+                    </button>
                 </div>
             </div>
-            <div class="text-sm">
-                <i class="fa-regular fa-calendar-check mr-1"></i> <span id="currentDate"></span>
+        </div>
+        
+        <!-- Mobile Menu -->
+        <div class="hidden lg:hidden absolute w-full bg-white z-50 border-t shadow-lg max-h-[80vh] overflow-y-auto" id="mobile-menu">
+            <div class="pt-2 pb-3 space-y-1">
+                <button onclick="switchTab('dashboard'); document.getElementById('mobile-menu').classList.add('hidden')" id="mob-dashboard" class="w-full text-left block pl-6 py-3 border-l-4 border-amber-600 bg-amber-50 text-amber-700 font-bold text-sm flex items-center mb-1 uppercase">
+                    <i data-lucide="layout-dashboard" class="w-5 h-5 mr-2 text-amber-600"></i> Dashboard
+                </button>
+                <button onclick="switchTab('cadastro'); document.getElementById('mobile-menu').classList.add('hidden')" id="mob-cadastro" class="w-full text-left block pl-6 py-2 border-l-4 border-transparent text-gray-600 font-medium hover:bg-gray-50 text-sm uppercase flex items-center"><i data-lucide="file-signature" class="w-4 h-4 mr-2 text-gray-400"></i> Cadastro</button>
+                <button onclick="switchTab('calibracao'); document.getElementById('mobile-menu').classList.add('hidden')" id="mob-calibracao" class="w-full text-left block pl-6 py-2 border-l-4 border-transparent text-gray-600 font-medium hover:bg-gray-50 text-sm uppercase flex items-center"><i data-lucide="stamp" class="w-4 h-4 mr-2 text-gray-400"></i> Calibração</button>
+                <button onclick="switchTab('historico'); document.getElementById('mobile-menu').classList.add('hidden')" id="mob-historico" class="w-full text-left block pl-6 py-2 border-l-4 border-transparent text-gray-600 font-medium hover:bg-gray-50 text-sm uppercase flex items-center"><i data-lucide="clock-rotate-left" class="w-4 h-4 mr-2 text-gray-400"></i> Histórico</button>
+                <button onclick="switchTab('manutencao'); document.getElementById('mobile-menu').classList.add('hidden')" id="mob-manutencao" class="w-full text-left block pl-6 py-2 border-l-4 border-transparent text-gray-600 font-medium hover:bg-gray-50 text-sm uppercase flex items-center"><i data-lucide="wrench" class="w-4 h-4 mr-2 text-gray-400"></i> Manutenção</button>
+                <button onclick="switchTab('logs'); document.getElementById('mobile-menu').classList.add('hidden')" id="mob-logs" class="w-full text-left block pl-6 py-2 border-l-4 border-transparent text-gray-600 font-medium hover:bg-gray-50 text-sm uppercase flex items-center"><i data-lucide="list-ul" class="w-4 h-4 mr-2 text-gray-400"></i> Logs</button>
+
+                <div class="border-t border-gray-100 mt-3 pt-2">
+                    <a href="#" onclick="navigateTo('index.html')" class="block pl-6 py-3 text-white bg-slate-800 hover:bg-slate-700 font-bold uppercase"><i data-lucide="arrow-left" class="w-5 h-5 inline mr-2"></i> PORTAL</a>
+                </div>
             </div>
         </div>
     </header>
 
-    <!-- Sistema de Abas (Navegação) -->
-    <div class="bg-white border-b border-gray-200 shadow-sm sticky top-0 z-40">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <nav class="-mb-px flex space-x-8 overflow-x-auto" aria-label="Tabs">
-                <button onclick="switchTab('dashboard')" id="tab-dashboard" class="border-isoBlue text-isoBlue whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center gap-2 transition-colors duration-200 uppercase">
-                    <i class="fa-solid fa-chart-line"></i> Dashboard & Inventário
-                </button>
-                <button onclick="switchTab('cadastro')" id="tab-cadastro" class="border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center gap-2 transition-colors duration-200 uppercase">
-                    <i class="fa-solid fa-file-signature"></i> Cadastro de Equipamento
-                </button>
-                <button onclick="switchTab('calibracao')" id="tab-calibracao" class="border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center gap-2 transition-all uppercase">
-                    <i class="fa-solid fa-stamp"></i> Registrar Calibração
-                </button>
-                <button onclick="switchTab('manutencao')" id="tab-manutencao" class="border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center gap-2 transition-colors duration-200 uppercase">
-                    <i class="fa-solid fa-wrench"></i> Registrar Manutenção
-                </button>
-                <button onclick="switchTab('historico')" id="tab-historico" class="border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center gap-2 transition-colors duration-200 uppercase">
-                    <i class="fa-solid fa-clock-rotate-left"></i> Histórico
-                </button>
-                <button onclick="switchTab('logs')" id="tab-logs" class="border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center gap-2 transition-all uppercase">
-                    <i class="fa-solid fa-list-ul"></i> Log de Atividades
-                </button>
-            </nav>
-        </div>
-    </div>
+    <!-- Elemento oculto para a lógica antiga não quebrar (data) -->
+    <span id="currentDate" class="hidden"></span>
 
     <main class="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
         
         <!-- ABA 1: DASHBOARD E INVENTÁRIO -->
         <div id="view-dashboard" class="block fade-in">
             <!-- Dashboard KPIs -->
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8 print:hidden">
                 <div class="bg-white rounded-lg shadow p-5 border-l-4 border-blue-500 flex items-center justify-between">
                     <div>
                         <p class="text-sm text-gray-500 font-semibold uppercase">Total de Ativos</p>
@@ -117,13 +183,16 @@
                 <div class="bg-white rounded-lg shadow-md p-6">
                     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b pb-4 mb-4 gap-4">
                         <h2 class="text-lg font-bold text-gray-700 flex items-center gap-2 uppercase">
-                            <i class="fa-solid fa-list text-isoBlue"></i>
+                            <i class="fa-solid fa-list text-isoBlue print:hidden"></i>
                             Lista Mestra de Equipamentos
                         </h2>
                         
-                        <div class="flex flex-col sm:flex-row items-center gap-3 w-full sm:w-auto">
-                            <!-- Botões de Backup -->
+                        <div class="flex flex-col sm:flex-row items-center gap-3 w-full sm:w-auto print:hidden">
+                            <!-- Botões de Backup e Impressão -->
                             <div class="flex gap-2 w-full sm:w-auto">
+                                <button onclick="window.print()" class="bg-gray-100 text-gray-700 px-3 py-2 rounded-md hover:bg-gray-200 text-sm font-medium border border-gray-300 transition-colors w-full sm:w-auto flex justify-center items-center gap-2 uppercase" title="Imprimir Lista Mestra">
+                                    <i class="fa-solid fa-print"></i> Imprimir
+                                </button>
                                 <button onclick="exportarBackup()" class="bg-gray-100 text-gray-700 px-3 py-2 rounded-md hover:bg-gray-200 text-sm font-medium border border-gray-300 transition-colors w-full sm:w-auto flex justify-center items-center gap-2 uppercase" title="Baixar cópia do banco de dados">
                                     <i class="fa-solid fa-download"></i> Exportar
                                 </button>
@@ -151,7 +220,7 @@
                                     <th scope="col" class="px-4 py-3 text-left font-semibold text-gray-600 tracking-wider">Última Cal.</th>
                                     <th scope="col" class="px-4 py-3 text-left font-semibold text-gray-600 tracking-wider">Próxima Cal.</th>
                                     <th scope="col" class="px-4 py-3 text-center font-semibold text-gray-600 tracking-wider">Status</th>
-                                    <th scope="col" class="px-4 py-3 text-center font-semibold text-gray-600 tracking-wider">Ações</th>
+                                    <th scope="col" class="px-4 py-3 text-center font-semibold text-gray-600 tracking-wider print:hidden">Ações</th>
                                 </tr>
                             </thead>
                             <tbody id="tableBody" class="bg-white divide-y divide-gray-200">
@@ -162,9 +231,9 @@
                     
                     <!-- Empty State -->
                     <div id="emptyState" class="hidden flex flex-col items-center justify-center py-12 text-gray-500">
-                        <i class="fa-solid fa-clipboard-list text-5xl mb-4 text-gray-300"></i>
+                        <i class="fa-solid fa-clipboard-list text-5xl mb-4 text-gray-300 print:hidden"></i>
                         <p class="text-lg font-medium uppercase">Nenhum equipamento cadastrado.</p>
-                        <p class="text-sm uppercase">Vá para a aba "Cadastro de Equipamento" para registrar o primeiro.</p>
+                        <p class="text-sm uppercase print:hidden">Vá para a aba "Cadastro de Equipamento" para registrar o primeiro.</p>
                     </div>
                 </div>
             </div>
@@ -254,10 +323,10 @@
                             </select>
                         </div>
 
-                        <!-- SESSÃO DE ANEXOS -->
+                        <!-- SESSÃO DE ANEXOS DO EQUIPAMENTO -->
                         <div class="border-t border-gray-200 pt-4 mt-4 uppercase">
-                            <label class="block text-sm font-medium text-gray-700 mb-1 uppercase">Anexos (Lim. 800KB por arquivo)</label>
-                            <input type="file" id="fileAnexos" multiple onchange="processarAnexos(event)" class="text-xs uppercase" accept=".pdf,image/*">
+                            <label class="block text-sm font-medium text-gray-700 mb-1 uppercase">Anexos do Equipamento</label>
+                            <input type="file" id="fileAnexos" multiple onchange="processarAnexos(event)" class="text-xs uppercase w-full border border-gray-300 rounded p-1.5 bg-white" accept=".pdf,image/*">
                             <div id="listaAnexosForm" class="mt-2 space-y-1"></div>
                         </div>
 
@@ -269,9 +338,15 @@
                         </div>
 
                         <div id="calibracaoFields" class="space-y-4 bg-gray-50 p-4 rounded-md border border-gray-200 transition-opacity">
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1 uppercase">Frequência (Meses) *</label>
-                                <input type="number" id="frequencia" min="1" max="120" value="12" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-isoBlue/20">
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1 uppercase">Frequência (Meses) *</label>
+                                    <input type="number" id="frequencia" min="1" max="120" value="12" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-isoBlue/20">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1 uppercase text-blue-800" title="Para avaliar em porcentagem, adicione o sinal %. Ex: 3%">Critério Aceitação (EMA)</label>
+                                    <input type="text" id="erroMaximo" class="w-full border border-blue-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-isoBlue/20 bg-white uppercase" placeholder="Ex: 0.05 mm ou 3%">
+                                </div>
                             </div>
                         </div>
 
@@ -286,20 +361,101 @@
 
         <!-- ABA 3: LANÇAMENTO DE CALIBRAÇÃO -->
         <div id="view-calibracao" class="hidden fade-in">
-            <div class="max-w-xl mx-auto bg-white rounded-lg shadow-md p-6 uppercase">
-                <h2 class="text-lg font-bold border-b pb-2 mb-4 text-gray-700 uppercase">Lançar Nova Calibração</h2>
-                <form id="calibracaoForm" class="space-y-4 uppercase">
-                    <select id="selectEquipamentoCal" required class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-isoBlue/20 bg-white uppercase"></select>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 uppercase">
-                        <input type="date" id="novaDataCal" required class="border border-gray-300 rounded-md px-3 py-2 w-full outline-none">
-                        <input type="text" id="novoCertificado" required placeholder="Nº CERTIFICADO" class="border border-gray-300 rounded-md px-3 py-2 w-full outline-none uppercase">
+            <div class="max-w-4xl mx-auto bg-white rounded-lg shadow-md p-6 uppercase">
+                <h2 class="text-lg font-bold border-b pb-2 mb-4 text-gray-700 uppercase" id="calibracaoTitle">Lançar Nova Calibração</h2>
+                <form id="calibracaoForm" class="space-y-5 uppercase">
+                    <!-- Campo oculto para controlo de Edição -->
+                    <input type="hidden" id="calibracaoEditOriginal" value="">
+
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 mb-1">Selecione o Instrumento</label>
+                        <select id="selectEquipamentoCal" onchange="carregarCriterioEquipamento()" required class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-isoBlue/20 bg-white uppercase"></select>
                     </div>
-                    <button type="submit" class="w-full bg-green-600 text-white py-3 rounded font-bold shadow hover:bg-green-700 uppercase transition-all">Confirmar Registro</button>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 uppercase">
+                        <div>
+                            <label class="block text-xs font-bold text-gray-500 mb-1">Data da Calibração</label>
+                            <input type="date" id="novaDataCal" required class="border border-gray-300 rounded-md px-3 py-2 w-full outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-gray-500 mb-1">Nº do Certificado</label>
+                            <input type="text" id="novoCertificado" required placeholder="Ex: CAL-2026-001" class="border border-gray-300 rounded-md px-3 py-2 w-full outline-none uppercase">
+                        </div>
+                    </div>
+
+                    <!-- CAIXA DE CÁLCULO DE RESULTADO DA CALIBRAÇÃO COM MÚLTIPLAS MEDIDAS -->
+                    <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 space-y-4">
+                        <div class="flex justify-between items-center border-b border-blue-200 pb-2">
+                            <h3 class="text-sm font-bold text-isoBlue"><i class="fa-solid fa-calculator mr-2"></i> Avaliação do Certificado (Erro + Incerteza)</h3>
+                            <button type="button" onclick="adicionarLinhaMedicao()" class="bg-blue-100 text-isoBlue px-3 py-1 rounded text-[10px] font-bold hover:bg-blue-200 transition-colors uppercase shadow-sm"><i class="fa-solid fa-plus mr-1"></i> Adicionar Medida</button>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-[10px] font-bold text-blue-800 mb-1">Critério de Aceitação Global (EMA)</label>
+                            <input type="text" id="calCriterioEMA" readonly class="w-full md:w-1/3 border border-blue-200 bg-blue-100/50 rounded-md px-3 py-2 outline-none text-gray-600 font-bold" placeholder="Auto">
+                        </div>
+
+                        <!-- Container das Medidas Dinâmicas -->
+                        <div class="bg-white p-3 rounded border border-blue-100 shadow-sm">
+                            <div class="flex items-center gap-2 mb-2 px-1 border-b border-gray-100 pb-2">
+                                <div class="flex-1 text-[9px] font-bold text-gray-500 uppercase">Ponto (VVC)</div>
+                                <div class="flex-1 text-[9px] font-bold text-gray-500 uppercase">Valor Medido</div>
+                                <div class="flex-1 text-[9px] font-bold text-gray-500 uppercase">Incerteza (U)</div>
+                                <div class="w-16 sm:w-20 text-[9px] font-bold text-gray-500 uppercase text-center" title="Módulo do Erro somado com a Incerteza">|E| + U</div>
+                                <div class="w-16 sm:w-20 text-[9px] font-bold text-gray-500 uppercase text-center" title="Erro em Porcentagem">Erro %</div>
+                                <div class="w-6"></div>
+                            </div>
+                            <div id="medidasContainer" class="space-y-2 max-h-64 overflow-y-auto custom-scrollbar pr-1">
+                                <!-- Linhas inseridas via JS -->
+                            </div>
+                        </div>
+
+                        <!-- Resumo e Status Final -->
+                        <div class="flex items-center gap-4 bg-white p-3 rounded border border-blue-100 shadow-sm mt-4">
+                            <div class="flex-1">
+                                <span class="block text-[10px] font-bold text-gray-500">Pior Caso Encontrado</span>
+                                <input type="text" id="calResultadoSoma" readonly class="w-full bg-transparent border-none text-lg font-black text-gray-700 p-0 outline-none" placeholder="0.00">
+                            </div>
+                            <div class="w-px h-10 bg-gray-200"></div>
+                            <div class="flex-1 text-center">
+                                <span class="block text-[10px] font-bold text-gray-500 mb-1">Status Final do Equipamento</span>
+                                <div id="calBadgeStatus" class="inline-block px-4 py-1.5 rounded text-xs font-black bg-gray-100 text-gray-400 border border-gray-200 w-full text-center">AGUARDANDO DADOS</div>
+                                <input type="hidden" id="calStatusFinal" value="">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- SESSÃO DE ANEXOS DA CALIBRAÇÃO -->
+                    <div class="border-t border-blue-200 pt-4 mt-4 uppercase">
+                        <label class="block text-[10px] font-bold text-blue-800 mb-1 uppercase">Anexos do Certificado</label>
+                        <input type="file" id="fileAnexosCal" multiple onchange="processarAnexosCalibracao(event)" class="text-xs uppercase w-full bg-white border border-blue-200 rounded p-1.5" accept=".pdf,image/*">
+                        <div id="listaAnexosCalForm" class="mt-2 space-y-1"></div>
+                    </div>
+
+                    <div class="flex gap-3">
+                        <button type="submit" class="w-full bg-green-600 text-white py-3 rounded font-bold shadow hover:bg-green-700 uppercase transition-all">Registrar Avaliação e Calibração</button>
+                    </div>
                 </form>
             </div>
         </div>
 
-        <div id="view-historico" class="hidden fade-in text-center py-20 text-gray-400 font-bold uppercase">Consulte os itens através da Lista Mestra.</div>
+        <!-- ABA 4: HISTÓRICO DE CALIBRAÇÕES -->
+        <div id="view-historico" class="hidden fade-in">
+            <div class="max-w-4xl mx-auto bg-white rounded-lg shadow-md p-6 uppercase">
+                <h2 class="text-lg font-bold border-b pb-2 mb-4 text-gray-700 flex items-center gap-2 uppercase">
+                    <i class="fa-solid fa-clock-rotate-left text-isoBlue"></i> Histórico de Calibrações
+                </h2>
+                <div class="mb-6">
+                    <label class="block text-xs font-bold text-gray-500 mb-1">Selecione o Instrumento para Consultar</label>
+                    <select id="selectEquipamentoHist" onchange="renderHistoricoEquipamento()" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-isoBlue/20 bg-white uppercase"></select>
+                </div>
+                <div id="historicoContainer" class="space-y-4">
+                    <p class="text-center text-gray-400 py-10 font-bold uppercase">SELECIONE UM EQUIPAMENTO ACIMA PARA CONSULTAR O HISTÓRICO.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- ABA DE MANUTENÇÃO (RESERVADA) -->
         <div id="view-manutencao" class="hidden fade-in text-center py-20 text-gray-400 font-bold uppercase">Módulo de Manutenção Reservado.</div>
 
     </main>
@@ -316,7 +472,7 @@
         </div>
     </div>
 
-    <footer class="bg-gray-800 text-gray-400 py-6 text-center text-[10px] font-bold uppercase mt-auto uppercase">
+    <footer class="bg-gray-800 text-gray-400 py-6 text-center text-[10px] font-bold uppercase mt-auto uppercase print:hidden">
         &copy; 2026 REVIMAQ - Controle de Monitoramento e Medição (ISO 9001:2015)
     </footer>
 
@@ -334,12 +490,17 @@
 
         let ativos = [], logs = [], db, userId, appId = 'gestao-de-pessoas-49200';
         let anexosPendentes = [];
+        let anexosCalibracaoPendentes = [];
+
+        // Permissões
+        let state = { roles: [], employees: [] };
+        let userPermissions = {};
 
         async function init() {
             try {
                 const { initializeApp } = await import("https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js");
                 const { getAuth, signInAnonymously, onAuthStateChanged } = await import("https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js");
-                const { getFirestore, doc, onSnapshot, setDoc } = await import("https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js");
+                const { getFirestore, doc, collection, onSnapshot, setDoc, getDoc } = await import("https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js");
 
                 const app = initializeApp(firebaseConfig);
                 const auth = getAuth(app);
@@ -349,36 +510,107 @@
                 onAuthStateChanged(auth, user => {
                     if (user) {
                         userId = user.uid;
-                        // Gravação seguindo a regra de paths restritos para artifacts
-                        const docRef = doc(db, 'artifacts', appId, 'users', userId, 'gestao_calibracao', 'inventario');
-                        onSnapshot(docRef, snap => {
-                            const data = snap.exists() ? snap.data() : {};
-                            ativos = data.lista || [];
-                            logs = data.logs || [];
+                        if(document.getElementById('user-avatar')) {
+                            document.getElementById('user-avatar').innerText = user.email ? user.email.charAt(0).toUpperCase() : 'U'; 
+                        }
+
+                        // Carregar permissões ativas de RH
+                        const rolesRef = collection(db, 'artifacts', appId, 'public', 'data', 'roles');
+                        onSnapshot(rolesRef, snap => {
+                            state.roles = snap.docs.map(d => d.data());
+                            updatePermissions(user);
+                        });
+
+                        const empRef = collection(db, 'artifacts', appId, 'public', 'data', 'employees');
+                        onSnapshot(empRef, snap => {
+                            state.employees = snap.docs.map(d => d.data());
+                            updatePermissions(user);
+                        });
+
+                        // Carregar Inventário de Calibração (NOVO CAMINHO GLOBAL PARA A EMPRESA INTEIRA)
+                        const globalDocRef = doc(db, 'calibracao', 'inventario_geral');
+                        
+                        onSnapshot(globalDocRef, async snap => {
+                            if (snap.exists() && snap.data().lista && snap.data().lista.length > 0) {
+                                ativos = snap.data().lista;
+                                logs = snap.data().logs || [];
+                            } else {
+                                // Resgate Automático: Tenta recuperar os dados da sua pasta antiga ou do cache do navegador
+                                let recuperou = false;
+                                try {
+                                    const oldDocRef = doc(db, 'artifacts', appId, 'users', userId, 'gestao_calibracao', 'inventario');
+                                    const oldSnap = await getDoc(oldDocRef);
+                                    if (oldSnap.exists() && oldSnap.data().lista && oldSnap.data().lista.length > 0) {
+                                        ativos = oldSnap.data().lista;
+                                        logs = oldSnap.data().logs || [];
+                                        recuperou = true;
+                                    }
+                                } catch(e) {}
+                                
+                                if (!recuperou) {
+                                    const local = JSON.parse(localStorage.getItem('backup_calibracao') || '{"lista":[]}');
+                                    if (local.lista && local.lista.length > 0) {
+                                        ativos = local.lista;
+                                        logs = local.logs || [];
+                                        recuperou = true;
+                                    }
+                                }
+                                
+                                if (recuperou) {
+                                    // Publica os dados recuperados no banco global para a equipa inteira ver!
+                                    await setDoc(globalDocRef, { lista: ativos, logs: logs });
+                                }
+                            }
+                            
                             renderTable();
                             renderLogsTable();
                             populateSelects();
+                            
+                            if(window.lucide) window.lucide.createIcons();
                         }, (err) => {
                             console.error("ERRO FIREBASE:", err);
-                            if(err.code === 'permission-denied') {
-                                alert("⚠️ ACESSO NEGADO! Verifique se as Regras do Firestore no painel do Firebase foram publicadas corretamente.");
-                            }
                         });
                     }
                 });
             } catch (e) { 
                 console.error(e);
                 const local = JSON.parse(localStorage.getItem('backup_calibracao') || '{"lista":[],"logs":[]}');
-                ativos = local.lista; logs = local.logs;
+                ativos = local.lista || []; logs = local.logs || [];
                 renderTable(); renderLogsTable();
             }
+        }
+
+        // LÓGICA DE PERMISSÕES
+        function updatePermissions(user) {
+            if (user && user.email && user.email !== 'Local') {
+                const currentEmp = state.employees.find(e => e.email === user.email);
+                if (currentEmp) {
+                    const roleObj = state.roles.find(r => r.name === currentEmp.role);
+                    if (roleObj && roleObj.permissions) userPermissions = roleObj.permissions;
+                    else userPermissions = {};
+                } else {
+                    userPermissions = {};
+                }
+            } else {
+                userPermissions = { calibracao: { view:true, create:true, edit:true, delete:true } };
+            }
+        }
+
+        function checkPerm(module, action) {
+            if (userId && (!userPermissions || Object.keys(userPermissions).length === 0)) return true; // Se não tem sistema de login rodando, permite default para funcionar local/anonimamente.
+            const modPerms = userPermissions[module] || userPermissions['ativos'] || userPermissions['equipamentos'];
+            if (!modPerms) return false;
+            return modPerms[action] === true;
         }
 
         async function salvar() {
             if (!userId) return;
             const { doc, setDoc } = await import("https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js");
-            const docRef = doc(db, 'artifacts', appId, 'users', userId, 'gestao_calibracao', 'inventario');
-            await setDoc(docRef, { lista: ativos, logs: logs });
+            
+            // Agora salva SEMPRE no caminho Global para todos!
+            const globalDocRef = doc(db, 'calibracao', 'inventario_geral');
+            await setDoc(globalDocRef, { lista: ativos, logs: logs });
+            
             localStorage.setItem('backup_calibracao', JSON.stringify({ lista: ativos, logs: logs }));
         }
 
@@ -414,30 +646,55 @@
         function switchTab(id) {
             ['dashboard', 'cadastro', 'calibracao', 'historico', 'logs', 'manutencao'].forEach(t => {
                 const v = document.getElementById(`view-${t}`);
-                const b = document.getElementById(`tab-${t}`);
+                const navBtn = document.getElementById(`nav-${t}`);
+                const mobBtn = document.getElementById(`mob-${t}`);
+                
                 if (v) v.classList.add('hidden');
-                if (b) {
-                    b.classList.replace('border-isoBlue', 'border-transparent');
-                    b.classList.replace('text-isoBlue', 'text-gray-500');
+                
+                if (navBtn) {
+                    navBtn.className = "inline-flex items-center px-3 h-full border-b-2 border-transparent text-sm font-medium text-gray-500 hover:text-amber-600 transition-colors focus:outline-none uppercase";
+                }
+                if (mobBtn) {
+                    mobBtn.classList.remove('border-amber-600', 'bg-amber-50', 'text-amber-700', 'font-bold');
+                    mobBtn.classList.add('border-transparent', 'text-gray-600', 'font-medium');
                 }
             });
+            
             const activeV = document.getElementById(`view-${id}`);
-            const activeB = document.getElementById(`tab-${id}`);
+            const activeNav = document.getElementById(`nav-${id}`);
+            const activeMob = document.getElementById(`mob-${id}`);
+            
             if (activeV) activeV.classList.remove('hidden');
-            if (activeB) {
-                activeB.classList.replace('border-transparent', 'border-isoBlue');
-                activeB.classList.replace('text-gray-500', 'text-isoBlue');
+            if (activeNav) {
+                activeNav.className = "inline-flex items-center px-3 h-full border-b-2 border-amber-600 text-sm font-bold text-amber-700 bg-amber-50 transition-colors focus:outline-none uppercase";
             }
+            if (activeMob) {
+                activeMob.classList.remove('border-transparent', 'text-gray-600', 'font-medium');
+                activeMob.classList.add('border-amber-600', 'bg-amber-50', 'text-amber-700', 'font-bold');
+            }
+            
+            if(window.lucide) window.lucide.createIcons();
         }
 
         function processarAnexos(e) {
             const files = Array.from(e.target.files);
             files.forEach(f => {
-                if (f.size > 800 * 1024) return alert(`ARQUIVO ${f.name} EXCEDE 800KB.`);
                 const r = new FileReader();
                 r.onload = ev => {
                     anexosPendentes.push({ nome: f.name.toUpperCase(), tipo: f.type, dados: ev.target.result });
                     renderListaFicheiros();
+                };
+                r.readAsDataURL(f);
+            });
+        }
+
+        function processarAnexosCalibracao(e) {
+            const files = Array.from(e.target.files);
+            files.forEach(f => {
+                const r = new FileReader();
+                r.onload = ev => {
+                    anexosCalibracaoPendentes.push({ nome: f.name.toUpperCase(), tipo: f.type, dados: ev.target.result });
+                    renderListaFicheirosCalibracao();
                 };
                 r.readAsDataURL(f);
             });
@@ -448,6 +705,15 @@
                 <div class="flex justify-between items-center bg-blue-50 p-1.5 rounded border border-blue-100">
                     <span class="text-[9px] font-bold text-blue-800 truncate w-3/4"><i class="fa-solid fa-file mr-1"></i> ${f.nome}</span>
                     <button type="button" onclick="anexosPendentes.splice(${i},1); renderListaFicheiros()" class="text-red-500 text-xs"><i class="fa-solid fa-trash"></i></button>
+                </div>
+            `).join('');
+        }
+
+        function renderListaFicheirosCalibracao() {
+            document.getElementById('listaAnexosCalForm').innerHTML = anexosCalibracaoPendentes.map((f, i) => `
+                <div class="flex justify-between items-center bg-green-50 p-1.5 rounded border border-green-100">
+                    <span class="text-[9px] font-bold text-green-800 truncate w-3/4"><i class="fa-solid fa-file mr-1"></i> ${f.nome}</span>
+                    <button type="button" onclick="anexosCalibracaoPendentes.splice(${i},1); renderListaFicheirosCalibracao()" class="text-red-500 text-xs"><i class="fa-solid fa-trash"></i></button>
                 </div>
             `).join('');
         }
@@ -463,13 +729,25 @@
                 serie: document.getElementById('serie').value.toUpperCase(),
                 resolucao: document.getElementById('resolucao').value.toUpperCase(),
                 tolerancia: document.getElementById('tolerancia').value.toUpperCase(),
-                frequencia: parseInt(document.getElementById('frequencia').value),
+                requerCalibracao: document.getElementById('requerCalibracao').checked,
+                frequencia: parseInt(document.getElementById('frequencia').value) || 12,
+                erroMaximo: document.getElementById('erroMaximo').value.toUpperCase(),
                 setor: document.getElementById('setor').value,
                 anexos: anexosPendentes,
-                historico: []
+                historico: [] 
             };
-            const idx = ativos.findIndex(a => a.id === id);
+            const idx = ativos.findIndex(a => String(a.id) === String(id));
             if (idx > -1) {
+                const existingData = ativos[idx];
+                novo.dataUltimaCal = existingData.dataUltimaCal;
+                novo.dataProximaCal = existingData.dataProximaCal;
+                novo.certificado = existingData.certificado;
+                novo.ultimoErro = existingData.ultimoErro;
+                novo.ultimaIncerteza = existingData.ultimaIncerteza;
+                novo.ultimoStatusCal = existingData.ultimoStatusCal;
+                novo.ultimasMedidas = existingData.ultimasMedidas;
+                novo.historico = existingData.historico || []; 
+                
                 ativos[idx] = { ...ativos[idx], ...novo, anexos: anexosPendentes };
                 await registrarLog("EDITAR", `EQUIPAMENTO ${tag} ATUALIZADO.`);
             } else {
@@ -480,28 +758,312 @@
         });
 
         async function apagarAtivo(id) {
-            const a = ativos.find(x => x.id === id);
+            if (!checkPerm('calibracao', 'delete')) {
+                return alert('Acesso Negado: O seu perfil não possui permissão para excluir ativos do inventário.');
+            }
+            const a = ativos.find(x => String(x.id) === String(id));
             if (confirm(`DESEJA REMOVER ${a.tag} PERMANENTEMENTE?`)) {
-                const tag = a.tag; ativos = ativos.filter(x => x.id !== id);
+                const tag = a.tag; ativos = ativos.filter(x => String(x.id) !== String(id));
                 await registrarLog("ELIMINAR", `EQUIPAMENTO ${tag} REMOVIDO DO INVENTÁRIO.`);
                 await salvar();
             }
         }
 
+        // ==========================================
+        // LÓGICA DAS MEDIDAS MÚLTIPLAS DA CALIBRAÇÃO 
+        // ==========================================
+        
+        function adicionarLinhaMedicao() {
+            adicionarLinhaMedicaoComValores('', '', '');
+        }
+
+        function adicionarLinhaMedicaoComValores(ponto, medido, inc) {
+            const p = ponto !== undefined ? ponto : '';
+            const m = medido !== undefined ? medido : '';
+            const i = inc !== undefined ? inc : '';
+            
+            const container = document.getElementById('medidasContainer');
+            const id = Date.now() + Math.floor(Math.random() * 1000);
+            const div = document.createElement('div');
+            div.className = "flex items-center gap-2 medida-row hover:bg-gray-50 transition-colors p-1 rounded";
+            div.id = `medida-${id}`;
+            div.innerHTML = `
+                <div class="flex-1">
+                    <input type="number" step="any" class="medida-ponto w-full border border-gray-300 rounded px-2 py-1.5 text-xs outline-none focus:border-isoBlue" placeholder="PONTO" oninput="calcularAvaliacaoCalibracao()" value="${p}">
+                </div>
+                <div class="flex-1">
+                    <input type="number" step="any" class="medida-medido w-full border border-gray-300 rounded px-2 py-1.5 text-xs outline-none focus:border-isoBlue" placeholder="MEDIDO" oninput="calcularAvaliacaoCalibracao()" value="${m}">
+                </div>
+                <div class="flex-1">
+                    <input type="number" step="any" class="medida-incerteza w-full border border-gray-300 rounded px-2 py-1.5 text-xs outline-none focus:border-isoBlue" placeholder="INCERTEZA" oninput="calcularAvaliacaoCalibracao()" value="${i}">
+                </div>
+                <div class="w-16 sm:w-20 text-center">
+                    <span class="medida-resultado text-[10px] font-bold text-gray-600">-</span>
+                </div>
+                <div class="w-16 sm:w-20 text-center">
+                    <span class="medida-resultado-perc text-[10px] font-bold text-gray-600">-</span>
+                </div>
+                <button type="button" onclick="removerLinhaMedicao('${id}')" class="text-red-400 hover:text-red-600 w-6 flex justify-center"><i class="fa-solid fa-trash"></i></button>
+            `;
+            container.appendChild(div);
+        }
+
+        function removerLinhaMedicao(id) {
+            const el = document.getElementById(`medida-${id}`);
+            if (el) el.remove();
+            calcularAvaliacaoCalibracao();
+        }
+
+        function carregarCriterioEquipamento() {
+            document.getElementById('calibracaoEditOriginal').value = ''; // Limpa o modo de edição se trocar de equipamento manualmente
+            const id = document.getElementById('selectEquipamentoCal').value;
+            const emaInput = document.getElementById('calCriterioEMA');
+            
+            if (id) {
+                const eq = ativos.find(a => String(a.id) === String(id));
+                const isPercent = (eq.erroMaximo || '').includes('%');
+                const criterioNumerico = eq.erroMaximo ? eq.erroMaximo.replace(/[^0-9.,]/g, '').replace(',', '.') : '';
+                emaInput.value = criterioNumerico + (isPercent ? '%' : '');
+            } else {
+                emaInput.value = '';
+            }
+
+            document.getElementById('medidasContainer').innerHTML = '';
+            adicionarLinhaMedicao(); // Já cria a primeira linha
+            calcularAvaliacaoCalibracao();
+        }
+
+        function calcularAvaliacaoCalibracao() {
+            const emaRaw = document.getElementById('calCriterioEMA').value;
+            const isPercent = emaRaw.includes('%');
+            const emaStr = emaRaw.replace(/[^0-9.,]/g, '').replace(',', '.');
+            const ema = parseFloat(emaStr);
+            const rows = document.querySelectorAll('.medida-row');
+            
+            let maxSoma = -1;
+            let maxSomaPerc = -1;
+            let worstErro = 0;
+            let worstIncerteza = 0;
+            let temValores = false;
+
+            rows.forEach(row => {
+                const pontoInp = row.querySelector('.medida-ponto').value.replace(',', '.');
+                const medidoInp = row.querySelector('.medida-medido').value.replace(',', '.');
+                const incInp = row.querySelector('.medida-incerteza').value.replace(',', '.');
+                
+                const resSpan = row.querySelector('.medida-resultado');
+                const resPercSpan = row.querySelector('.medida-resultado-perc');
+                
+                const ponto = parseFloat(pontoInp);
+                const medido = parseFloat(medidoInp);
+                const inc = parseFloat(incInp);
+                
+                if (!isNaN(ponto) && !isNaN(medido) && !isNaN(inc)) {
+                    temValores = true;
+                    
+                    // Cálculo do Erro real: Valor Medido - Ponto (VVC)
+                    const erro = medido - ponto;
+                    
+                    // Cálculo da tolerância: módulo do erro + incerteza
+                    const soma = Math.abs(erro) + inc;
+                    
+                    // Cálculo percentual do erro
+                    let somaPerc = 0;
+                    if (ponto !== 0) {
+                        somaPerc = (soma / Math.abs(ponto)) * 100;
+                    }
+                    
+                    resSpan.innerText = soma.toFixed(4);
+                    resPercSpan.innerText = somaPerc.toFixed(3) + '%';
+                    
+                    // O que vai ser comparado contra o EMA?
+                    const valorComparacao = isPercent ? somaPerc : soma;
+                    
+                    if (!isNaN(ema) && ema > 0) {
+                        if (valorComparacao > ema) {
+                            resSpan.className = "medida-resultado text-[10px] font-bold text-red-600";
+                            resPercSpan.className = "medida-resultado-perc text-[10px] font-bold text-red-600";
+                        } else {
+                            resSpan.className = "medida-resultado text-[10px] font-bold text-green-600";
+                            resPercSpan.className = "medida-resultado-perc text-[10px] font-bold text-green-600";
+                        }
+                    }
+
+                    // Achar o pior caso (maior discrepância)
+                    const currentEvalSoma = isPercent ? somaPerc : soma;
+                    const maxEvalSoma = isPercent ? maxSomaPerc : maxSoma;
+
+                    if (currentEvalSoma > maxEvalSoma) {
+                        maxSoma = soma;
+                        maxSomaPerc = somaPerc;
+                        worstErro = erro;
+                        worstIncerteza = inc;
+                    }
+                } else {
+                    resSpan.innerText = '-';
+                    resSpan.className = "medida-resultado text-[10px] font-bold text-gray-600";
+                    if(resPercSpan) {
+                        resPercSpan.innerText = '-';
+                        resPercSpan.className = "medida-resultado-perc text-[10px] font-bold text-gray-600";
+                    }
+                }
+            });
+
+            const somaInput = document.getElementById('calResultadoSoma');
+            const badge = document.getElementById('calBadgeStatus');
+            const hiddenStatus = document.getElementById('calStatusFinal');
+
+            somaInput.dataset.worstErro = worstErro;
+            somaInput.dataset.worstIncerteza = worstIncerteza;
+
+            if (temValores) {
+                // Atualiza o visor final dependendo de ser % ou Absoluto
+                if (isPercent) {
+                    somaInput.value = `${maxSomaPerc.toFixed(3)}% (${maxSoma.toFixed(4)} abs)`;
+                } else {
+                    somaInput.value = maxSoma.toFixed(4);
+                }
+
+                const valorComparacaoFinal = isPercent ? maxSomaPerc : maxSoma;
+
+                if (!isNaN(ema) && ema > 0) {
+                    if (valorComparacaoFinal <= ema) {
+                        badge.innerText = "APROVADO";
+                        badge.className = "inline-block px-4 py-1.5 rounded text-xs font-black bg-green-100 text-green-700 border border-green-200 w-full text-center";
+                        hiddenStatus.value = "APROVADO";
+                    } else {
+                        badge.innerText = "REPROVADO";
+                        badge.className = "inline-block px-4 py-1.5 rounded text-xs font-black bg-red-100 text-red-700 border border-red-200 w-full text-center";
+                        hiddenStatus.value = "REPROVADO";
+                    }
+                } else {
+                    badge.innerText = "SEM CRITÉRIO (EMA)";
+                    badge.className = "inline-block px-4 py-1.5 rounded text-xs font-black bg-yellow-100 text-yellow-700 border border-yellow-200 w-full text-center";
+                    hiddenStatus.value = "ANALISAR MANUALMENTE";
+                }
+            } else {
+                somaInput.value = '';
+                badge.innerText = "AGUARDANDO DADOS";
+                badge.className = "inline-block px-4 py-1.5 rounded text-xs font-black bg-gray-100 text-gray-400 border border-gray-200 w-full text-center";
+                hiddenStatus.value = "";
+            }
+        }
+
+        function recalcularStatusAtivo(idx) {
+            if (ativos[idx].historico && ativos[idx].historico.length > 0) {
+                // Ordena da mais recente para a mais antiga para extrair a vigente
+                const sorted = [...ativos[idx].historico].sort((x, y) => new Date(y.data) - new Date(x.data));
+                const ultima = sorted[0];
+                ativos[idx].dataUltimaCal = ultima.data;
+                ativos[idx].certificado = ultima.certificado;
+                ativos[idx].dataProximaCal = ultima.proxima;
+                ativos[idx].ultimoErro = ultima.erro;
+                ativos[idx].ultimaIncerteza = ultima.incerteza;
+                ativos[idx].ultimasMedidas = ultima.medidas;
+                ativos[idx].ultimoStatusCal = ultima.status;
+            } else {
+                // Equipamento não possui mais calibrações no histórico
+                ativos[idx].dataUltimaCal = '';
+                ativos[idx].certificado = '';
+                ativos[idx].dataProximaCal = '';
+                ativos[idx].ultimoErro = '';
+                ativos[idx].ultimaIncerteza = '';
+                ativos[idx].ultimasMedidas = [];
+                ativos[idx].ultimoStatusCal = '';
+            }
+        }
+
         document.getElementById('calibracaoForm').addEventListener('submit', async e => {
             e.preventDefault();
+            
+            const editIndex = document.getElementById('calibracaoEditOriginal').value;
+
             const id = document.getElementById('selectEquipamentoCal').value;
-            const idx = ativos.findIndex(a => a.id === id);
+            const idx = ativos.findIndex(a => String(a.id) === String(id));
+            
+            if (idx === -1) {
+                alert("Equipamento não encontrado. Por favor, selecione novamente na lista.");
+                return;
+            }
+
             const data = document.getElementById('novaDataCal').value;
             const cert = document.getElementById('novoCertificado').value.toUpperCase();
+            const statusAvaliacao = document.getElementById('calStatusFinal').value;
             
-            ativos[idx].dataUltimaCal = data;
-            ativos[idx].certificado = cert;
-            ativos[idx].dataProximaCal = calcularProx(data, ativos[idx].frequencia);
+            if (statusAvaliacao === 'REPROVADO') {
+                const conf = confirm("ATENÇÃO: O equipamento foi reprovado no cálculo final de Erro + Incerteza > EMA.\n\nDeseja registrar a calibração mesmo assim e inativar o equipamento?");
+                if (!conf) return;
+            }
+
+            const proximaCal = calcularProx(data, ativos[idx].frequencia || 12);
             
-            await registrarLog("CALIBRAÇÃO", `CERTIFICADO ${cert} LANÇADO PARA ${ativos[idx].tag}.`);
-            document.getElementById('calibracaoForm').reset(); switchTab('dashboard');
+            // Coletar array com todas as medidas submetidas
+            const rows = document.querySelectorAll('.medida-row');
+            const medidasArr = [];
+            rows.forEach(r => {
+                const p = r.querySelector('.medida-ponto').value;
+                const med = r.querySelector('.medida-medido').value;
+                const inc = r.querySelector('.medida-incerteza').value;
+                if(p !== '' && med !== '' && inc !== '') {
+                    medidasArr.push({ ponto: p.toUpperCase(), medido: med, incerteza: inc });
+                }
+            });
+
+            const somaInput = document.getElementById('calResultadoSoma');
+            
+            const novaCal = {
+                data: data,
+                certificado: cert,
+                proxima: proximaCal,
+                status: statusAvaliacao,
+                erro: somaInput.dataset.worstErro || '',
+                incerteza: somaInput.dataset.worstIncerteza || '',
+                medidas: medidasArr,
+                anexos: [...anexosCalibracaoPendentes]
+            };
+            
+            if (!ativos[idx].historico) ativos[idx].historico = [];
+            
+            // Substitui (Edita) se houver original, senão Adiciona
+            if (editIndex !== '') {
+                const idxNum = parseInt(editIndex, 10);
+                if (idxNum === -1) {
+                    ativos[idx].historico.push(novaCal);
+                } else if (idxNum >= 0 && idxNum < ativos[idx].historico.length) {
+                    ativos[idx].historico[idxNum] = novaCal;
+                } else {
+                    ativos[idx].historico.push(novaCal);
+                }
+                
+                // Atualizar os campos matriz ANTES de registrar no banco
+                recalcularStatusAtivo(idx);
+                
+                await registrarLog("CALIBRAÇÃO", `CALIBRAÇÃO EDITADA NO ATIVO ${ativos[idx].tag}. RESULTADO: ${statusAvaliacao}.`);
+            } else {
+                ativos[idx].historico.push(novaCal);
+                
+                // Atualizar os campos matriz ANTES de registrar no banco
+                recalcularStatusAtivo(idx);
+                
+                await registrarLog("CALIBRAÇÃO", `CERTIFICADO ${cert} LANÇADO PARA ${ativos[idx].tag}. RESULTADO: ${statusAvaliacao || 'REGISTRADO'}.`);
+            }
+            
+            // Limpezas Pós Submissão
+            document.getElementById('calibracaoForm').reset(); 
+            document.getElementById('calibracaoEditOriginal').value = '';
+            document.getElementById('calibracaoTitle').innerText = 'Lançar Nova Calibração';
+            document.getElementById('medidasContainer').innerHTML = ''; 
+            document.getElementById('calBadgeStatus').className = "inline-block px-4 py-1.5 rounded text-xs font-black bg-gray-100 text-gray-400 border border-gray-200 w-full text-center";
+            document.getElementById('calBadgeStatus').innerText = "AGUARDANDO DADOS";
+            somaInput.value = '';
+            
+            anexosCalibracaoPendentes = [];
+            renderListaFicheirosCalibracao();
+            
+            switchTab('dashboard');
         });
+
+        // ==========================================
 
         function renderTable() {
             const tbody = document.getElementById('tableBody');
@@ -520,10 +1082,12 @@
                             <td class="px-4 py-4 font-bold text-slate-500 uppercase">${formatarData(a.dataUltimaCal)}</td>
                             <td class="px-4 py-4 font-bold text-slate-600 uppercase">${formatarData(a.dataProximaCal)}</td>
                             <td class="px-4 py-4 text-center"><span class="px-2 py-1 rounded-full text-[9px] font-black border ${status.classe}">${status.texto}</span></td>
-                            <td class="px-4 py-4 flex justify-center gap-3">
-                                ${a.anexos?.length ? `<button onclick="verAnexos('${a.id}')" class="text-green-600" title="Ver Anexos"><i class="fa-solid fa-paperclip"></i></button>` : ''}
-                                <button onclick="editarAtivo('${a.id}')" class="text-blue-500" title="Editar"><i class="fa-solid fa-pen"></i></button>
-                                <button onclick="apagarAtivo('${a.id}')" class="text-red-400" title="Remover"><i class="fa-solid fa-trash"></i></button>
+                            <td class="px-4 py-4 flex justify-center gap-3 print:hidden">
+                                <button onclick="imprimirRelatorioEquipamento('${a.id}')" class="text-slate-500 hover:text-slate-800" title="Imprimir Ficha do Equipamento"><i class="fa-solid fa-print"></i></button>
+                                <button onclick="verHistorico('${a.id}')" class="text-indigo-500 hover:text-indigo-700" title="Consultar Histórico"><i class="fa-solid fa-clock-rotate-left"></i></button>
+                                ${a.anexos?.length ? `<button onclick="verAnexos('${a.id}')" class="text-green-600 hover:text-green-800" title="Ver Anexos"><i class="fa-solid fa-paperclip"></i></button>` : ''}
+                                <button onclick="editarAtivo('${a.id}')" class="text-blue-500 hover:text-blue-700" title="Editar Equipamento"><i class="fa-solid fa-pen"></i></button>
+                                <button onclick="apagarAtivo('${a.id}')" class="text-red-400 hover:text-red-600" title="Remover Equipamento"><i class="fa-solid fa-trash"></i></button>
                             </td>
                         </tr>
                     `;
@@ -532,9 +1096,151 @@
             atualizarKPIs();
         }
 
+        function imprimirRelatorioEquipamento(id) {
+            const a = ativos.find(x => String(x.id) === String(id));
+            if (!a) return;
+
+            let printArea = document.getElementById('print-area-equip');
+            if (!printArea) {
+                printArea = document.createElement('div');
+                printArea.id = 'print-area-equip';
+                printArea.className = 'hidden bg-white w-full h-full absolute top-0 left-0 z-[99999] p-8';
+                document.body.appendChild(printArea);
+            }
+
+            // Gerar Tabela de Medidas (se existir)
+            let medidasHtml = '';
+            if (a.ultimasMedidas && a.ultimasMedidas.length > 0) {
+                const isPercent = (a.erroMaximo || '').includes('%');
+                
+                medidasHtml = `
+                    <div class="mt-6 border border-gray-300">
+                        <h4 class="bg-gray-200 p-2 text-xs font-bold text-gray-800 border-b border-gray-300 uppercase">3. RESULTADOS DA MEDIÇÃO (CERTIFICADO)</h4>
+                        <div class="p-4">
+                            <table class="w-full text-left text-[10px] border-collapse uppercase">
+                                <thead>
+                                    <tr class="bg-gray-50 border-b border-gray-300">
+                                        <th class="p-2 border border-gray-200">Ponto (VVC)</th>
+                                        <th class="p-2 border border-gray-200">Valor Medido</th>
+                                        <th class="p-2 border border-gray-200">Erro</th>
+                                        <th class="p-2 border border-gray-200">Incerteza (U)</th>
+                                        <th class="p-2 border border-gray-200 text-center">|E| + U</th>
+                                        ${isPercent ? `<th class="p-2 border border-gray-200 text-center">Erro %</th>` : ''}
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${a.ultimasMedidas.map(m => {
+                                        const ponto = parseFloat(m.ponto);
+                                        const medido = parseFloat(m.medido);
+                                        const inc = parseFloat(m.incerteza);
+                                        const erro = medido - ponto;
+                                        const soma = Math.abs(erro) + inc;
+                                        let somaPerc = 0;
+                                        if (ponto !== 0) somaPerc = (soma / Math.abs(ponto)) * 100;
+
+                                        return `
+                                        <tr class="border-b border-gray-100">
+                                            <td class="p-2 border border-gray-200 font-bold">${m.ponto}</td>
+                                            <td class="p-2 border border-gray-200">${m.medido}</td>
+                                            <td class="p-2 border border-gray-200">${erro.toFixed(4)}</td>
+                                            <td class="p-2 border border-gray-200">${m.incerteza}</td>
+                                            <td class="p-2 border border-gray-200 text-center font-bold">${soma.toFixed(4)}</td>
+                                            ${isPercent ? `<td class="p-2 border border-gray-200 text-center font-bold">${somaPerc.toFixed(3)}%</td>` : ''}
+                                        </tr>`;
+                                    }).join('')}
+                                </tbody>
+                            </table>
+                            <div class="mt-4 text-[10px] font-bold text-gray-600 text-right">
+                                PIOR CASO ENCONTRADO: <span class="text-sm text-black ml-2">${isPercent ? (a.ultimoErro ? (parseFloat(a.ultimoErro) + parseFloat(a.ultimaIncerteza)).toFixed(4) + ' abs' : '-') : (a.ultimoErro ? (parseFloat(a.ultimoErro) + parseFloat(a.ultimaIncerteza)).toFixed(4) : '-')}</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            const html = `
+                <div class="max-w-4xl mx-auto font-sans uppercase text-xs">
+                    <!-- Header do Relatório -->
+                    <div class="flex justify-between items-end border-b-[3px] border-gray-900 pb-4 mb-6">
+                        <div>
+                            <h1 class="text-2xl font-black text-gray-900 uppercase tracking-tight">Ficha de Equipamento</h1>
+                            <p class="text-[10px] font-bold text-gray-500 mt-1 tracking-widest">Controle de Monitoramento e Medição - ISO 9001</p>
+                        </div>
+                        <div class="text-right">
+                            <p class="font-bold text-gray-500 text-[10px]">TAG / ATIVO</p>
+                            <p class="text-2xl font-black text-black border-2 border-black px-3 py-1 inline-block mt-1">${a.tag}</p>
+                            <p class="text-[9px] text-gray-400 mt-2 font-bold">EMISSÃO: ${new Date().toLocaleDateString('pt-BR')}</p>
+                        </div>
+                    </div>
+
+                    <!-- Bloco 1: Cadastro -->
+                    <div class="border border-gray-300 mb-6">
+                        <h3 class="bg-gray-100 p-2 text-xs font-bold text-gray-800 border-b border-gray-300 uppercase">1. DADOS DE CADASTRO</h3>
+                        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 p-4">
+                            <div class="col-span-2"><span class="font-bold text-gray-400 block text-[8px] mb-0.5">DESCRIÇÃO:</span> <span class="font-bold text-sm">${a.descricao || '-'}</span></div>
+                            <div class="col-span-2"><span class="font-bold text-gray-400 block text-[8px] mb-0.5">SETOR / LOCALIZAÇÃO:</span> <span class="font-bold text-sm">${a.setor || '-'}</span></div>
+                            
+                            <div class="col-span-2"><span class="font-bold text-gray-400 block text-[8px] mb-0.5">FABRICANTE:</span> <span class="font-bold">${a.fabricante || '-'}</span></div>
+                            <div class="col-span-2"><span class="font-bold text-gray-400 block text-[8px] mb-0.5">Nº DE SÉRIE:</span> <span class="font-bold">${a.serie || '-'}</span></div>
+                            
+                            <div><span class="font-bold text-gray-400 block text-[8px] mb-0.5">RESOLUÇÃO:</span> <span class="font-bold">${a.resolucao || '-'}</span></div>
+                            <div><span class="font-bold text-gray-400 block text-[8px] mb-0.5">TOLERÂNCIA DE PROCESSO:</span> <span class="font-bold">${a.tolerancia || '-'}</span></div>
+                            <div><span class="font-bold text-gray-400 block text-[8px] mb-0.5">REQUER CALIBRAÇÃO?:</span> <span class="font-bold text-indigo-700">${a.requerCalibracao !== false ? 'SIM' : 'NÃO'}</span></div>
+                            <div><span class="font-bold text-gray-400 block text-[8px] mb-0.5">FREQUÊNCIA:</span> <span class="font-bold">${a.frequencia || 12} MESES</span></div>
+                            
+                            <div class="col-span-4 mt-2 pt-2 border-t border-gray-100"><span class="font-bold text-gray-400 block text-[8px] mb-0.5">CRITÉRIO DE ACEITAÇÃO GLOBAL (EMA):</span> <span class="font-black text-blue-700 text-sm">${a.erroMaximo || 'NÃO DEFINIDO'}</span></div>
+                        </div>
+                    </div>
+
+                    <!-- Bloco 2: Calibração Atual -->
+                    <div class="border border-gray-300 mb-6">
+                        <h3 class="bg-gray-100 p-2 text-xs font-bold text-gray-800 border-b border-gray-300 uppercase">2. DADOS DA ÚLTIMA CALIBRAÇÃO</h3>
+                        <div class="grid grid-cols-3 gap-4 p-4">
+                            <div><span class="font-bold text-gray-400 block text-[8px] mb-0.5">CERTIFICADO Nº:</span> <span class="font-black text-base">${a.certificado || 'NÃO LANÇADO'}</span></div>
+                            <div><span class="font-bold text-gray-400 block text-[8px] mb-0.5">DATA DA CALIBRAÇÃO:</span> <span class="font-bold text-base">${formatarData(a.dataUltimaCal) || '-'}</span></div>
+                            <div><span class="font-bold text-gray-400 block text-[8px] mb-0.5">VÁLIDO ATÉ:</span> <span class="font-bold text-base">${formatarData(a.dataProximaCal) || '-'}</span></div>
+                            
+                            <div class="col-span-3 mt-4 p-3 bg-gray-50 flex items-center justify-between border border-gray-200">
+                                <span class="font-bold text-gray-600 text-[10px]">STATUS FINAL DA AVALIAÇÃO DE ERRO E INCERTEZA:</span> 
+                                <span class="px-4 py-1.5 border-2 rounded text-sm font-black ${a.ultimoStatusCal === 'APROVADO' ? 'text-green-700 border-green-600 bg-green-100' : (a.ultimoStatusCal === 'REPROVADO' ? 'text-red-700 border-red-600 bg-red-100' : 'text-gray-600 border-gray-400 bg-gray-200')}">${a.ultimoStatusCal || 'AGUARDANDO AVALIAÇÃO'}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Bloco 3: Medidas Dinâmicas (Se existirem) -->
+                    ${medidasHtml}
+
+                    <!-- Rodapé de Assinaturas -->
+                    <div class="mt-20 flex justify-between pt-4 border-t-2 border-gray-900 text-[9px] text-gray-500 font-bold">
+                        <div class="text-center w-64">
+                            <div class="border-b border-gray-500 mb-2 h-6"></div>
+                            RESPONSÁVEL PELA AVALIAÇÃO (SGQ)
+                        </div>
+                        <div class="text-right">
+                            DOCUMENTO GERADO ELETRONICAMENTE<br>SISTEMA REVIMAQ
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            printArea.innerHTML = html;
+
+            // Oculta a interface principal
+            document.querySelectorAll('header, nav, main, footer').forEach(el => el.style.display = 'none');
+            printArea.classList.remove('hidden');
+
+            setTimeout(() => {
+                window.print();
+                // Restaura a interface principal após fechar a janela de impressão
+                document.querySelectorAll('header, nav, main, footer').forEach(el => el.style.display = '');
+                printArea.classList.add('hidden');
+                printArea.innerHTML = '';
+            }, 300);
+        }
+
         function verAnexos(id) {
-            const a = ativos.find(x => x.id === id);
-            document.getElementById('modalAnexosBody').innerHTML = a.anexos.map(f => `
+            const a = ativos.find(x => String(x.id) === String(id));
+            document.getElementById('modalAnexosBody').innerHTML = (a.anexos || []).map(f => `
                 <div class="flex justify-between items-center bg-gray-50 p-3 rounded border">
                     <span class="text-xs font-bold text-gray-700 truncate w-3/4 uppercase">${f.nome}</span>
                     <a href="${f.dados}" download="${f.nome}" class="bg-isoBlue text-white p-1 px-2 rounded text-xs uppercase"><i class="fa-solid fa-download"></i></a>
@@ -544,7 +1250,11 @@
         }
 
         function editarAtivo(id) {
-            const a = ativos.find(x => x.id === id);
+            if (!checkPerm('calibracao', 'edit')) {
+                return alert('Acesso Negado: O seu perfil não possui permissão para editar cadastros de equipamentos.');
+            }
+            
+            const a = ativos.find(x => String(x.id) === String(id));
             document.getElementById('instrumentId').value = a.id;
             document.getElementById('tag').value = a.tag;
             document.getElementById('descricao').value = a.descricao;
@@ -552,10 +1262,13 @@
             document.getElementById('serie').value = a.serie || '';
             document.getElementById('resolucao').value = a.resolucao || '';
             document.getElementById('tolerancia').value = a.tolerancia || '';
-            document.getElementById('frequencia').value = a.frequencia;
+            document.getElementById('requerCalibracao').checked = a.requerCalibracao !== false; 
+            document.getElementById('frequencia').value = a.frequencia || 12;
+            document.getElementById('erroMaximo').value = a.erroMaximo || '';
             document.getElementById('setor').value = a.setor;
             anexosPendentes = [...(a.anexos || [])]; renderListaFicheiros();
             document.getElementById('formTitle').innerText = "EDITAR: " + a.tag;
+            toggleCalibracaoFields();
             switchTab('cadastro');
         }
 
@@ -584,6 +1297,8 @@
         function populateSelects() {
             const html = '<option value="">-- SELECIONAR EQUIPAMENTO --</option>' + ativos.sort((a,b)=>a.tag.localeCompare(b.tag)).map(a => `<option value="${a.id}">${a.tag} - ${a.descricao}</option>`).join('');
             document.getElementById('selectEquipamentoCal').innerHTML = html;
+            const histSelect = document.getElementById('selectEquipamentoHist');
+            if(histSelect) histSelect.innerHTML = html;
         }
 
         function exportarBackup() {
@@ -612,6 +1327,228 @@
         function toggleCalibracaoFields() {
             const div = document.getElementById('calibracaoFields');
             div.style.opacity = document.getElementById('requerCalibracao').checked ? '1' : '0.5';
+        }
+
+        function verHistorico(id) {
+            switchTab('historico');
+            const sel = document.getElementById('selectEquipamentoHist');
+            if (sel) {
+                sel.value = id;
+                renderHistoricoEquipamento();
+            }
+        }
+
+        function renderHistoricoEquipamento() {
+            const id = document.getElementById('selectEquipamentoHist').value;
+            const container = document.getElementById('historicoContainer');
+            if (!id) {
+                container.innerHTML = '<p class="text-center text-gray-400 py-10 font-bold uppercase">SELECIONE UM EQUIPAMENTO ACIMA PARA CONSULTAR O HISTÓRICO.</p>';
+                return;
+            }
+            
+            const a = ativos.find(x => String(x.id) === String(id));
+            if (!a) return;
+            
+            let hist = (a.historico || []).map((h, index) => ({ ...h, originalIndex: index }));
+            
+            // Adiciona fallback visual temporário caso exista uma calibração lançada que ainda não foi pro array de historico (para compatibilidade legada)
+            if (hist.length === 0 && a.dataUltimaCal) {
+                hist.push({
+                    originalIndex: -1,
+                    data: a.dataUltimaCal,
+                    certificado: a.certificado,
+                    proxima: a.dataProximaCal,
+                    status: a.ultimoStatusCal,
+                    erro: a.ultimoErro,
+                    incerteza: a.ultimaIncerteza,
+                    medidas: a.ultimasMedidas || [],
+                    anexos: []
+                });
+            }
+
+            if (hist.length === 0) {
+                container.innerHTML = '<p class="text-center text-gray-400 py-10 font-bold uppercase">NENHUMA CALIBRAÇÃO REGISTRADA PARA ESTE EQUIPAMENTO.</p>';
+                return;
+            }
+
+            // Ordena da mais recente para a mais antiga
+            hist.sort((x, y) => new Date(y.data) - new Date(x.data));
+
+            container.innerHTML = hist.map(h => {
+                const isPercent = (a.erroMaximo || '').includes('%');
+                let medidasHtml = '';
+                
+                if (h.medidas && h.medidas.length > 0) {
+                    medidasHtml = `
+                        <div class="mt-4 border border-gray-200 rounded">
+                            <table class="w-full text-left text-[10px] border-collapse uppercase">
+                                <thead class="bg-gray-100 border-b border-gray-200">
+                                    <tr>
+                                        <th class="p-2 font-semibold">Ponto (VVC)</th>
+                                        <th class="p-2 font-semibold">Medido</th>
+                                        <th class="p-2 font-semibold">Erro</th>
+                                        <th class="p-2 font-semibold">Incerteza (U)</th>
+                                        <th class="p-2 font-semibold text-center">|E| + U</th>
+                                        ${isPercent ? '<th class="p-2 font-semibold text-center">Erro %</th>' : ''}
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${h.medidas.map(m => {
+                                        const ponto = parseFloat(m.ponto);
+                                        const medido = parseFloat(m.medido);
+                                        const inc = parseFloat(m.incerteza);
+                                        const erro = medido - ponto;
+                                        const soma = Math.abs(erro) + inc;
+                                        let somaPerc = 0;
+                                        if (ponto !== 0) somaPerc = (soma / Math.abs(ponto)) * 100;
+                                        return `
+                                        <tr class="border-b border-gray-50 hover:bg-gray-50">
+                                            <td class="p-2 font-bold">${m.ponto}</td>
+                                            <td class="p-2">${m.medido}</td>
+                                            <td class="p-2">${erro.toFixed(4)}</td>
+                                            <td class="p-2">${m.incerteza}</td>
+                                            <td class="p-2 text-center font-bold text-gray-700">${soma.toFixed(4)}</td>
+                                            ${isPercent ? `<td class="p-2 text-center font-bold text-gray-700">${somaPerc.toFixed(3)}%</td>` : ''}
+                                        </tr>
+                                        `;
+                                    }).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                    `;
+                }
+
+                let anexosHtml = '';
+                if (h.anexos && h.anexos.length > 0) {
+                    anexosHtml = `
+                        <div class="mt-3 border-t border-gray-100 pt-3">
+                            <span class="block text-[9px] font-bold text-gray-400 uppercase mb-2">ANEXOS DA CALIBRAÇÃO:</span>
+                            <div class="flex gap-2 flex-wrap">
+                                ${h.anexos.map(anexo => `
+                                    <a href="${anexo.dados}" download="${anexo.nome}" class="inline-flex items-center gap-1 bg-gray-100 border border-gray-300 text-gray-700 px-2 py-1 rounded text-[9px] font-bold hover:bg-gray-200 transition-colors" title="Baixar ${anexo.nome}">
+                                        <i class="fa-solid fa-paperclip"></i> ${anexo.nome}
+                                    </a>
+                                `).join('')}
+                            </div>
+                        </div>
+                    `;
+                }
+
+                return `
+                    <div class="border border-gray-200 rounded-lg overflow-hidden mb-4 shadow-sm">
+                        <div class="bg-gray-50 p-4 flex flex-col md:flex-row justify-between items-start md:items-center border-b border-gray-200 gap-2">
+                            <div>
+                                <div class="font-black text-isoBlue text-sm flex items-center">
+                                    CERTIFICADO: ${h.certificado || 'S/N'}
+                                    <button onclick="editarCalibracaoHistorico('${a.id}', ${h.originalIndex})" class="text-blue-500 hover:text-blue-700 ml-4 print:hidden" title="Editar Calibração"><i class="fa-solid fa-pen text-xs"></i></button>
+                                    <button onclick="apagarCalibracaoHistorico('${a.id}', ${h.originalIndex})" class="text-red-400 hover:text-red-600 ml-3 print:hidden" title="Excluir Calibração"><i class="fa-solid fa-trash text-xs"></i></button>
+                                </div>
+                                <div class="text-xs text-gray-500 font-bold mt-1"><i class="fa-regular fa-calendar mr-1"></i> DATA: ${formatarData(h.data)}</div>
+                            </div>
+                            <div>
+                                <span class="px-3 py-1 rounded-full text-[10px] font-black border ${h.status === 'APROVADO' ? 'bg-green-100 text-green-700 border-green-200' : (h.status === 'REPROVADO' ? 'bg-red-100 text-red-700 border-red-200' : 'bg-gray-200 text-gray-600 border-gray-300')}">${h.status || 'N/A'}</span>
+                            </div>
+                        </div>
+                        <div class="p-4 bg-white">
+                            <div class="grid grid-cols-3 gap-4 text-xs bg-blue-50/50 p-3 rounded border border-blue-100">
+                                <div><span class="block text-[9px] font-bold text-blue-400 uppercase">PIOR ERRO</span><span class="font-bold text-blue-900">${h.erro && !isNaN(parseFloat(h.erro)) ? parseFloat(h.erro).toFixed(4) : '-'}</span></div>
+                                <div><span class="block text-[9px] font-bold text-blue-400 uppercase">INCERTEZA (U)</span><span class="font-bold text-blue-900">${h.incerteza && !isNaN(parseFloat(h.incerteza)) ? parseFloat(h.incerteza).toFixed(4) : '-'}</span></div>
+                                <div><span class="block text-[9px] font-bold text-blue-400 uppercase">VÁLIDO ATÉ</span><span class="font-bold text-blue-900">${formatarData(h.proxima)}</span></div>
+                            </div>
+                            ${medidasHtml}
+                            ${anexosHtml}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Edita uma calibração lançada anteriormente
+        function editarCalibracaoHistorico(ativoId, histIndex) {
+            if (!checkPerm('calibracao', 'edit')) {
+                return alert('Acesso Negado: O seu perfil não possui permissão para editar calibrações do histórico.');
+            }
+
+            const a = ativos.find(x => String(x.id) === String(ativoId));
+            if (!a) return;
+            
+            let h;
+            if (histIndex === -1) {
+                h = {
+                    data: a.dataUltimaCal,
+                    certificado: a.certificado,
+                    proxima: a.dataProximaCal,
+                    status: a.ultimoStatusCal,
+                    erro: a.ultimoErro,
+                    incerteza: a.ultimaIncerteza,
+                    medidas: a.ultimasMedidas || [],
+                    anexos: []
+                };
+            } else {
+                h = (a.historico || [])[histIndex];
+            }
+            if (!h) return;
+
+            document.getElementById('calibracaoEditOriginal').value = histIndex;
+            document.getElementById('selectEquipamentoCal').value = ativoId;
+            document.getElementById('novaDataCal').value = h.data || '';
+            document.getElementById('novoCertificado').value = h.certificado || '';
+            document.getElementById('calibracaoTitle').innerText = `Editar Calibração: ${h.certificado || 'Sem Certificado'}`;
+
+            // Recarregar Criterio
+            const isPercent = (a.erroMaximo || '').includes('%');
+            const criterioNumerico = a.erroMaximo ? a.erroMaximo.replace(/[^0-9.,]/g, '').replace(',', '.') : '';
+            document.getElementById('calCriterioEMA').value = criterioNumerico + (isPercent ? '%' : '');
+
+            // Recarregar Anexos
+            anexosCalibracaoPendentes = [...(h.anexos || [])];
+            renderListaFicheirosCalibracao();
+
+            // Recarregar Medidas
+            document.getElementById('medidasContainer').innerHTML = '';
+            if (h.medidas && h.medidas.length > 0) {
+                h.medidas.forEach(m => {
+                    adicionarLinhaMedicaoComValores(m.ponto, m.medido, m.incerteza);
+                });
+            } else {
+                adicionarLinhaMedicao();
+            }
+
+            calcularAvaliacaoCalibracao();
+            switchTab('calibracao');
+        }
+
+        // Apaga uma calibração do histórico e repuxa os valores atuais
+        async function apagarCalibracaoHistorico(ativoId, histIndex) {
+            if (!checkPerm('calibracao', 'delete')) {
+                return alert('Acesso Negado: O seu perfil não possui permissão para excluir calibrações do histórico.');
+            }
+
+            if (!confirm(`Deseja realmente excluir esta calibração?\n\nEsta ação não poderá ser desfeita.`)) return;
+
+            const idx = ativos.findIndex(x => String(x.id) === String(ativoId));
+            if (idx === -1) return;
+
+            if (histIndex === -1) {
+                ativos[idx].dataUltimaCal = '';
+                ativos[idx].certificado = '';
+                ativos[idx].dataProximaCal = '';
+                ativos[idx].ultimoErro = '';
+                ativos[idx].ultimaIncerteza = '';
+                ativos[idx].ultimasMedidas = [];
+                ativos[idx].ultimoStatusCal = '';
+            } else if (histIndex >= 0 && histIndex < (ativos[idx].historico || []).length) {
+                ativos[idx].historico.splice(histIndex, 1);
+            }
+
+            // Reposiciona o status do equipamento usando o array restante
+            recalcularStatusAtivo(idx);
+
+            await registrarLog("ELIMINAR", `CALIBRAÇÃO DO EQUIPAMENTO ${ativos[idx].tag} FOI EXCLUÍDA.`);
+            
+            renderHistoricoEquipamento(); 
+            renderTable(); 
+            alert('Calibração excluída com sucesso!');
         }
 
         window.onload = init;
