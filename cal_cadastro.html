@@ -185,11 +185,7 @@
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1 uppercase">Localização / Setor</label>
                     <select id="setor" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-isoBlue/20 bg-white uppercase">
-                        <option value="Controle de Qualidade">Controle de Qualidade</option>
-                        <option value="Produção">Produção</option>
-                        <option value="Manutenção">Manutenção</option>
-                        <option value="Laboratório">Laboratório</option>
-                        <option value="Almoxarifado">Almoxarifado</option>
+                        <option value="">-- A CARREGAR SETORES --</option>
                     </select>
                 </div>
 
@@ -254,7 +250,7 @@
         let getDownloadURLModule = null;
 
         // Permissões
-        let state = { roles: [], employees: [] };
+        let state = { roles: [], employees: [], sectors: [] };
         let userPermissions = {};
 
         async function init() {
@@ -275,10 +271,10 @@
                 firebaseStorage = getStorage(app);
 
                 const setupListeners = (userObj) => {
-                    let dataLoaded = { roles: false, emp: false, cal: false };
+                    let dataLoaded = { roles: false, emp: false, cal: false, sec: false };
                     
                     const tryRender = () => {
-                        if (dataLoaded.roles && dataLoaded.emp && dataLoaded.cal) {
+                        if (dataLoaded.roles && dataLoaded.emp && dataLoaded.cal && dataLoaded.sec) {
                             updatePermissions(userObj);
                             document.getElementById('loading-state').classList.add('hidden');
                             
@@ -294,6 +290,7 @@
                             } else {
                                 // PERMISSÃO CONCEDIDA!
                                 document.getElementById('instrumentForm').classList.remove('hidden');
+                                popularSetores();
                                 checkEditMode(); // Apenas preenche os dados, não faz nova verificação
                                 if(window.lucide) window.lucide.createIcons();
                             }
@@ -305,6 +302,9 @@
 
                     const empRef = collection(db, 'artifacts', appId, 'public', 'data', 'employees');
                     onSnapshot(empRef, snap => { state.employees = snap.docs.map(d => d.data()); dataLoaded.emp = true; tryRender(); });
+
+                    const secRef = collection(db, 'artifacts', appId, 'public', 'data', 'sectors');
+                    onSnapshot(secRef, snap => { state.sectors = snap.docs.map(d => d.data()); dataLoaded.sec = true; tryRender(); });
 
                     const globalDocRef = doc(db, 'calibracao', 'inventario_geral');
                     onSnapshot(globalDocRef, async snap => {
@@ -408,6 +408,15 @@
             await salvar();
         }
 
+        function popularSetores() {
+            const select = document.getElementById('setor');
+            const currentVal = select.value;
+            select.innerHTML = '<option value="">-- SELECIONE O SETOR --</option>' + 
+                state.sectors.sort((a,b) => a.name.localeCompare(b.name))
+                             .map(s => `<option value="${s.name}">${s.name}</option>`).join('');
+            if (currentVal) select.value = currentVal;
+        }
+
         function processarAnexos(e) {
             const files = Array.from(e.target.files);
             files.forEach(f => {
@@ -456,7 +465,7 @@
                     document.getElementById('requerCalibracao').checked = a.requerCalibracao !== false; 
                     document.getElementById('frequencia').value = a.frequencia || 12;
                     document.getElementById('erroMaximo').value = a.erroMaximo || '';
-                    document.getElementById('setor').value = a.setor || 'Controle de Qualidade';
+                    document.getElementById('setor').value = a.setor || '';
                     
                     anexosPendentes = [...(a.anexos || [])]; 
                     renderListaFicheiros();
