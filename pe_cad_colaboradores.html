@@ -1,0 +1,1074 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SGQ - Gestão de Colaboradores (ISO 9001)</title>
+    
+    <!-- Tailwind CSS para Estilização -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Lucide Icons para Ícones -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <!-- SweetAlert2 para Modais e Mensagens -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <!-- FIREBASE V8 (A versão blindada) -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-storage.js"></script>
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; }
+        .custom-scrollbar::-webkit-scrollbar { height: 8px; width: 8px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        .modal-open { overflow: hidden; }
+    </style>
+</head>
+<body class="flex flex-col h-screen text-gray-800 bg-gray-50">
+
+    <!-- ========================================================================= -->
+    <!-- MENU INTELIGENTE PADRÃO (COM DASHBOARD ISOLADO E APLICATIVOS) -->
+    <!-- ========================================================================= -->
+    <header class="bg-white shadow-sm z-20 no-print">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <!-- Logotipo / Título Dinâmico do Menu -->
+                <div class="flex items-center flex-1">
+                    <div class="flex-shrink-0 flex items-center mr-6" id="menu-logo-container">
+                        <div class="p-2 bg-slate-100 rounded-lg mr-3"><i data-lucide="layers" class="w-6 h-6 text-slate-700"></i></div>
+                        <h1 class="text-xl font-bold text-gray-800">SGQ <span class="text-slate-600">Portal</span></h1>
+                    </div>
+                    
+                    <!-- Desktop Menu -->
+                    <nav class="hidden lg:flex space-x-6 h-full">
+                        
+                        <!-- Menu Dashboard (Isolado e Direto) -->
+                        <div class="relative flex items-center h-full">
+                            <a href="dashboard.html" class="inline-flex items-center px-1 h-full border-b-2 border-transparent text-sm font-medium text-gray-500 hover:text-indigo-600 transition-colors focus:outline-none">
+                                Dashboard
+                            </a>
+                        </div>
+
+                        <!-- Menu Cadastros (Apenas RH e Negócio) -->
+                        <div class="relative group h-full flex items-center">
+                            <button class="inline-flex items-center px-1 h-full border-b-2 border-transparent text-sm font-medium text-gray-500 hover:text-blue-600 transition-colors focus:outline-none">
+                                Cadastros <i data-lucide="chevron-down" class="w-4 h-4 ml-1"></i>
+                            </button>
+                            <div class="absolute left-0 top-16 w-56 bg-white border border-gray-200 rounded-b-lg shadow-xl hidden group-hover:block transition-all z-50">
+                                <a href="pe_cad_colaboradores.html" class="block px-5 py-3 text-sm font-medium text-gray-600 hover:bg-gray-50 hover:text-blue-600 border-l-4 border-transparent transition-colors">Colaboradores</a>
+                                <a href="pe_cad_educacao.html" class="block px-5 py-3 text-sm font-medium text-gray-600 hover:bg-gray-50 hover:text-blue-600 border-l-4 border-transparent transition-colors">Educação</a>
+                                <a href="pe_cad_experiencia.html" class="block px-5 py-3 text-sm font-medium text-gray-600 hover:bg-gray-50 hover:text-blue-600 border-l-4 border-transparent transition-colors">Experiência</a>
+                                <a href="pe_cad_habilidades.html" class="block px-5 py-3 text-sm font-medium text-gray-600 hover:bg-gray-50 hover:text-blue-600 border-l-4 border-transparent transition-colors">Habilidades</a>
+                                <a href="pe_cad_treinamentos.html" class="block px-5 py-3 text-sm font-medium text-gray-600 hover:bg-gray-50 hover:text-blue-600 border-l-4 border-transparent transition-colors">Treinamentos</a>
+                            </div>
+                        </div>
+
+                        <!-- Menu Operacional -->
+                        <div class="relative group h-full flex items-center">
+                            <button class="inline-flex items-center px-1 h-full border-b-2 border-transparent text-sm font-medium text-gray-500 hover:text-amber-600 transition-colors focus:outline-none">
+                                Operacional <i data-lucide="chevron-down" class="w-4 h-4 ml-1"></i>
+                            </button>
+                            <div class="absolute left-0 top-16 w-64 bg-white border border-gray-200 rounded-b-lg shadow-xl hidden group-hover:block transition-all z-50">
+                                <a href="pe_ope_avaliacao_desempenho.html" class="block px-5 py-3 text-sm font-medium text-gray-600 hover:bg-gray-50 hover:text-amber-600 border-l-4 border-transparent transition-colors">Avaliação de Desempenho</a>
+                                <a href="pe_ope_eficacia.html" class="block px-5 py-3 text-sm font-medium text-gray-600 hover:bg-gray-50 hover:text-amber-600 border-l-4 border-transparent transition-colors">Eficácia</a>
+                                <a href="pe_ope_lista_de_presenca.html" class="block px-5 py-3 text-sm font-medium text-gray-600 hover:bg-gray-50 hover:text-amber-600 border-l-4 border-transparent transition-colors">Lista de Presença</a>
+                                <a href="pe_ope_planejamento_treinamento.html" class="block px-5 py-3 text-sm font-medium text-gray-600 hover:bg-gray-50 hover:text-amber-600 border-l-4 border-transparent transition-colors">Planejamento de Treinamento</a>
+                            </div>
+                        </div>
+
+                        <!-- Menu Consultas & Relatórios -->
+                        <div class="relative group h-full flex items-center">
+                            <button class="inline-flex items-center px-1 h-full border-b-2 border-transparent text-sm font-medium text-gray-500 hover:text-emerald-600 transition-colors focus:outline-none">
+                                Consultas <i data-lucide="chevron-down" class="w-4 h-4 ml-1"></i>
+                            </button>
+                            <div class="absolute left-0 top-16 w-64 bg-white border border-gray-200 rounded-b-lg shadow-xl hidden group-hover:block transition-all z-50">
+                                <a href="pe_con_colaboradores.html" class="block px-5 py-3 text-sm font-medium text-gray-600 hover:bg-gray-50 hover:text-emerald-600 border-l-4 border-transparent transition-colors">Colaboradores</a>
+                                <a href="pe_con_matriz.html" class="block px-5 py-3 text-sm font-medium text-gray-600 hover:bg-gray-50 hover:text-emerald-600 border-l-4 border-transparent transition-colors">Matriz de Competências</a>
+                                <a href="pe_con_competencia.html" class="block px-5 py-3 text-sm font-medium text-gray-600 hover:bg-gray-50 hover:text-emerald-600 border-l-4 border-transparent transition-colors">Histórico de Competência</a>
+                                <a href="pe_con_presenca_e_avaliacao.html" class="block px-5 py-3 text-sm font-medium text-gray-600 hover:bg-gray-50 hover:text-emerald-600 border-l-4 border-transparent transition-colors">Presença e Avaliação</a>
+                                <a href="pe_rel_tempo_de_treinamento.html" class="block px-5 py-3 text-sm font-medium text-gray-600 hover:bg-gray-50 hover:text-violet-600 border-l-4 border-transparent transition-colors">Tempo de Treinamento</a>
+                            </div>
+                        </div>
+
+                        <!-- Menu Configurações -->
+                        <div class="relative group h-full flex items-center">
+                            <button class="inline-flex items-center px-1 h-full border-b-2 border-transparent text-sm font-medium text-gray-500 hover:text-slate-800 transition-colors focus:outline-none">
+                                Configurações <i data-lucide="settings" class="w-4 h-4 ml-1"></i>
+                            </button>
+                            <div class="absolute right-0 top-16 w-64 bg-white border border-gray-200 rounded-b-lg shadow-xl hidden group-hover:block transition-all z-50">
+                                <div class="px-4 py-2 text-[10px] font-black text-slate-400 uppercase tracking-widest bg-slate-50 border-b border-slate-100">Estrutura e Cargos</div>
+                                <a href="pe_cad_setores.html" class="block px-5 py-3 text-sm font-medium text-gray-600 hover:bg-gray-50 hover:text-slate-800 border-l-4 border-transparent transition-colors">Setores / Departamentos</a>
+                                <a href="pe_cad_processos.html" class="block px-5 py-3 text-sm font-medium text-gray-600 hover:bg-gray-50 hover:text-slate-800 border-l-4 border-transparent transition-colors">Processos</a>
+                                <a href="pe_cad_cargos.html" class="block px-5 py-3 text-sm font-medium text-gray-600 hover:bg-gray-50 hover:text-slate-800 border-l-4 border-transparent transition-colors">Cargos</a>
+                                
+                                <div class="px-4 py-2 text-[10px] font-black text-slate-400 uppercase tracking-widest bg-slate-50 border-y border-slate-100 mt-1">Sistema & Segurança</div>
+                                <a href="pe_cfg_sistema.html" class="block px-5 py-3 text-sm font-medium text-gray-600 hover:bg-gray-50 hover:text-slate-800 border-l-4 border-transparent transition-colors">Parâmetros e Anexos</a>
+                                <a href="Permissoes.html" class="block px-5 py-3 text-sm font-bold text-red-600 bg-red-50/30 hover:bg-red-50 hover:text-red-700 border-l-4 border-transparent transition-colors flex justify-between items-center">Permissões de Acesso <i data-lucide="lock" class="w-4 h-4"></i></a>
+                            </div>
+                        </div>
+
+                        <!-- Menu Aplicativos Externos -->
+                        <div class="relative group h-full flex items-center">
+                            <button class="inline-flex items-center px-1 h-full border-b-2 border-transparent text-sm font-medium text-gray-500 hover:text-indigo-600 transition-colors focus:outline-none">
+                                Aplicativos <i data-lucide="layout-grid" class="w-4 h-4 ml-1"></i>
+                            </button>
+                            <div class="absolute right-0 top-16 w-64 bg-white border border-gray-200 rounded-b-lg shadow-xl hidden group-hover:block transition-all z-50">
+                                <div class="px-4 py-2 text-[10px] font-black text-indigo-500 uppercase tracking-widest bg-indigo-50 border-b border-indigo-100">Outros Sistemas</div>
+                                <a href="Ocorrencias.html" class="block px-5 py-3 text-sm font-medium text-gray-600 hover:bg-gray-50 hover:text-indigo-600 border-l-4 border-transparent transition-colors flex items-center"><i data-lucide="shield-alert" class="w-4 h-4 mr-2 text-indigo-500"></i> Gestão de Ocorrências</a>
+                                <a href="calibracao.html" class="block px-5 py-3 text-sm font-medium text-gray-600 hover:bg-gray-50 hover:text-indigo-600 border-l-4 border-transparent transition-colors flex items-center"><i data-lucide="scale" class="w-4 h-4 mr-2 text-indigo-500"></i> Ativos e Calibração</a>
+                                <a href="Indicador.html" class="block px-5 py-3 text-sm font-medium text-gray-600 hover:bg-gray-50 hover:text-indigo-600 border-l-4 border-transparent transition-colors flex items-center"><i data-lucide="line-chart" class="w-4 h-4 mr-2 text-indigo-500"></i> Painel de Indicadores</a>
+                            </div>
+                        </div>
+                    </nav>
+                </div>
+                
+                <!-- Ações do Utilizador -->
+                <div class="flex items-center space-x-4">
+                    <a href="index.html" class="hidden lg:inline-flex items-center px-4 py-2 border border-transparent text-sm font-bold rounded-md shadow-sm text-white bg-slate-800 hover:bg-slate-700 focus:outline-none transition-colors">
+                        <i data-lucide="arrow-left" class="w-4 h-4 mr-2"></i> PORTAL
+                    </a>
+                    <button class="text-gray-400 hover:text-gray-600 relative transition-colors" onclick="showDevInfo()"><i data-lucide="info" class="w-5 h-5"></i></button>
+                    <div class="h-8 w-8 rounded-full bg-slate-400 flex items-center justify-center text-white font-bold text-sm shadow-sm" id="user-avatar">--</div>
+                    <!-- Mobile menu button -->
+                    <button type="button" onclick="document.getElementById('mobile-menu').classList.toggle('hidden')" class="lg:hidden p-2 rounded-md text-gray-400 hover:bg-gray-100">
+                        <i data-lucide="menu" class="w-6 h-6"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Mobile Menu (Cascata Vertical) -->
+        <div class="hidden lg:hidden absolute w-full bg-white z-50 border-t shadow-lg max-h-[80vh] overflow-y-auto" id="mobile-menu">
+            <div class="pt-2 pb-3 space-y-1">
+                
+                <!-- Link direto Dashboard Mobile -->
+                <a href="dashboard.html" class="block pl-6 py-3 border-l-4 border-transparent text-gray-800 font-bold hover:bg-gray-50 text-sm flex items-center mb-1">
+                    <i data-lucide="layout-dashboard" class="w-5 h-5 mr-2 text-indigo-600"></i> Dashboard
+                </a>
+
+                <div class="px-4 py-2 text-xs font-bold text-blue-600 uppercase tracking-wider bg-blue-50/50 border-t border-gray-100">Cadastros</div>
+                <a href="pe_cad_colaboradores.html" class="block pl-6 py-2 border-l-4 border-transparent text-gray-600 font-medium hover:bg-gray-50 text-sm">Colaboradores</a>
+                <a href="pe_cad_educacao.html" class="block pl-6 py-2 border-l-4 border-transparent text-gray-600 font-medium hover:bg-gray-50 text-sm">Educação</a>
+                <a href="pe_cad_experiencia.html" class="block pl-6 py-2 border-l-4 border-transparent text-gray-600 font-medium hover:bg-gray-50 text-sm">Experiência</a>
+                <a href="pe_cad_habilidades.html" class="block pl-6 py-2 border-l-4 border-transparent text-gray-600 font-medium hover:bg-gray-50 text-sm">Habilidades</a>
+                <a href="pe_cad_treinamentos.html" class="block pl-6 py-2 border-l-4 border-transparent text-gray-600 font-medium hover:bg-gray-50 text-sm">Treinamentos</a>
+                
+                <div class="px-4 py-2 text-xs font-bold text-amber-600 uppercase tracking-wider bg-amber-50/50 mt-2">Operacional</div>
+                <a href="pe_ope_avaliacao_desempenho.html" class="block pl-6 py-2 border-l-4 border-transparent text-gray-600 font-medium hover:bg-gray-50 text-sm">Avaliação de Desempenho</a>
+                <a href="pe_ope_eficacia.html" class="block pl-6 py-2 border-l-4 border-transparent text-gray-600 font-medium hover:bg-gray-50 text-sm">Eficácia</a>
+                <a href="pe_ope_lista_de_presenca.html" class="block pl-6 py-2 border-l-4 border-transparent text-gray-600 font-medium hover:bg-gray-50 text-sm">Lista de Presença</a>
+                <a href="pe_ope_planejamento_treinamento.html" class="block pl-6 py-2 border-l-4 border-transparent text-gray-600 font-medium hover:bg-gray-50 text-sm">Planejamento de Treinamento</a>
+
+                <div class="px-4 py-2 text-xs font-bold text-emerald-600 uppercase tracking-wider bg-emerald-50/50 mt-2">Consultas</div>
+                <a href="pe_con_colaboradores.html" class="block pl-6 py-2 border-l-4 border-transparent text-gray-600 font-medium hover:bg-gray-50 text-sm">Colaboradores</a>
+                <a href="pe_con_matriz.html" class="block pl-6 py-2 border-l-4 border-transparent text-gray-600 font-medium hover:bg-gray-50 text-sm">Matriz de Competências</a>
+                <a href="pe_con_competencia.html" class="block pl-6 py-2 border-l-4 border-transparent text-gray-600 font-medium hover:bg-gray-50 text-sm">Histórico de Competência</a>
+                <a href="pe_con_presenca_e_avaliacao.html" class="block pl-6 py-2 border-l-4 border-transparent text-gray-600 font-medium hover:bg-gray-50 text-sm">Presença e Avaliação</a>
+                <a href="pe_rel_tempo_de_treinamento.html" class="block pl-6 py-2 border-l-4 border-transparent text-gray-600 font-medium hover:bg-gray-50 text-sm">Tempo de Treinamento</a>
+
+                <div class="px-4 py-2 text-xs font-bold text-slate-600 uppercase tracking-wider bg-slate-100 mt-2">Configurações</div>
+                <a href="pe_cad_setores.html" class="block pl-6 py-2 border-l-4 border-transparent text-gray-600 font-medium hover:bg-gray-50 text-sm">Setores</a>
+                <a href="pe_cad_processos.html" class="block pl-6 py-2 border-l-4 border-transparent text-gray-600 font-medium hover:bg-gray-50 text-sm">Processos</a>
+                <a href="pe_cad_cargos.html" class="block pl-6 py-2 border-l-4 border-transparent text-gray-600 font-medium hover:bg-gray-50 text-sm">Cargos</a>
+                <a href="pe_cfg_sistema.html" class="block pl-6 py-2 border-l-4 border-transparent text-gray-600 font-medium hover:bg-gray-50 text-sm">Parâmetros e Anexos</a>
+                <a href="Permissoes.html" class="block pl-6 py-2 border-l-4 border-transparent text-red-600 font-bold hover:bg-red-50 text-sm">Permissões (Admin)</a>
+                
+                <div class="px-4 py-2 text-xs font-bold text-indigo-600 uppercase tracking-wider bg-indigo-50 mt-2 border-t border-indigo-100">Aplicativos</div>
+                <a href="Ocorrencias.html" class="block pl-6 py-2 border-l-4 border-transparent text-gray-600 font-medium hover:bg-gray-50 text-sm flex items-center"><i data-lucide="shield-alert" class="w-4 h-4 mr-2 text-indigo-500"></i> Ocorrências</a>
+                <a href="calibracao.html" class="block pl-6 py-2 border-l-4 border-transparent text-gray-600 font-medium hover:bg-gray-50 text-sm flex items-center"><i data-lucide="scale" class="w-4 h-4 mr-2 text-indigo-500"></i> Calibração</a>
+                <a href="Indicador.html" class="block pl-6 py-2 border-l-4 border-transparent text-gray-600 font-medium hover:bg-gray-50 text-sm flex items-center"><i data-lucide="line-chart" class="w-4 h-4 mr-2 text-indigo-500"></i> Indicadores</a>
+
+                <div class="border-t border-gray-100 mt-3 pt-2">
+                    <a href="index.html" class="block pl-6 py-3 text-white bg-slate-800 hover:bg-slate-700 font-bold"><i data-lucide="arrow-left" class="w-5 h-5 inline mr-2"></i> PORTAL</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- SCRIPT MÁGICO DE AUTO-DESTAQUE DE MENU ATUALIZADO -->
+        <script>
+            document.addEventListener("DOMContentLoaded", () => {
+                let currentPath = window.location.pathname.split('/').pop() || 'dashboard.html';
+                // Lidar com nomes de ficheiros que possam ter espaços (codificados como %20)
+                currentPath = decodeURIComponent(currentPath);
+                
+                const logoContainer = document.getElementById('menu-logo-container');
+                
+                let activeClasses = [];
+                let highlightColorClass = '';
+                
+                // Lógica de cores baseada no ficheiro aberto
+                if (currentPath === 'dashboard.html') {
+                    // Módulo Dashboard
+                    activeClasses = ['border-indigo-600', 'text-indigo-700', 'bg-indigo-50', 'font-bold'];
+                    highlightColorClass = 'text-indigo-600';
+                    logoContainer.innerHTML = '<div class="p-2 bg-indigo-100 rounded-lg mr-3"><i data-lucide="layout-dashboard" class="w-6 h-6 text-indigo-700"></i></div><h1 class="text-xl font-bold text-gray-800">SGQ <span class="text-indigo-600">Painel</span></h1>';
+                } else if (currentPath === 'pe_cad_setores.html' || currentPath === 'pe_cad_processos.html' || currentPath === 'pe_cad_cargos.html' || currentPath.startsWith('Permissoes') || currentPath.startsWith('pe_cfg')) {
+                    // Módulo de Configurações
+                    activeClasses = ['border-slate-600', 'text-slate-800', 'bg-slate-100', 'font-bold'];
+                    highlightColorClass = 'text-slate-700';
+                    logoContainer.innerHTML = '<div class="p-2 bg-slate-200 rounded-lg mr-3"><i data-lucide="settings" class="w-6 h-6 text-slate-800"></i></div><h1 class="text-xl font-bold text-gray-800">SGQ <span class="text-slate-600">Config</span></h1>';
+                } else if (currentPath.startsWith('pe_cad') || currentPath.startsWith('pe_ca_')) {
+                    // Módulo Cadastros (RH)
+                    activeClasses = ['border-blue-600', 'text-blue-700', 'bg-blue-50', 'font-bold'];
+                    highlightColorClass = 'text-blue-600';
+                    logoContainer.innerHTML = '<div class="p-2 bg-blue-100 rounded-lg mr-3"><i data-lucide="users" class="w-6 h-6 text-blue-700"></i></div><h1 class="text-xl font-bold text-gray-800">SGQ <span class="text-blue-600">Cadastros</span></h1>';
+                } else if (currentPath.startsWith('pe_ope')) {
+                    // Módulo Operacional
+                    activeClasses = ['border-amber-600', 'text-amber-700', 'bg-amber-50', 'font-bold'];
+                    highlightColorClass = 'text-amber-600';
+                    logoContainer.innerHTML = '<div class="p-2 bg-amber-100 rounded-lg mr-3"><i data-lucide="cog" class="w-6 h-6 text-amber-700"></i></div><h1 class="text-xl font-bold text-gray-800">SGQ <span class="text-amber-600">Operação</span></h1>';
+                } else if (currentPath.startsWith('pe_con') || currentPath.startsWith('pe_rel')) {
+                    // Módulo Consultas & Relatórios
+                    activeClasses = ['border-emerald-600', 'text-emerald-700', 'bg-emerald-50', 'font-bold'];
+                    highlightColorClass = 'text-emerald-600';
+                    logoContainer.innerHTML = '<div class="p-2 bg-emerald-100 rounded-lg mr-3"><i data-lucide="search" class="w-6 h-6 text-emerald-700"></i></div><h1 class="text-xl font-bold text-gray-800">SGQ <span class="text-emerald-600">Consultas</span></h1>';
+                }
+
+                // Aplica o destaque na listagem de links
+                const links = document.querySelectorAll('nav a, #mobile-menu a');
+                links.forEach(link => {
+                    const href = decodeURIComponent(link.getAttribute('href'));
+                    if (href === currentPath || (currentPath === 'pe_ca_colaborador.html' && href === 'pe_cad_colaboradores.html')) {
+                        // Limpa classes base (tira o vermelho especial se for aba de Permissões)
+                        link.classList.remove('border-transparent', 'text-gray-600', 'font-medium', 'text-red-600', 'bg-red-50/30');
+                        // Adiciona as classes do módulo ativo
+                        link.classList.add(...activeClasses);
+                    }
+                });
+
+                // Tinge o avatar com a cor do módulo
+                const avatar = document.getElementById('user-avatar');
+                if (avatar && highlightColorClass) {
+                    avatar.classList.remove('bg-slate-400');
+                    avatar.classList.add(highlightColorClass.replace('text-', 'bg-'));
+                }
+                
+                // Recria os ícones Lucide recém injetados
+                if(window.lucide) window.lucide.createIcons();
+            });
+        </script>
+    </header>
+    <!-- ========================================================================= -->
+    <!-- FIM DO BLOCO DO MENU MESTRE -->
+    <!-- ========================================================================= -->
+
+    <main class="flex-1 overflow-auto bg-gray-50 p-4 md:p-6">
+        <div class="max-w-7xl mx-auto mb-4"><h2 class="text-2xl font-semibold text-gray-800" id="page-title">Gestão de Colaboradores</h2></div>
+        <div class="max-w-7xl mx-auto" id="app-content">
+            <div class="flex h-64 items-center justify-center"><div class="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600"></div></div>
+        </div>
+    </main>
+
+    <!-- Modal Container -->
+    <div id="modal-container" class="fixed inset-0 z-50 flex items-center justify-center hidden bg-black bg-opacity-50 backdrop-blur-sm p-4">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-[750px] max-h-[95vh] flex flex-col" id="modal-content-wrapper">
+            <div class="px-5 py-3 border-b border-gray-200 flex justify-between items-center"><h3 class="text-xl font-bold" id="modal-title">Título</h3><button onclick="closeModal()" class="text-gray-400 hover:text-gray-600"><i data-lucide="x" class="w-5 h-5"></i></button></div>
+            <div class="p-5 overflow-y-auto custom-scrollbar flex-1" id="modal-body"></div>
+            <div class="px-5 py-3 border-t border-gray-100 bg-gray-50 rounded-b-xl flex justify-end gap-3" id="modal-footer"></div>
+        </div>
+    </div>
+
+    <script>
+        // CONFIGURAÇÃO FIREBASE
+        const firebaseConfig = {
+            apiKey: "AIzaSyBqV0KOQMAYR4z6P_RKnrQPDfkAR2CsXBI",
+            authDomain: "gestao-de-pessoas-49200.firebaseapp.com",
+            projectId: "gestao-de-pessoas-49200",
+            storageBucket: "gestao-de-pessoas-49200.firebasestorage.app",
+            messagingSenderId: "615097388185",
+            appId: "1:615097388185:web:ef87969b64f4a886f23c08"
+        };
+        if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth(); const db = firebase.firestore(); const storage = firebase.storage();
+        db.settings({ experimentalForceLongPolling: true });
+        const appId = 'gestao-de-pessoas-49200';
+        
+        let currentUser = null;
+        let currentEmp = null;
+        let userPermissions = {};
+
+        // ESTADO GLOBAL (Carrega as coleções necessárias para a consistência dos colaboradores)
+        let state = { roles: [], employees: [], skills: [], employeeSkills: [], trainings: [], attendanceLists: [], effectivenessEvaluations: [], performanceReviews: [], logs: [], sectors: [], processes: [] };
+
+        function loadDataFromFirestore() {
+            if (!currentUser) return;
+
+            const collections = ['roles', 'employees', 'skills', 'employeeSkills', 'trainings', 'attendanceLists', 'effectivenessEvaluations', 'performanceReviews', 'logs', 'sectors', 'processes'];
+            let loadedCount = 0;
+            
+            collections.forEach(col => {
+                db.collection(`artifacts/${appId}/public/data/${col}`).onSnapshot((snapshot) => {
+                    state[col] = snapshot.docs.map(doc => doc.data());
+                    if(col === 'logs') state.logs.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+                    if(col === 'attendanceLists') state.attendanceLists.sort((a, b) => new Date(a.date) - new Date(b.date));
+                    
+                    loadedCount++;
+                    if(loadedCount >= collections.length) {
+                        // --- LÓGICA DE PERMISSÕES ---
+                        if (currentUser.email && currentUser.email !== 'Local') {
+                            currentEmp = state.employees.find(e => e.email === currentUser.email);
+                            if (currentEmp) {
+                                const roleObj = state.roles.find(r => r.name === currentEmp.role);
+                                if (roleObj && roleObj.permissions) userPermissions = roleObj.permissions;
+                                else userPermissions = {}; 
+                            } else {
+                                userPermissions = {}; 
+                            }
+                        } else {
+                            // Acesso Total (Admin ou Teste Local)
+                            userPermissions = {
+                                colaboradores: {view:true, create:true, edit:true, delete:true},
+                                cargos: {view:true, create:true, edit:true, delete:true},
+                                habilidades: {view:true, create:true, edit:true, delete:true},
+                                treinamentos: {view:true, create:true, edit:true, delete:true}
+                            };
+                        }
+
+                        applyMenuVisibility();
+
+                        if (checkPerm('colaboradores', 'view')) {
+                            renderColaboradores(document.getElementById('app-content'));
+                        } else {
+                            showAccessDenied();
+                        }
+                    }
+                }, (error) => {
+                    console.error(`Erro na coleção ${col}:`, error);
+                });
+            });
+        }
+
+        // Funções Auxiliares de Permissão
+        function checkPerm(module, action) {
+            if (currentUser && currentUser.email === 'Local') return true; 
+            if (!userPermissions[module]) return false;
+            return userPermissions[module][action] === true;
+        }
+
+        function applyMenuVisibility() {
+            document.querySelectorAll('.nav-colaboradores').forEach(el => el.style.display = checkPerm('colaboradores', 'view') ? '' : 'none');
+            document.querySelectorAll('.nav-cargos').forEach(el => el.style.display = checkPerm('cargos', 'view') ? '' : 'none');
+            document.querySelectorAll('.nav-habilidades').forEach(el => el.style.display = checkPerm('habilidades', 'view') ? '' : 'none');
+            document.querySelectorAll('.nav-treinamentos').forEach(el => el.style.display = checkPerm('treinamentos', 'view') ? '' : 'none');
+        }
+
+        function showAccessDenied() {
+            document.getElementById('page-title').innerText = "Acesso Restrito";
+            document.getElementById('app-content').innerHTML = `
+                <div class="flex flex-col items-center justify-center h-64 text-center">
+                    <div class="text-red-500 mb-4"><i data-lucide="shield-alert" class="w-16 h-16 mx-auto"></i></div>
+                    <h3 class="text-2xl font-bold text-gray-800">Acesso Restrito</h3>
+                    <p class="text-gray-500 mt-2">O seu cargo não possui permissão para visualizar a lista de Colaboradores.</p>
+                </div>
+            `;
+            if(window.lucide) window.lucide.createIcons();
+        }
+
+        async function dbSave(collection, docId, data) { await db.collection(`artifacts/${appId}/public/data/${collection}`).doc(docId.toString()).set(data); }
+        async function dbDelete(collection, docId) { await db.collection(`artifacts/${appId}/public/data/${collection}`).doc(docId.toString()).delete(); }
+        
+        const generateId = (array) => array.length > 0 ? Math.max(...array.map(i => i.id)) + 1 : 1;
+        const formatDate = (dateStr) => { if(!dateStr) return '-'; const [y, m, d] = dateStr.split('-'); return `${d}/${m}/${y}`; };
+        
+        function addLog(moduleName, action, details) {
+            const newLog = { id: Date.now() + Math.floor(Math.random() * 1000), module: moduleName, action: action, details: details, timestamp: new Date().toISOString(), user: currentUser ? (currentUser.email || 'Visitante') : 'Sistema' };
+            dbSave('logs', newLog.id, newLog);
+        }
+
+        async function requirePasswordForAction(actionCallback) {
+            const user = firebase.auth().currentUser;
+            if (!user || user.isAnonymous) {
+                Swal.fire({ title: 'Modo Local', text: 'Digite a senha mestre "admin" para excluir:', input: 'password', showCancelButton: true }).then((result) => {
+                    if (result.value === 'admin') actionCallback(); else if (result.isConfirmed) Swal.fire('Erro', 'Senha incorreta.', 'error');
+                }); return;
+            }
+            const { value: password } = await Swal.fire({ title: 'Autenticação', text: 'Confirme sua senha para excluir:', input: 'password', showCancelButton: true });
+            if (password) {
+                try { Swal.showLoading(); await firebase.auth().signInWithEmailAndPassword(user.email, password); actionCallback(); } 
+                catch (error) { Swal.fire('Acesso Negado', 'Senha incorreta.', 'error'); }
+            }
+        }
+
+        function openModal(title, bodyHtml, footerHtml) {
+            document.getElementById('modal-title').innerText = title; document.getElementById('modal-body').innerHTML = bodyHtml; document.getElementById('modal-footer').innerHTML = footerHtml;
+            document.getElementById('modal-container').classList.remove('hidden'); document.body.classList.add('modal-open');
+            if(window.lucide) window.lucide.createIcons();
+        }
+        function closeModal() { 
+            const modal = document.getElementById('modal-container');
+            const wrapper = document.getElementById('modal-content-wrapper');
+            wrapper.classList.remove('scale-100'); wrapper.classList.add('scale-95');
+            setTimeout(() => { modal.classList.add('hidden'); document.body.classList.remove('modal-open'); }, 200);
+        }
+        
+        function openLogModal(moduleName) {
+            const moduleLogs = state.logs.filter(l => l.module === moduleName);
+            let bodyHtml = moduleLogs.length === 0 ? '<p class="text-gray-500 text-center py-6">Nenhum registo encontrado.</p>' : '<ul class="space-y-4">' + moduleLogs.map(log => `<li class="border-l-4 border-blue-500 bg-gray-50 p-3 rounded shadow-sm"><p class="text-sm font-semibold">${log.action} <span class="text-xs text-gray-500 float-right">${new Date(log.timestamp).toLocaleString('pt-PT')}</span></p><p class="text-sm text-gray-600 mt-1">${log.details}</p></li>`).join('') + '</ul>';
+            openModal(`Histórico - ${moduleName}`, bodyHtml, `<button onclick="closeModal()" class="px-4 py-2 bg-gray-200 rounded">Fechar</button>`);
+        }
+        function showDevInfo() { Swal.fire({ title: 'SGQ Cadastros', text: 'Conectado ao Firebase com Controle de Acesso.', icon: 'info' }); }
+
+        // ================= 1. GESTÃO DE COLABORADORES (COMPLETO) =================
+        let tempEmpAttachments = [];
+        let currentSearchQuery = '';
+        let currentSortOption = 'nome_asc';
+
+        window.handleSearch = function(val) {
+            currentSearchQuery = val;
+            renderColaboradoresTableBody();
+        };
+
+        window.handleSort = function(val) {
+            currentSortOption = val;
+            renderColaboradoresTableBody();
+        };
+
+        function renderColaboradores(container) {
+            if(!checkPerm('colaboradores', 'view')) return;
+
+            // Renderiza o esqueleto apenas uma vez para não perder o foco do input ao digitar
+            if (!document.getElementById('colaboradores-tbody')) {
+                let html = `
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                        <div class="p-6 border-b flex flex-col lg:flex-row justify-between items-start lg:items-center bg-gray-50 gap-4">
+                            <h3 class="text-lg font-semibold text-gray-800 whitespace-nowrap">Quadro de Funcionários</h3>
+                            
+                            <!-- Filtros e Pesquisa -->
+                            <div class="flex flex-col sm:flex-row gap-2 w-full lg:w-auto flex-1 lg:justify-center px-0 lg:px-4">
+                                <div class="relative w-full sm:w-64">
+                                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                        <i data-lucide="search" class="w-4 h-4 text-gray-400"></i>
+                                    </div>
+                                    <input type="text" id="empSearchInput" onkeyup="window.handleSearch(this.value)" placeholder="Buscar colaborador..." class="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
+                                </div>
+                                <select id="empSortSelect" onchange="window.handleSort(this.value)" class="w-full sm:w-auto border border-gray-300 rounded-lg text-sm px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white cursor-pointer uppercase">
+                                    <option value="nome_asc">Nome (A-Z)</option>
+                                    <option value="nome_desc">Nome (Z-A)</option>
+                                    <option value="cargo_asc">Cargo (A-Z)</option>
+                                    <option value="status_desc">Status (Ativos 1º)</option>
+                                    <option value="status_asc">Status (Inativos 1º)</option>
+                                </select>
+                            </div>
+
+                            <div class="flex space-x-2 w-full lg:w-auto justify-start lg:justify-end">
+                                <button onclick="openLogModal('Colaboradores')" class="bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center whitespace-nowrap">
+                                    <i data-lucide="history" class="w-4 h-4 mr-2"></i> Histórico
+                                </button>
+                                ${checkPerm('colaboradores', 'create') ? `
+                                <button onclick="openEmployeeModal()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center whitespace-nowrap">
+                                    <i data-lucide="plus" class="w-4 h-4 mr-2"></i> Novo
+                                </button>` : ''}
+                            </div>
+                        </div>
+                        <div class="overflow-x-auto custom-scrollbar">
+                            <table class="w-full text-left border-collapse">
+                                <thead>
+                                    <tr class="bg-gray-50 text-gray-500 text-xs uppercase tracking-wider border-b">
+                                        <th class="p-4 font-medium">Nome / E-mail Portal</th>
+                                        <th class="p-4 font-medium">Cargo</th>
+                                        <th class="p-4 font-medium">Setor / Processo</th>
+                                        <th class="p-4 font-medium text-center">Status Portal</th>
+                                        <th class="p-4 font-medium text-center">Status Geral</th>
+                                        <th class="p-4 font-medium text-center">Ações</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="colaboradores-tbody" class="divide-y divide-gray-100 text-sm">
+                                    <!-- Injetado por renderColaboradoresTableBody -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                `;
+                container.innerHTML = html;
+                if(window.lucide) window.lucide.createIcons();
+            }
+
+            renderColaboradoresTableBody();
+        }
+
+        function renderColaboradoresTableBody() {
+            const tbody = document.getElementById('colaboradores-tbody');
+            if (!tbody) return;
+
+            let filtered = [...state.employees];
+            
+            // Aplica o filtro de pesquisa
+            if (currentSearchQuery) {
+                const q = currentSearchQuery.toLowerCase();
+                filtered = filtered.filter(e => 
+                    (e.name || '').toLowerCase().includes(q) || 
+                    (e.email || '').toLowerCase().includes(q) ||
+                    (e.role || '').toLowerCase().includes(q) ||
+                    (e.sector || '').toLowerCase().includes(q) ||
+                    (e.process || '').toLowerCase().includes(q)
+                );
+            }
+
+            // Aplica a classificação
+            filtered.sort((a, b) => {
+                if (currentSortOption === 'nome_asc') return (a.name || '').localeCompare(b.name || '');
+                if (currentSortOption === 'nome_desc') return (b.name || '').localeCompare(a.name || '');
+                if (currentSortOption === 'cargo_asc') return (a.role || '').localeCompare(b.role || '');
+                if (currentSortOption === 'status_desc') return (a.status === 'Ativo' ? -1 : 1) - (b.status === 'Ativo' ? -1 : 1);
+                if (currentSortOption === 'status_asc') return (b.status === 'Ativo' ? -1 : 1) - (a.status === 'Ativo' ? -1 : 1);
+                return 0;
+            });
+
+            tbody.innerHTML = filtered.map(emp => `
+                <tr class="hover:bg-gray-50 transition-colors">
+                    <td class="p-4">
+                        <div class="font-medium text-gray-800 flex items-center">
+                            ${emp.name}
+                            ${(emp.attachments && emp.attachments.length > 0) || emp.attachment ? `<button onclick="openEmpAttachmentsViewer(${emp.id})" class="text-blue-500 ml-2 bg-blue-50 px-1.5 py-0.5 rounded text-[10px] font-bold uppercase transition hover:bg-blue-100" title="Ver Documentos do Colaborador"><i data-lucide="paperclip" class="w-3 h-3 inline"></i> Docs (${emp.attachments ? emp.attachments.length : 1})</button>` : ''}
+                        </div>
+                        <div class="text-[10px] text-gray-400 font-normal italic mt-0.5">${emp.email || 'Sem login configurado'}</div>
+                    </td>
+                    <td class="p-4 text-gray-600">${emp.role}</td>
+                    <td class="p-4 text-gray-600">
+                        ${emp.sector || '-'}
+                        ${emp.process ? `<div class="text-[10px] text-gray-400 mt-0.5">${emp.process}</div>` : ''}
+                    </td>
+                    <td class="p-4 text-center">
+                        ${emp.forcePasswordChange ? 
+                            '<span class="px-2 py-0.5 bg-amber-100 text-amber-700 text-[10px] font-bold rounded-full">TROCA SENHA</span>' : 
+                            (emp.email ? '<span class="px-2 py-0.5 bg-blue-100 text-blue-700 text-[10px] font-bold rounded-full">ATIVO</span>' : '<span class="px-2 py-0.5 bg-gray-100 text-gray-400 text-[10px] font-bold rounded-full">SEM ACESSO</span>')}
+                    </td>
+                    <td class="p-4 text-center">
+                        <span class="px-2.5 py-1 text-xs font-semibold rounded-full ${emp.status === 'Ativo' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}">
+                            ${emp.status}
+                        </span>
+                    </td>
+                    <td class="p-4 text-center whitespace-nowrap">
+                        <button onclick="openEmployeeDossier(${emp.id})" class="text-emerald-600 hover:text-emerald-800 mx-1" title="Dossiê de Treinamentos"><i data-lucide="book-open" class="w-4 h-4"></i></button>
+                        ${checkPerm('colaboradores', 'edit') ? `<button onclick="openEmployeeModal(${emp.id})" class="text-blue-600 hover:text-blue-800 mx-1" title="Editar"><i data-lucide="edit" class="w-4 h-4"></i></button>` : ''}
+                        ${checkPerm('colaboradores', 'delete') ? `<button onclick="deleteEmployee(${emp.id})" class="text-red-600 hover:text-red-800 mx-1" title="Excluir (Requer Senha)"><i data-lucide="trash-2" class="w-4 h-4"></i></button>` : ''}
+                    </td>
+                </tr>
+            `).join('') || '<tr><td colspan="6" class="p-4 text-center text-gray-500">Nenhum colaborador encontrado com estes filtros.</td></tr>';
+            
+            if(window.lucide) window.lucide.createIcons();
+        }
+
+        function openEmpAttachmentsViewer(id) {
+            const emp = state.employees.find(e => e.id === id);
+            if (!emp) return;
+
+            let atts = [];
+            if (emp.attachments) atts = emp.attachments;
+            else if (emp.attachment) atts = [{docName: 'Documento Principal', expirationDate: '', ...emp.attachment}];
+
+            if(atts.length === 0) return;
+
+            let html = '<div class="space-y-3 text-left">';
+            atts.forEach((a, i) => {
+                let statusBadge = '';
+                if (a.expirationDate) {
+                    const valDate = new Date(a.expirationDate + 'T00:00:00');
+                    const today = new Date(); today.setHours(0,0,0,0);
+                    if (valDate < today) statusBadge = '<span class="ml-2 px-2 py-0.5 bg-red-100 text-red-800 text-[10px] rounded font-bold uppercase shadow-sm">Vencido</span>';
+                    else statusBadge = '<span class="ml-2 px-2 py-0.5 bg-green-100 text-green-800 text-[10px] rounded font-bold uppercase shadow-sm">Válido</span>';
+                }
+
+                html += `
+                <div class="border border-gray-200 p-3 rounded-lg bg-gray-50 flex justify-between items-center">
+                    <div>
+                        <p class="text-sm font-bold text-gray-800 flex items-center">${a.docName || 'Documento'} ${statusBadge}</p>
+                        <p class="text-xs text-gray-500 mt-1"><i data-lucide="file" class="w-3 h-3 inline mr-1"></i>${a.fileName || 'Arquivo'} ${a.expirationDate ? '| Validade: ' + formatDate(a.expirationDate) : ''}</p>
+                    </div>
+                    <button onclick="downloadEmpAttachment('${emp.id}', ${i})" class="bg-blue-600 text-white px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-blue-700 transition flex items-center shadow-sm">
+                        <i data-lucide="download" class="w-4 h-4 mr-1"></i> Baixar
+                    </button>
+                </div>
+                `;
+            });
+            html += '</div>';
+
+            Swal.fire({
+                title: `<h3 class="text-lg font-bold border-b border-gray-200 pb-3 text-left"><i data-lucide="folder-open" class="w-5 h-5 inline mr-2 text-blue-600"></i> Documentos: ${emp.name}</h3>`,
+                html: html,
+                showCloseButton: true,
+                showConfirmButton: false,
+                width: '600px',
+                didOpen: () => { if(window.lucide) window.lucide.createIcons(); }
+            });
+        }
+
+        function downloadEmpAttachment(empId, index) {
+            const emp = state.employees.find(e => e.id == empId);
+            if (!emp) return;
+
+            let atts = [];
+            if (emp.attachments) atts = emp.attachments;
+            else if (emp.attachment) atts = [{docName: 'Documento Principal', expirationDate: '', ...emp.attachment}];
+
+            const a = atts[index];
+            if (!a) return;
+
+            if (a.url) {
+                window.open(a.url, '_blank');
+            } else if (a.data) {
+                const link = document.createElement('a');
+                link.href = a.data;
+                link.download = a.fileName || 'documento';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            }
+        }
+
+        function openEmployeeModal(id = null) {
+            if (id && !checkPerm('colaboradores', 'edit')) return Swal.fire('Acesso Negado', 'Seu cargo não permite editar colaboradores.', 'error');
+            if (!id && !checkPerm('colaboradores', 'create')) return Swal.fire('Acesso Negado', 'Seu cargo não permite cadastrar novos colaboradores.', 'error');
+
+            const emp = id ? state.employees.find(e => e.id === id) : { 
+                name: '', role: '', sector: '', process: '', admission: '', status: 'Ativo', 
+                email: '', forcePasswordChange: false, 
+                cpf: '', rg: '', dataNasc: '', telefone: '', 
+                cep: '', logradouro: '', numero: '', complemento: '', bairro: '', cidade: '', uf: '',
+                nextReviewDate: '' 
+            };
+            const isEdit = !!id;
+
+            tempEmpAttachments = [];
+            if (emp.attachments) {
+                tempEmpAttachments = [...emp.attachments];
+            } else if (emp.attachment) {
+                tempEmpAttachments.push({
+                    docName: 'Documento Principal',
+                    expirationDate: '',
+                    data: emp.attachment.data,
+                    url: emp.attachment.url,
+                    fileName: emp.attachment.name || 'documento'
+                });
+            }
+
+            const bodyHtml = `
+                <form id="empForm" class="space-y-6 text-left">
+                    <input type="hidden" id="empId" value="${id || ''}">
+                    
+                    <!-- Corporativo -->
+                    <div>
+                        <h4 class="font-semibold text-gray-800 border-b border-gray-200 pb-1 mb-3 text-sm flex items-center"><i data-lucide="briefcase" class="w-4 h-4 mr-2 text-blue-600"></i> Dados Corporativos</h4>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                            <div class="md:col-span-2"><label class="block text-xs font-bold mb-1 text-gray-700">Nome Completo *</label><input type="text" id="empName" value="${emp.name}" required class="w-full border border-gray-300 p-2 rounded text-sm focus:ring-2 focus:ring-blue-500 outline-none"></div>
+                            <div><label class="block text-xs font-bold mb-1 text-gray-700">Cargo *</label><select id="empRole" required class="w-full border border-gray-300 p-2 rounded text-sm focus:ring-2 focus:ring-blue-500 outline-none"><option value="" disabled ${!emp.role ? 'selected' : ''}>Selecione...</option>${state.roles.map(r => `<option value="${r.name}" ${emp.role === r.name ? 'selected' : ''}>${r.name}</option>`).join('')}</select></div>
+                            <div><label class="block text-xs font-bold mb-1 text-gray-700">Setor</label><select id="empSector" class="w-full border border-gray-300 p-2 rounded text-sm focus:ring-2 focus:ring-blue-500 outline-none"><option value="">Selecione...</option>${state.sectors.map(s => `<option value="${s.name}" ${emp.sector === s.name ? 'selected' : ''}>${s.name}</option>`).join('')}</select></div>
+                            <div><label class="block text-xs font-bold mb-1 text-gray-700">Processo</label><select id="empProcess" class="w-full border border-gray-300 p-2 rounded text-sm focus:ring-2 focus:ring-blue-500 outline-none"><option value="">Selecione...</option>${state.processes.map(p => `<option value="${p.name}" ${emp.process === p.name ? 'selected' : ''}>${p.name}</option>`).join('')}</select></div>
+                            <div><label class="block text-xs font-bold mb-1 text-gray-700">Data de Admissão *</label><input type="date" id="empAdm" value="${emp.admission || ''}" required class="w-full border border-gray-300 p-2 rounded text-sm focus:ring-2 focus:ring-blue-500 outline-none"></div>
+                            <div><label class="block text-xs font-bold mb-1 text-blue-700">Data Próx. Avaliação</label><input type="date" id="empNextReview" value="${emp.nextReviewDate || ''}" title="Deixe em branco para o cálculo automático de 1 ano" class="w-full border border-blue-200 bg-blue-50 p-2 rounded text-sm focus:ring-2 focus:ring-blue-500 outline-none"></div>
+                            <div><label class="block text-xs font-bold mb-1 text-gray-700">Status</label><select id="empStatus" class="w-full border border-gray-300 p-2 rounded text-sm focus:ring-2 focus:ring-blue-500 outline-none"><option value="Ativo" ${emp.status === 'Ativo' ? 'selected' : ''}>Ativo</option><option value="Inativo" ${emp.status === 'Inativo' ? 'selected' : ''}>Inativo</option></select></div>
+                        </div>
+                    </div>
+
+                    <!-- Pessoais -->
+                    <div>
+                        <h4 class="font-semibold text-gray-800 border-b border-gray-200 pb-1 mb-3 text-sm flex items-center"><i data-lucide="user" class="w-4 h-4 mr-2 text-blue-600"></i> Dados Pessoais</h4>
+                        <div class="grid grid-cols-2 gap-3">
+                            <div><label class="block text-xs font-bold mb-1 text-gray-700">CPF</label><input type="text" id="empCpf" value="${emp.cpf || ''}" placeholder="000.000.000-00" class="w-full border border-gray-300 p-2 rounded text-sm focus:ring-2 focus:ring-blue-500 outline-none"></div>
+                            <div><label class="block text-xs font-bold mb-1 text-gray-700">RG</label><input type="text" id="empRg" value="${emp.rg || ''}" class="w-full border border-gray-300 p-2 rounded text-sm focus:ring-2 focus:ring-blue-500 outline-none"></div>
+                            <div><label class="block text-xs font-bold mb-1 text-gray-700">Data de Nascimento</label><input type="date" id="empNasc" value="${emp.dataNasc || ''}" class="w-full border border-gray-300 p-2 rounded text-sm focus:ring-2 focus:ring-blue-500 outline-none"></div>
+                            <div><label class="block text-xs font-bold mb-1 text-gray-700">Telefone / WhatsApp</label><input type="text" id="empTel" value="${emp.telefone || ''}" placeholder="(00) 00000-0000" class="w-full border border-gray-300 p-2 rounded text-sm focus:ring-2 focus:ring-blue-500 outline-none"></div>
+                        </div>
+                    </div>
+
+                    <!-- Endereço -->
+                    <div>
+                        <h4 class="font-semibold text-gray-800 border-b border-gray-200 pb-1 mb-3 text-sm flex items-center"><i data-lucide="map-pin" class="w-4 h-4 mr-2 text-blue-600"></i> Endereço</h4>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                            <div class="md:col-span-1"><label class="block text-xs font-bold mb-1 text-gray-700">CEP</label><input type="text" id="empCep" value="${emp.cep || ''}" placeholder="00000-000" class="w-full border border-gray-300 p-2 rounded text-sm focus:ring-2 focus:ring-blue-500 outline-none"></div>
+                            <div class="md:col-span-2"><label class="block text-xs font-bold mb-1 text-gray-700">Logradouro (Rua, Av)</label><input type="text" id="empLogradouro" value="${emp.logradouro || ''}" class="w-full border border-gray-300 p-2 rounded text-sm focus:ring-2 focus:ring-blue-500 outline-none"></div>
+                            <div class="md:col-span-1"><label class="block text-xs font-bold mb-1 text-gray-700">Número</label><input type="text" id="empNumero" value="${emp.numero || ''}" class="w-full border border-gray-300 p-2 rounded text-sm focus:ring-2 focus:ring-blue-500 outline-none"></div>
+                            <div class="md:col-span-2"><label class="block text-xs font-bold mb-1 text-gray-700">Complemento</label><input type="text" id="empCompl" value="${emp.complemento || ''}" placeholder="Apto, Bloco..." class="w-full border border-gray-300 p-2 rounded text-sm focus:ring-2 focus:ring-blue-500 outline-none"></div>
+                            <div class="md:col-span-1"><label class="block text-xs font-bold mb-1 text-gray-700">Bairro</label><input type="text" id="empBairro" value="${emp.bairro || ''}" class="w-full border border-gray-300 p-2 rounded text-sm focus:ring-2 focus:ring-blue-500 outline-none"></div>
+                            <div class="md:col-span-1"><label class="block text-xs font-bold mb-1 text-gray-700">Cidade</label><input type="text" id="empCidade" value="${emp.cidade || ''}" class="w-full border border-gray-300 p-2 rounded text-sm focus:ring-2 focus:ring-blue-500 outline-none"></div>
+                            <div class="md:col-span-1"><label class="block text-xs font-bold mb-1 text-gray-700">UF</label><input type="text" id="empUf" value="${emp.uf || ''}" placeholder="SP, RJ..." maxlength="2" class="w-full border border-gray-300 p-2 rounded text-sm focus:ring-2 focus:ring-blue-500 outline-none uppercase"></div>
+                        </div>
+                    </div>
+
+                    <!-- Múltiplos Anexos -->
+                    <div class="bg-gray-50 p-4 rounded-xl border border-gray-200">
+                        <h4 class="font-semibold text-gray-800 border-b border-gray-200 pb-1 mb-3 text-sm flex items-center"><i data-lucide="paperclip" class="w-4 h-4 mr-2 text-gray-600"></i> Documentos e Anexos Múltiplos</h4>
+                        
+                        <div id="empAttachmentsList" class="space-y-2 mb-3"></div>
+
+                        <div class="bg-white p-3 border border-gray-200 rounded-lg">
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-2 mb-2">
+                                <div class="md:col-span-2">
+                                    <label class="block text-xs font-bold text-gray-700 mb-1">Nome do Documento (Ex: CNH, ASO)</label>
+                                    <input type="text" id="newAttName" class="w-full text-xs border border-gray-300 p-1.5 rounded focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Digite o nome do documento...">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-bold text-gray-700 mb-1">Validade (Opcional)</label>
+                                    <input type="date" id="newAttDate" class="w-full text-xs border border-gray-300 p-1.5 rounded focus:ring-2 focus:ring-blue-500 outline-none">
+                                </div>
+                            </div>
+                            <div class="flex flex-col md:flex-row items-start md:items-center gap-2">
+                                <input type="file" id="newAttFile" accept=".pdf,image/*" class="w-full md:flex-1 text-xs border border-gray-300 p-1.5 rounded bg-gray-50">
+                                <button type="button" onclick="addEmpAttachment()" class="w-full md:w-auto bg-blue-600 text-white px-4 py-1.5 rounded text-xs font-bold hover:bg-blue-700 transition">Adicionar Anexo</button>
+                            </div>
+                            <p class="text-[10px] text-gray-500 mt-2">Você pode adicionar múltiplos arquivos na ficha (Máx 5MB por arquivo).</p>
+                        </div>
+                    </div>
+
+                    <!-- Login -->
+                    <div class="bg-blue-50 p-4 rounded-xl border border-blue-100">
+                        <h4 class="font-semibold text-blue-900 border-b border-blue-200 pb-1 mb-3 text-sm flex items-center"><i data-lucide="shield" class="w-4 h-4 mr-2"></i> Acesso ao Portal SGQ (Login)</h4>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-xs font-bold text-blue-900 mb-1">E-mail Corporativo</label>
+                                <input type="email" id="empEmail" value="${emp.email || ''}" placeholder="usuario@empresa.com" class="w-full border border-blue-200 p-2 rounded text-sm bg-white focus:ring-2 focus:ring-blue-500 outline-none">
+                            </div>
+                            <div class="${isEdit ? 'hidden' : ''}">
+                                <label class="block text-xs font-bold text-blue-900 mb-1">Senha Inicial</label>
+                                <input type="text" id="empTempPass" placeholder="Mín. 6 caracteres" class="w-full border border-blue-200 p-2 rounded text-sm bg-white focus:ring-2 focus:ring-blue-500 outline-none">
+                            </div>
+                        </div>
+                        ${isEdit ? `
+                            <div class="flex items-center space-x-2 mt-3">
+                                <input type="checkbox" id="empResetPass" class="rounded text-blue-600 focus:ring-blue-500">
+                                <label for="empResetPass" class="text-xs font-semibold text-blue-800">Forçar troca de senha no próximo login</label>
+                            </div>
+                        ` : ''}
+                    </div>
+                </form>
+            `;
+            const footerHtml = `
+                <button onclick="closeModal()" class="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg font-medium transition-colors">Cancelar</button>
+                <button onclick="saveEmployee()" class="px-5 py-2 bg-blue-600 text-white hover:bg-blue-700 rounded-lg font-medium shadow-sm transition-colors">Salvar Registro</button>
+            `;
+            openModal(isEdit ? 'Editar Colaborador' : 'Novo Colaborador', bodyHtml, footerHtml);
+
+            // Renderiza a lista inicial
+            setTimeout(() => renderEmpAttachmentsList(), 50);
+        }
+
+        function renderEmpAttachmentsList() {
+            const container = document.getElementById('empAttachmentsList');
+            if (!container) return;
+
+            if (tempEmpAttachments.length === 0) {
+                container.innerHTML = '<p class="text-xs text-gray-500 italic text-center py-2">Nenhum documento anexado.</p>';
+                return;
+            }
+
+            container.innerHTML = tempEmpAttachments.map((att, index) => {
+                let statusText = '';
+                if (att.expirationDate) {
+                    const valDate = new Date(att.expirationDate + 'T00:00:00');
+                    const today = new Date(); today.setHours(0,0,0,0);
+                    if (valDate < today) statusText = '<span class="text-[9px] bg-red-100 text-red-800 px-1.5 py-0.5 rounded font-bold uppercase ml-2">Vencido</span>';
+                    else statusText = '<span class="text-[9px] bg-green-100 text-green-800 px-1.5 py-0.5 rounded font-bold uppercase ml-2">Válido</span>';
+                }
+
+                return `
+                <div class="flex justify-between items-center bg-white border border-gray-200 p-2 rounded-lg text-sm shadow-sm">
+                    <div class="flex flex-col truncate w-3/4">
+                        <span class="font-bold text-gray-800 flex items-center truncate">${att.docName || 'Documento'} ${statusText}</span>
+                        <span class="text-[10px] text-gray-500 mt-0.5 truncate"><i data-lucide="file" class="w-3 h-3 inline mr-1"></i>${att.fileName || 'Arquivo'} ${att.expirationDate ? '| Validade: ' + formatDate(att.expirationDate) : ''}</span>
+                    </div>
+                    <button type="button" onclick="removeEmpAttachment(${index})" class="text-red-500 hover:text-red-700 bg-red-50 p-2 rounded-md transition" title="Remover Anexo">
+                        <i data-lucide="trash-2" class="w-4 h-4"></i>
+                    </button>
+                </div>
+                `;
+            }).join('');
+            if(window.lucide) window.lucide.createIcons();
+        }
+
+        function addEmpAttachment() {
+            const docName = document.getElementById('newAttName').value.trim();
+            const expDate = document.getElementById('newAttDate').value;
+            const fileInput = document.getElementById('newAttFile');
+
+            if (!docName) return Swal.fire('Aviso', 'Preencha o Nome do Documento.', 'warning');
+            if (fileInput.files.length === 0) return Swal.fire('Aviso', 'Selecione um arquivo.', 'warning');
+            const file = fileInput.files[0];
+            if (file.size > 5 * 1024 * 1024) return Swal.fire('Erro', 'O limite é de 5MB por arquivo.', 'error');
+
+            tempEmpAttachments.push({ docName: docName, expirationDate: expDate, fileName: file.name, isNew: true, fileObj: file });
+
+            document.getElementById('newAttName').value = ''; document.getElementById('newAttDate').value = ''; fileInput.value = '';
+            renderEmpAttachmentsList();
+        }
+
+        function removeEmpAttachment(index) { tempEmpAttachments.splice(index, 1); renderEmpAttachmentsList(); }
+
+        const processSingleEmpFile = (att) => {
+            return new Promise((resolve, reject) => {
+                if (!att.isNew) { resolve({ docName: att.docName, expirationDate: att.expirationDate, fileName: att.fileName, data: att.data, url: att.url }); return; }
+                const file = att.fileObj;
+                if (file.type.startsWith('image/')) {
+                    const reader = new FileReader(); reader.readAsDataURL(file);
+                    reader.onload = (e) => {
+                        const img = new Image(); img.src = e.target.result;
+                        img.onload = () => {
+                            const canvas = document.createElement('canvas'); let w=img.width, h=img.height;
+                            if(w>1200){h=Math.round(h*1200/w);w=1200;} if(h>1200){w=Math.round(w*1200/h);h=1200;}
+                            canvas.width=w; canvas.height=h; canvas.getContext('2d').drawImage(img,0,0,w,h);
+                            let dataUrl = canvas.toDataURL('image/jpeg', 0.8);
+                            if(dataUrl.length <= 950*1024) resolve({ docName: att.docName, expirationDate: att.expirationDate, fileName: file.name, data: dataUrl });
+                            else uploadToStorageAsPromise(file, att).then(resolve).catch(reject);
+                        };
+                    };
+                } else {
+                    if (file.size <= 750*1024) { const r = new FileReader(); r.onload = (e) => resolve({ docName: att.docName, expirationDate: att.expirationDate, fileName: file.name, data: e.target.result }); r.readAsDataURL(file); } 
+                    else uploadToStorageAsPromise(file, att).then(resolve).catch(reject);
+                }
+            });
+        };
+
+        const uploadToStorageAsPromise = (file, att) => {
+            return new Promise((resolve, reject) => {
+                let timeoutFired = false;
+                const fallbackTimer = setTimeout(() => { timeoutFired = true; reject(new Error(`O arquivo ${file.name} excedeu o tempo (Plano Grátis).`)); }, 15000);
+                const storageRef = storage.ref(`funcionarios/documentos/${Date.now()}_${file.name.replace(/[^a-zA-Z0-9.]/g, '_')}`);
+                const uploadTask = storageRef.put(file);
+                uploadTask.on('state_changed',
+                    (s) => { if(s.bytesTransferred > 0) clearTimeout(fallbackTimer); if(timeoutFired) uploadTask.cancel(); },
+                    (e) => { clearTimeout(fallbackTimer); reject(new Error('Falha no upload para a Nuvem.')); },
+                    () => { clearTimeout(fallbackTimer); if(timeoutFired) return; uploadTask.snapshot.ref.getDownloadURL().then(url => { resolve({ docName: att.docName, expirationDate: att.expirationDate, fileName: file.name, url: url }); }).catch(reject); }
+                );
+            });
+        };
+
+        async function saveEmployee() {
+            const id = document.getElementById('empId').value;
+            const isEdit = !!id;
+
+            if (isEdit && !checkPerm('colaboradores', 'edit')) return;
+            if (!isEdit && !checkPerm('colaboradores', 'create')) return;
+
+            const name = document.getElementById('empName').value;
+            const role = document.getElementById('empRole').value;
+            const admission = document.getElementById('empAdm').value;
+            
+            if(!name || !role || !admission) return Swal.fire('Aviso', 'Preencha Nome, Cargo e Admissão (*).', 'warning');
+
+            Swal.fire({title: 'Processando Dados e Anexos...', html: 'Por favor, aguarde.', allowOutsideClick: false, didOpen: () => Swal.showLoading()});
+
+            try {
+                const processedAttachments = await Promise.all(tempEmpAttachments.map(att => processSingleEmpFile(att)));
+
+                const empObj = { 
+                    id: isEdit ? parseInt(id) : generateId(state.employees), 
+                    name, role, 
+                    sector: document.getElementById('empSector').value, 
+                    process: document.getElementById('empProcess').value, 
+                    admission, 
+                    status: document.getElementById('empStatus').value, 
+                    email: document.getElementById('empEmail').value.trim(),
+                    forcePasswordChange: isEdit ? (document.getElementById('empResetPass')?.checked || false) : (document.getElementById('empTempPass')?.value.length > 0),
+                    cpf: document.getElementById('empCpf').value, 
+                    rg: document.getElementById('empRg').value, 
+                    dataNasc: document.getElementById('empNasc').value,
+                    telefone: document.getElementById('empTel').value,
+                    cep: document.getElementById('empCep').value, 
+                    logradouro: document.getElementById('empLogradouro').value, 
+                    numero: document.getElementById('empNumero').value, 
+                    complemento: document.getElementById('empCompl').value,
+                    bairro: document.getElementById('empBairro').value, 
+                    cidade: document.getElementById('empCidade').value,
+                    uf: document.getElementById('empUf').value,
+                    nextReviewDate: document.getElementById('empNextReview').value,
+                    attachments: processedAttachments
+                };
+                
+                delete empObj.attachment;
+                
+                await dbSave('employees', empObj.id, empObj);
+                addLog('Colaboradores', isEdit ? 'Edição' : 'Criação', `Perfil de "${name}" salvo.`);
+                
+                closeModal(); 
+                renderColaboradores(document.getElementById('app-content'));
+                Swal.fire('Sucesso!', 'Dados guardados com sucesso.', 'success');
+            } catch (error) {
+                console.error(error);
+                Swal.fire('Erro no Processamento', error.message || 'Ocorreu um problema ao salvar.', 'error');
+            }
+        }
+
+        function deleteEmployee(id) {
+            if (!checkPerm('colaboradores', 'delete')) return Swal.fire('Acesso Negado', 'Sem permissão para excluir.', 'error');
+            const emp = state.employees.find(e => e.id === id);
+            if (!emp) return;
+
+            const hasAttendance = state.attendanceLists.some(l => l.attendees && l.attendees.includes(id));
+            const hasEffectiveness = state.effectivenessEvaluations.some(e => e.empId === id);
+            const hasSkills = state.employeeSkills.some(e => e.empId === id && (e.req > 0 || e.actual > 0));
+            const hasPerformance = state.performanceReviews.some(p => p.empId === id);
+
+            if (hasAttendance || hasEffectiveness || hasSkills || hasPerformance) {
+                Swal.fire({
+                    title: 'Ação Restrita', html: `Possui históricos no sistema. Deseja alterá-lo para <strong>INATIVO</strong>?`, icon: 'warning', showCancelButton: true, confirmButtonColor: '#f59e0b', confirmButtonText: 'Sim, Inativar'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        emp.status = 'Inativo'; dbSave('employees', emp.id, emp);
+                        addLog('Colaboradores', 'Inativação', `"${emp.name}" inativado.`);
+                        renderColaboradores(document.getElementById('app-content'));
+                    }
+                });
+                return;
+            }
+
+            requirePasswordForAction(() => {
+                dbDelete('employees', id); addLog('Colaboradores', 'Exclusão', `O colaborador "${emp.name}" foi removido.`); renderColaboradores(document.getElementById('app-content')); Swal.fire('Excluído!', '', 'success');
+            });
+        }
+
+        // --- DOSSIÊ DE TREINAMENTOS ---
+        function viewAttachment(listId) {
+            const list = state.attendanceLists.find(l => l.id === listId);
+            if (!list || !list.attachment) return;
+            if (list.attachment.url) window.open(list.attachment.url, '_blank');
+            else if (list.attachment.data) { const link = document.createElement('a'); link.href = list.attachment.data; link.download = list.attachment.name; document.body.appendChild(link); link.click(); document.body.removeChild(link); }
+        }
+
+        function viewTrainingHistory(empId, trainingId) {
+            const emp = state.employees.find(e => e.id === empId); const tr = state.trainings.find(t => t.id === trainingId);
+            if(!emp || !tr) return;
+            const parts = state.attendanceLists.filter(l => l.trainingId === trainingId && l.attendees.includes(empId)).sort((a, b) => new Date(b.date) - new Date(a.date));
+            if (parts.length === 0) return;
+
+            let html = `<div class="mb-4 text-left"><p class="text-sm text-gray-500">Colaborador: <strong class="text-gray-800">${emp.name}</strong></p></div><div class="overflow-x-auto text-left border rounded-lg custom-scrollbar max-h-64"><table class="w-full text-sm border-collapse min-w-[500px]"><thead><tr class="bg-gray-50 border-b text-xs text-gray-500 uppercase tracking-wider"><th class="p-3">Data Realização</th><th class="p-3">Instrutor</th><th class="p-3 text-center">Eficácia</th><th class="p-3 text-center">Evidência</th></tr></thead><tbody class="divide-y divide-gray-100">`;
+
+            parts.forEach((p, index) => {
+                const isLatest = index === 0; const evalRecord = state.effectivenessEvaluations.find(e => e.recordId === p.id && e.empId === empId);
+                let efStatus = 'Pendente'; let efClass = 'bg-amber-100 text-amber-700';
+                if (evalRecord) { if (evalRecord.status === 'Eficaz') { efStatus = 'Eficaz'; efClass = 'bg-green-100 text-green-700'; } else if (evalRecord.status === 'Ineficaz') { efStatus = 'Não Eficaz'; efClass = 'bg-red-100 text-red-700'; } }
+                let anexoBtn = p.attachment ? `<button onclick="viewAttachment(${p.id})" class="text-blue-600 hover:text-blue-800"><i data-lucide="paperclip" class="w-4 h-4 inline"></i></button>` : '-';
+                html += `<tr class="hover:bg-gray-50 ${isLatest ? 'bg-blue-50/40' : ''}"><td class="p-3 text-gray-800 font-medium">${formatDate(p.date)} ${isLatest ? '<span class="ml-2 px-1 py-0.5 bg-blue-100 text-blue-700 text-[9px] rounded uppercase">Atual</span>' : ''}</td><td class="p-3 text-gray-600">${p.instructor || '-'}</td><td class="p-3 text-center"><span class="px-2 py-0.5 rounded-full text-[10px] font-bold ${efClass}">${efStatus}</span></td><td class="p-3 text-center">${anexoBtn}</td></tr>`;
+            });
+            Swal.fire({ title: `<h3 class="text-lg font-bold text-gray-800 border-b pb-3"><i data-lucide="history" class="w-5 h-5 inline mr-2 text-blue-600"></i> Histórico de Renovação</h3>`, html: html + `</tbody></table></div>`, width: '700px', showCloseButton: true, showConfirmButton: false, didOpen: () => { if(window.lucide) window.lucide.createIcons(); } });
+        }
+
+        function viewPerformanceHistory(empId) {
+            const emp = state.employees.find(e => e.id === empId); if(!emp) return;
+            const reviews = state.performanceReviews.filter(r => r.empId === empId).sort((a, b) => new Date(b.date) - new Date(a.date));
+            if (reviews.length === 0) return Swal.fire('Aviso', 'Sem avaliações de desempenho.', 'info');
+            let allSkillsMap = new Map(); reviews.forEach(r => { if(r.skills) r.skills.forEach(s => allSkillsMap.set(s.skillId, s.skillName)); });
+
+            let html = `<div class="text-left mb-4"><p class="text-sm text-gray-500">Acompanhamento: <strong class="text-gray-800">${emp.name}</strong></p></div><div class="overflow-x-auto border border-gray-200 rounded-lg custom-scrollbar"><table class="w-full text-left border-collapse text-sm"><thead><tr class="bg-gray-50 border-b text-xs text-gray-500 uppercase"><th class="p-3">Competência Avaliada</th>${reviews.map((r, index) => `<th class="p-3 text-center border-l bg-white">${formatDate(r.date)}${index===0?' <br><span class="text-[9px] bg-emerald-100 text-emerald-700 px-1 rounded">Atual</span>':''}</th>`).join('')}</tr></thead><tbody class="divide-y divide-gray-100">`;
+
+            if(allSkillsMap.size > 0) {
+                allSkillsMap.forEach((skillName, skillId) => { html += `<tr><td class="p-3 font-medium">${skillName}</td>`; reviews.forEach(r => { const sk = r.skills ? r.skills.find(x => x.skillId === skillId) : null; const score = sk && sk.score > 0 ? sk.score : '-'; html += `<td class="p-3 text-center border-l font-bold ${score !== '-' ? 'text-blue-600' : 'text-gray-300'}">${score}</td>`; }); html += `</tr>`; });
+            }
+            html += `<tr class="bg-gray-100/60 border-t-2"><td class="p-3 font-bold text-right text-xs uppercase">Média Global:</td>${reviews.map(r => `<td class="p-3 text-center border-l font-black text-base ${!r.minScore ? 'text-blue-700' : (r.score >= r.minScore ? 'text-green-600' : 'text-red-600')}">${r.score}</td>`).join('')}</tr></tbody></table></div>`;
+            Swal.fire({ title: `<h3 class="text-lg font-bold border-b pb-3"><i data-lucide="bar-chart-2" class="w-5 h-5 inline mr-2 text-emerald-600"></i> Evolução Anual</h3>`, html: html, width: '850px', showCloseButton: true, showConfirmButton: false, didOpen: () => { if(window.lucide) window.lucide.createIcons(); } });
+        }
+
+        function openEmployeeDossier(empId) {
+            const emp = state.employees.find(e => e.id === empId); if(!emp) return;
+            const role = state.roles.find(r => r.name === emp.role);
+            let dossierTrainings = []; let processedIds = [];
+
+            const processTraining = (tId, isMandatory) => {
+                if (processedIds.includes(tId)) return; processedIds.push(tId);
+                const tr = state.trainings.find(t => t.id === tId); if(!tr) return;
+                const parts = state.attendanceLists.filter(l => l.trainingId === tId && l.attendees.includes(empId)).sort((a, b) => new Date(b.date) - new Date(a.date));
+                
+                let status = isMandatory ? 'Não realizado' : 'Realizado'; let statusClass = isMandatory ? 'bg-red-100 text-red-800' : 'bg-blue-100 text-blue-800';
+                let lastDate = '-'; let valDate = '-'; let listId = null; let hasAttachment = false; let historyCount = 0;
+                let efStatus = 'Não realizado'; let efClass = 'bg-gray-100 text-gray-500';
+
+                if(parts.length > 0) {
+                    historyCount = parts.length > 1 ? parts.length - 1 : 0;
+                    const lastPart = parts[0]; lastDate = formatDate(lastPart.date); listId = lastPart.id; hasAttachment = !!lastPart.attachment;
+                    
+                    const evalRecord = state.effectivenessEvaluations.find(e => e.recordId === listId && e.empId === empId);
+                    if (evalRecord) {
+                        if (evalRecord.status === 'Eficaz') { efStatus = 'Eficaz'; efClass = 'bg-green-100 text-green-700'; } 
+                        else if (evalRecord.status === 'Ineficaz') { efStatus = 'Não Eficaz'; efClass = 'bg-red-100 text-red-700'; } 
+                        else { efStatus = 'Pendente'; efClass = 'bg-amber-100 text-amber-700'; }
+                    } else { efStatus = 'Pendente'; efClass = 'bg-amber-100 text-amber-700'; }
+                    
+                    if(tr.periodicityMonths > 0) {
+                        const [y,m,d] = lastPart.date.split('-'); const val = new Date(y, m-1, d); val.setMonth(val.getMonth() + tr.periodicityMonths);
+                        valDate = `${String(val.getDate()).padStart(2, '0')}/${String(val.getMonth() + 1).padStart(2, '0')}/${val.getFullYear()}`;
+                        if(new Date() > val) { status = 'Vencido'; statusClass = 'bg-orange-100 text-orange-800'; } else { status = 'Em dia'; statusClass = 'bg-green-100 text-green-800'; }
+                    } else { status = 'Em dia'; statusClass = 'bg-green-100 text-green-800'; valDate = 'Indeterminado'; }
+                } else if (!isMandatory) return;
+                dossierTrainings.push({ tId, empId, trName: tr.title, isMandatory, status, statusClass, lastDate, valDate, listId, hasAttachment, efStatus, efClass, historyCount });
+            };
+
+            if(role && role.trainingIds) role.trainingIds.forEach(tId => processTraining(tId, true));
+            state.attendanceLists.forEach(list => { if (list.attendees.includes(empId)) processTraining(list.trainingId, false); });
+
+            let atts = [];
+            if (emp.attachments) atts = emp.attachments;
+            else if (emp.attachment) atts = [{docName: 'Documento Principal', expirationDate: '', ...emp.attachment}];
+
+            let attachmentsHtml = '';
+            if(atts.length > 0) {
+                attachmentsHtml = `
+                    <div class="mb-4 bg-gray-50 p-3 rounded-lg border border-gray-200">
+                        <h5 class="text-xs font-bold text-gray-700 mb-2 uppercase flex items-center"><i data-lucide="paperclip" class="w-3 h-3 mr-1 text-blue-600"></i> Documentos do Colaborador</h5>
+                        <div class="flex flex-wrap gap-2">
+                            ${atts.map((a, i) => {
+                                let statusBadge = '';
+                                if (a.expirationDate) {
+                                    const valDate = new Date(a.expirationDate + 'T00:00:00');
+                                    const today = new Date(); today.setHours(0,0,0,0);
+                                    if (valDate < today) statusBadge = '<span class="ml-1 text-red-500 uppercase text-[9px]">(Vencido)</span>';
+                                    else statusBadge = '<span class="ml-1 text-green-600 uppercase text-[9px]">(Válido)</span>';
+                                }
+                                return `<button onclick="downloadEmpAttachment('${emp.id}', ${i})" class="bg-white border border-gray-300 text-gray-700 px-2.5 py-1 rounded text-[10px] font-bold hover:bg-gray-50 transition flex items-center shadow-sm">
+                                    <i data-lucide="file-text" class="w-3 h-3 mr-1 text-blue-500"></i> ${a.docName || 'Documento'} ${statusBadge}
+                                </button>`;
+                            }).join('')}
+                        </div>
+                    </div>
+                `;
+            }
+
+            const bodyHtml = `
+                <div class="mb-4 flex items-center gap-3">
+                    <div class="h-12 w-12 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 font-bold text-xl">${emp.name.charAt(0).toUpperCase()}</div>
+                    <div>
+                        <div class="flex items-center gap-2"><h4 class="text-lg font-bold text-gray-800">${emp.name}</h4><button onclick="viewPerformanceHistory(${emp.id})" class="bg-emerald-50 text-emerald-700 border border-emerald-200 px-2 py-0.5 rounded text-[10px] font-bold"><i data-lucide="bar-chart-2" class="w-3 h-3 inline mr-1"></i> Evolução de Notas</button></div>
+                        <p class="text-xs font-semibold text-gray-500 mt-1">Cargo: <span class="text-blue-600">${emp.role}</span></p>
+                    </div>
+                </div>
+                ${attachmentsHtml}
+                <div class="overflow-x-auto custom-scrollbar border border-gray-200 rounded-lg shadow-sm">
+                    <table class="w-full text-left border-collapse min-w-[650px]">
+                        <thead><tr class="bg-gray-50 text-gray-600 text-xs uppercase border-b"><th class="p-3">Treinamento</th><th class="p-3 text-center">Status</th><th class="p-3 text-center">Realização</th><th class="p-3 text-center">Validade</th><th class="p-3 text-center">Eficácia</th><th class="p-3 text-center">Evidência</th></tr></thead>
+                        <tbody class="divide-y divide-gray-100 text-sm">
+                            ${dossierTrainings.length > 0 ? dossierTrainings.map(t => `
+                                <tr class="hover:bg-blue-50/50">
+                                    <td class="p-3 font-medium text-gray-800">${t.trName} ${!t.isMandatory ? '<span class="px-1 py-0.5 rounded text-[9px] bg-purple-100 text-purple-700">Extra</span>' : ''}</td>
+                                    <td class="p-3 text-center"><span class="px-2 py-1 rounded-full text-[10px] font-bold ${t.statusClass}">${t.status}</span></td>
+                                    <td class="p-3 text-center"><div class="flex flex-col items-center"><span>${t.lastDate}</span>${t.historyCount > 0 ? `<button onclick="viewTrainingHistory(${t.empId}, ${t.tId})" class="mt-1 text-[10px] text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full"><i data-lucide="history" class="w-3 h-3 inline"></i> +${t.historyCount}</button>` : ''}</div></td>
+                                    <td class="p-3 text-center">${t.valDate}</td>
+                                    <td class="p-3 text-center"><span class="px-2 py-1 rounded-full text-[10px] font-bold ${t.efClass}">${t.efStatus}</span></td>
+                                    <td class="p-3 text-center">${t.hasAttachment ? `<button onclick="viewAttachment(${t.listId})" class="text-blue-600"><i data-lucide="paperclip" class="w-4 h-4 inline"></i> Abrir</button>` : '-'}</td>
+                                </tr>
+                            `).join('') : '<tr><td colspan="6" class="p-8 text-center text-gray-500">Sem treinamentos.</td></tr>'}
+                        </tbody>
+                    </table>
+                </div>
+            `;
+            openModal('Dossiê de Treinamentos', bodyHtml, `<button onclick="closeModal()" class="px-5 py-2 bg-gray-100 text-gray-700 rounded-lg font-medium shadow-sm">Fechar</button>`);
+        }
+
+        // INICIALIZAÇÃO
+        auth.onAuthStateChanged((user) => { 
+            if (user) { 
+                currentUser = user; 
+                document.getElementById('user-avatar').innerText = user.email ? user.email.charAt(0).toUpperCase() : 'U'; 
+                loadDataFromFirestore(); 
+            } else {
+                auth.signInAnonymously().then(() => {
+                    currentUser = { email: 'Local' };
+                    loadDataFromFirestore();
+                }); 
+            }
+        });
+    </script>
+</body>
+</html>

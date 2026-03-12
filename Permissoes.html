@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SGQ - Matriz de Permissões (ISO 9001)</title>
+    
+    <!-- Tailwind CSS para Estilização -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Lucide Icons para Ícones -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <!-- SweetAlert2 para Modais e Mensagens -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; }
+        .custom-scrollbar::-webkit-scrollbar { height: 8px; width: 8px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        
+        /* Checkbox Customizado */
+        .perm-checkbox {
+            width: 1.25rem; height: 1.25rem;
+            color: #dc2626; background-color: #f1f5f9;
+            border-color: #cbd5e1; border-radius: 0.25rem;
+            cursor: pointer;
+        }
+        .perm-checkbox:focus { ring: 2px; ring-color: #fca5a5; }
+    </style>
+
+    <script>
+        function navigateTo(url) { window.location.href = url; }
+        function showDevInfo() { Swal.fire({ title: 'Controle de Acessos', text: 'Gerenciamento centralizado de permissões do SGQ.', icon: 'info' }); }
+    </script>
+</head>
+<body class="flex flex-col h-screen text-slate-800 bg-slate-50 uppercase">
+
+    <!-- ========================================================================= -->
+    <!-- MENU INTELIGENTE PADRÃO -->
+    <!-- ========================================================================= -->
+    <header class="bg-white shadow-sm z-20 no-print sticky top-0">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <!-- Logotipo / Título Dinâmico do Menu -->
+                <div class="flex items-center flex-1">
+                    <div class="flex-shrink-0 flex items-center mr-6" id="menu-logo-container">
+                        <div class="p-2 bg-slate-200 rounded-lg mr-3"><i data-lucide="settings" class="w-6 h-6 text-slate-800"></i></div>
+                        <h1 class="text-xl font-bold text-gray-800">SGQ <span class="text-slate-600">Config</span></h1>
+                    </div>
+                    
+                    <!-- Desktop Menu -->
+                    <nav class="hidden lg:flex space-x-6 h-full">
+                        <div class="relative flex items-center h-full">
+                            <a href="#" onclick="navigateTo('dashboard.html')" class="inline-flex items-center px-1 h-full border-b-2 border-transparent text-sm font-medium text-slate-500 hover:text-indigo-600 transition-colors focus:outline-none">Dashboard</a>
+                        </div>
+                        
+                        <!-- Menu Configurações (Ativo) -->
+                        <div class="relative group h-full flex items-center">
+                            <button class="inline-flex items-center px-1 h-full border-b-2 border-slate-600 text-sm font-bold text-slate-800 bg-slate-100 transition-colors focus:outline-none">
+                                Configurações <i data-lucide="chevron-down" class="w-4 h-4 ml-1"></i>
+                            </button>
+                            <div class="absolute left-0 top-16 w-64 bg-white border border-slate-200 rounded-b-lg shadow-xl hidden group-hover:block transition-all z-50">
+                                <div class="px-4 py-2 text-[10px] font-black text-slate-400 uppercase tracking-widest bg-slate-50 border-b border-slate-100">Estrutura e Cargos</div>
+                                <a href="#" onclick="navigateTo('pe_cad_setores.html')" class="block px-5 py-3 text-sm font-medium text-slate-600 hover:bg-slate-50 hover:text-slate-800 border-l-4 border-transparent transition-colors">Setores / Departamentos</a>
+                                <a href="#" onclick="navigateTo('pe_cad_processos.html')" class="block px-5 py-3 text-sm font-medium text-slate-600 hover:bg-slate-50 hover:text-slate-800 border-l-4 border-transparent transition-colors">Processos</a>
+                                <a href="#" onclick="navigateTo('pe_cad_cargos.html')" class="block px-5 py-3 text-sm font-medium text-slate-600 hover:bg-slate-50 hover:text-slate-800 border-l-4 border-transparent transition-colors">Cargos</a>
+                                
+                                <div class="px-4 py-2 text-[10px] font-black text-slate-400 uppercase tracking-widest bg-slate-50 border-y border-slate-100 mt-1">Sistema & Segurança</div>
+                                <a href="#" onclick="navigateTo('pe_cfg_sistema.html')" class="block px-5 py-3 text-sm font-medium text-slate-600 hover:bg-slate-50 hover:text-slate-800 border-l-4 border-transparent transition-colors">Parâmetros e Anexos</a>
+                                <a href="#" onclick="navigateTo('Permissoes.html')" class="block px-5 py-3 text-sm font-bold text-red-600 bg-red-50/30 hover:bg-red-50 hover:text-red-700 border-l-4 border-red-500 transition-colors flex justify-between items-center">Permissões de Acesso <i data-lucide="lock" class="w-4 h-4"></i></a>
+                            </div>
+                        </div>
+
+                        <!-- Menu Aplicativos Externos -->
+                        <div class="relative group h-full flex items-center">
+                            <button class="inline-flex items-center px-1 h-full border-b-2 border-transparent text-sm font-medium text-slate-500 hover:text-indigo-600 transition-colors focus:outline-none">
+                                Aplicativos <i data-lucide="layout-grid" class="w-4 h-4 ml-1"></i>
+                            </button>
+                            <div class="absolute right-0 top-16 w-64 bg-white border border-slate-200 rounded-b-lg shadow-xl hidden group-hover:block transition-all z-50">
+                                <div class="px-4 py-2 text-[10px] font-black text-indigo-500 uppercase tracking-widest bg-indigo-50 border-b border-indigo-100">Outros Sistemas</div>
+                                <a href="#" onclick="navigateTo('oco_dashboard.html')" class="block px-5 py-3 text-sm font-medium text-slate-600 hover:bg-slate-50 hover:text-indigo-600 border-l-4 border-transparent transition-colors flex items-center"><i data-lucide="shield-alert" class="w-4 h-4 mr-2 text-indigo-500"></i> Gestão de Ocorrências</a>
+                                <a href="#" onclick="navigateTo('Documentos.html')" class="block px-5 py-3 text-sm font-medium text-slate-600 hover:bg-slate-50 hover:text-emerald-600 border-l-4 border-transparent transition-colors flex items-center"><i data-lucide="files" class="w-4 h-4 mr-2 text-emerald-500"></i> Gestão de Documentos</a>
+                                <a href="#" onclick="navigateTo('cal_dashboard.html')" class="block px-5 py-3 text-sm font-medium text-slate-600 hover:bg-slate-50 hover:text-amber-600 border-l-4 border-transparent transition-colors flex items-center"><i data-lucide="scale" class="w-4 h-4 mr-2 text-amber-500"></i> Ativos e Calibração</a>
+                                <a href="#" onclick="navigateTo('dashboard.html')" class="block px-5 py-3 text-sm font-medium text-slate-600 hover:bg-slate-50 hover:text-sky-600 border-l-4 border-transparent transition-colors flex items-center"><i data-lucide="users" class="w-4 h-4 mr-2 text-sky-500"></i> Gestão de Pessoas (RH)</a>
+                                <a href="#" onclick="navigateTo('analise_critica.html')" class="block px-5 py-3 text-sm font-medium text-slate-600 hover:bg-slate-50 hover:text-teal-600 border-l-4 border-transparent transition-colors flex items-center"><i data-lucide="presentation-chart" class="w-4 h-4 mr-2 text-teal-500"></i> Análise Crítica da Direção</a>
+                                <a href="#" onclick="navigateTo('Indicador.html')" class="block px-5 py-3 text-sm font-medium text-slate-600 hover:bg-slate-50 hover:text-violet-600 border-l-4 border-transparent transition-colors flex items-center"><i data-lucide="line-chart" class="w-4 h-4 mr-2 text-violet-500"></i> Painel de Indicadores</a>
+                            </div>
+                        </div>
+                    </nav>
+                </div>
+                
+                <div class="flex items-center space-x-4">
+                    <a href="#" onclick="navigateTo('index.html')" class="hidden lg:inline-flex items-center px-4 py-2 border border-transparent text-sm font-bold rounded-md shadow-sm text-white bg-slate-800 hover:bg-slate-700 focus:outline-none transition-colors">
+                        <i data-lucide="arrow-left" class="w-4 h-4 mr-2"></i> PORTAL
+                    </a>
+                    <button class="text-slate-400 hover:text-slate-600 relative transition-colors" onclick="showDevInfo()"><i data-lucide="info" class="w-5 h-5"></i></button>
+                    <div class="h-8 w-8 rounded-full bg-slate-700 flex items-center justify-center text-white font-bold text-sm shadow-sm" id="user-avatar">--</div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full" id="main-container">
+        
+        <div class="mb-6 flex flex-col md:flex-row md:items-center md:justify-between">
+            <div>
+                <h2 class="text-2xl font-black text-slate-800 tracking-tight flex items-center">
+                    <i data-lucide="shield-check" class="text-red-600 w-8 h-8 mr-3"></i> 
+                    Matriz de Permissões
+                </h2>
+                <p class="text-sm font-bold text-slate-500 mt-1 tracking-wider">Defina os acessos por Cargo para cada Módulo do Sistema.</p>
+            </div>
+            
+            <div id="save-status" class="mt-4 md:mt-0 text-sm font-bold hidden items-center px-4 py-2 rounded-lg bg-green-50 text-green-700 border border-green-200">
+                <i data-lucide="check-circle" class="w-4 h-4 mr-2"></i> Salvo com Sucesso
+            </div>
+        </div>
+
+        <div id="loading-state" class="flex flex-col h-64 w-full items-center justify-center">
+            <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-red-600 mb-4"></div>
+            <span class="text-slate-500 font-bold tracking-widest text-xs">Carregando Cargos e Regras...</span>
+        </div>
+
+        <div id="app-content" class="hidden flex flex-col lg:flex-row gap-6">
+            
+            <!-- Lista de Cargos (Roles) -->
+            <div class="w-full lg:w-1/4 bg-white rounded-xl shadow-sm border border-slate-200 flex flex-col overflow-hidden max-h-[600px]">
+                <div class="p-4 bg-slate-50 border-b border-slate-200">
+                    <h3 class="font-black text-slate-700 text-sm tracking-widest">Cargos Registados</h3>
+                </div>
+                <div class="overflow-y-auto custom-scrollbar flex-1 p-2 space-y-1" id="roles-list">
+                    <!-- Gerado via JS -->
+                </div>
+                <div class="p-4 bg-slate-50 border-t border-slate-200 text-[10px] text-slate-500 font-bold text-center">
+                    Os cargos devem ser criados no menu "Cargos"
+                </div>
+            </div>
+
+            <!-- Matriz de Permissões -->
+            <div class="w-full lg:w-3/4 bg-white rounded-xl shadow-sm border border-slate-200 flex flex-col overflow-hidden hidden" id="matrix-container">
+                <div class="p-4 bg-slate-50 border-b border-slate-200 flex justify-between items-center">
+                    <div>
+                        <h3 class="font-black text-slate-800 text-sm tracking-widest">Acessos: <span id="selected-role-name" class="text-red-600"></span></h3>
+                    </div>
+                    <button onclick="savePermissions()" id="btn-save" class="bg-red-600 hover:bg-red-700 text-white px-5 py-2 rounded-lg text-xs font-black tracking-widest shadow-md transition-colors flex items-center">
+                        <i data-lucide="save" class="w-4 h-4 mr-2"></i> Gravar Alterações
+                    </button>
+                </div>
+                
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-slate-100 text-[10px] text-slate-500 uppercase tracking-widest border-b border-slate-200">
+                                <th class="p-4 font-black">Módulo do Sistema</th>
+                                <th class="p-4 font-black text-center border-l border-slate-200">Ver</th>
+                                <th class="p-4 font-black text-center border-l border-slate-200">Criar</th>
+                                <th class="p-4 font-black text-center border-l border-slate-200">Editar</th>
+                                <th class="p-4 font-black text-center border-l border-slate-200">Excluir</th>
+                                <th class="p-4 font-black text-center border-l border-slate-200 text-indigo-600 bg-indigo-50/30" title="Aprovar Documentos, Assinar Relatórios">Especial (Aprovar)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="matrix-body" class="divide-y divide-slate-100 text-xs font-bold text-slate-700">
+                            <!-- Gerado via JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Mensagem ao abrir -->
+            <div id="empty-state" class="w-full lg:w-3/4 bg-slate-100/50 rounded-xl border border-dashed border-slate-300 flex flex-col items-center justify-center p-10 text-center">
+                <div class="bg-white p-4 rounded-full shadow-sm mb-4"><i data-lucide="mouse-pointer-click" class="w-8 h-8 text-slate-400"></i></div>
+                <h3 class="text-slate-600 font-black text-lg">Selecione um Cargo</h3>
+                <p class="text-slate-400 font-bold mt-2 max-w-md">Clique em um cargo na lista ao lado para configurar as permissões de acesso aos módulos corporativos.</p>
+            </div>
+
+        </div>
+
+    </main>
+
+    <!-- Importação Modular do Firebase V11 -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, initializeFirestore, collection, onSnapshot, doc, updateDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyBqV0KOQMAYR4z6P_RKnrQPDfkAR2CsXBI",
+            authDomain: "gestao-de-pessoas-49200.firebaseapp.com",
+            projectId: "gestao-de-pessoas-49200",
+            storageBucket: "gestao-de-pessoas-49200.firebasestorage.app",
+            messagingSenderId: "615097388185",
+            appId: "1:615097388185:web:ef87969b64f4a886f23c08"
+        };
+        const app_id = "gestao-de-pessoas-49200";
+
+        let db, currentUser = null;
+        let roles = [];
+        let selectedRole = null;
+        let currentPermissions = {}; // Cópia local para edição antes de salvar
+
+        // Definição Oficial de Todos os Módulos do Sistema SGQ
+        const systemModules = [
+            { id: 'pessoas', name: 'Gestão de Pessoas (RH)', icon: 'users', color: 'text-sky-600' },
+            { id: 'calibracao', name: 'Ativos e Calibração', icon: 'scale', color: 'text-amber-600' },
+            { id: 'ocorrencias', name: 'Ocorrências (NC / AC)', icon: 'shield-alert', color: 'text-indigo-600' },
+            { id: 'indicadores', name: 'Painel de Indicadores', icon: 'line-chart', color: 'text-violet-600' },
+            { id: 'documentos', name: 'Controle de Documentos', icon: 'files', color: 'text-emerald-600' },
+            { id: 'analise_critica', name: 'Análise Crítica da Direção', icon: 'presentation-chart', color: 'text-teal-600' },
+            { id: 'configuracoes', name: 'Configurações e Permissões', icon: 'settings', color: 'text-slate-800' }
+        ];
+
+        const actions = ['view', 'create', 'edit', 'delete', 'approve'];
+
+        async function initApp() {
+            try {
+                const app = initializeApp(firebaseConfig);
+                const auth = getAuth(app);
+                db = initializeFirestore(app, { experimentalForceLongPolling: true });
+
+                onAuthStateChanged(auth, (user) => { 
+                    if (user) { 
+                        currentUser = user; 
+                        document.getElementById('user-avatar').innerText = user.email ? user.email.charAt(0).toUpperCase() : 'U'; 
+                        
+                        // Proteção Básica: Em um ambiente real, validaríamos no backend se 'user' tem admin.
+                        // Para este protótipo, vamos deixar carregar.
+                        loadRoles(); 
+                    } else {
+                        signInAnonymously(auth).then(() => {
+                            currentUser = { email: 'Local' };
+                            loadRoles();
+                        }); 
+                    }
+                });
+            } catch (error) {
+                console.error("Error initializing:", error);
+            }
+        }
+
+        function loadRoles() {
+            const rolesRef = collection(db, `artifacts/${app_id}/public/data/roles`);
+            onSnapshot(rolesRef, (snapshot) => {
+                roles = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                
+                // Ordena por nome
+                roles.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+                
+                renderRolesList();
+                
+                document.getElementById('loading-state').classList.add('hidden');
+                document.getElementById('app-content').classList.remove('hidden');
+
+                // Se tinha um selecionado, atualiza a tela
+                if (selectedRole) {
+                    const updatedRole = roles.find(r => r.id === selectedRole.id);
+                    if (updatedRole) selectRole(updatedRole.id);
+                }
+            });
+        }
+
+        function renderRolesList() {
+            const container = document.getElementById('roles-list');
+            if (roles.length === 0) {
+                container.innerHTML = '<div class="p-4 text-center text-slate-400 text-xs">Nenhum cargo encontrado.</div>';
+                return;
+            }
+
+            container.innerHTML = roles.map(r => `
+                <button onclick="window.selectRole('${r.id}')" 
+                    class="w-full text-left px-4 py-3 rounded-lg border transition-all duration-200 flex items-center justify-between
+                    ${selectedRole && selectedRole.id === r.id 
+                        ? 'bg-red-50 border-red-200 text-red-800 font-black shadow-sm' 
+                        : 'bg-white border-transparent text-slate-600 hover:bg-slate-100 hover:border-slate-200'}">
+                    <span class="truncate">${r.name}</span>
+                    <i data-lucide="chevron-right" class="w-4 h-4 opacity-50 ${selectedRole && selectedRole.id === r.id ? 'text-red-500 opacity-100' : ''}"></i>
+                </button>
+            `).join('');
+
+            if(window.lucide) lucide.createIcons();
+        }
+
+        window.selectRole = function(roleId) {
+            selectedRole = roles.find(r => r.id === roleId);
+            if (!selectedRole) return;
+
+            // Deep clone das permissões para não alterar o state original antes de salvar
+            currentPermissions = JSON.parse(JSON.stringify(selectedRole.permissions || {}));
+
+            // Garante que a estrutura exista para todos os módulos
+            systemModules.forEach(mod => {
+                if (!currentPermissions[mod.id]) {
+                    currentPermissions[mod.id] = { view: false, create: false, edit: false, delete: false, approve: false };
+                }
+            });
+
+            document.getElementById('selected-role-name').innerText = selectedRole.name;
+            document.getElementById('empty-state').classList.add('hidden');
+            document.getElementById('matrix-container').classList.remove('hidden');
+            
+            renderRolesList(); // Re-renderiza para atualizar o destaque
+            renderMatrix();
+        };
+
+        function renderMatrix() {
+            const tbody = document.getElementById('matrix-body');
+            
+            tbody.innerHTML = systemModules.map(mod => `
+                <tr class="hover:bg-slate-50 transition-colors">
+                    <td class="p-4 flex items-center">
+                        <div class="w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center mr-3 ${mod.color}">
+                            <i data-lucide="${mod.icon}" class="w-4 h-4"></i>
+                        </div>
+                        ${mod.name}
+                    </td>
+                    ${actions.map(act => `
+                        <td class="p-4 text-center border-l border-slate-100 ${act === 'approve' ? 'bg-indigo-50/10' : ''}">
+                            <input type="checkbox" 
+                                class="perm-checkbox"
+                                ${currentPermissions[mod.id] && currentPermissions[mod.id][act] ? 'checked' : ''}
+                                onchange="window.togglePermission('${mod.id}', '${act}', this.checked)">
+                        </td>
+                    `).join('')}
+                </tr>
+            `).join('');
+
+            if(window.lucide) lucide.createIcons();
+        }
+
+        window.togglePermission = function(moduleId, actionId, isChecked) {
+            if (!currentPermissions[moduleId]) {
+                currentPermissions[moduleId] = {};
+            }
+            currentPermissions[moduleId][actionId] = isChecked;
+
+            // Regra de Ouro da Interface: Se pode Criar/Editar/Deletar, automaticamente precisa poder Visualizar (View).
+            if (isChecked && actionId !== 'view') {
+                currentPermissions[moduleId]['view'] = true;
+                renderMatrix(); // Atualiza a tela para forçar o "view" a ficar checado visualmente
+            }
+            
+            // Regra de Ouro: Se tirar o View, tira todos os outros.
+            if (!isChecked && actionId === 'view') {
+                actions.forEach(a => currentPermissions[moduleId][a] = false);
+                renderMatrix();
+            }
+        };
+
+        window.savePermissions = async function() {
+            if (!selectedRole) return;
+
+            const btn = document.getElementById('btn-save');
+            btn.disabled = true;
+            btn.innerHTML = '<i data-lucide="loader-2" class="w-4 h-4 mr-2 animate-spin"></i> Gravando...';
+            if(window.lucide) lucide.createIcons();
+
+            try {
+                const roleDocRef = doc(db, `artifacts/${app_id}/public/data/roles`, selectedRole.id);
+                await updateDoc(roleDocRef, { 
+                    permissions: currentPermissions,
+                    updatedAt: new Date().toISOString()
+                });
+
+                // Feedback visual de sucesso
+                const statusDiv = document.getElementById('save-status');
+                statusDiv.classList.remove('hidden');
+                statusDiv.classList.add('flex');
+                
+                setTimeout(() => {
+                    statusDiv.classList.add('hidden');
+                    statusDiv.classList.remove('flex');
+                }, 3000);
+
+            } catch (error) {
+                console.error("Erro ao salvar permissões:", error);
+                Swal.fire({
+                    title: 'Erro!',
+                    text: 'Não foi possível salvar as permissões. Verifique sua conexão.',
+                    icon: 'error',
+                    confirmButtonColor: '#dc2626'
+                });
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<i data-lucide="save" class="w-4 h-4 mr-2"></i> Gravar Alterações';
+                if(window.lucide) lucide.createIcons();
+            }
+        };
+
+        // Init
+        document.addEventListener("DOMContentLoaded", initApp);
+    </script>
+</body>
+</html>

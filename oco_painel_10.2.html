@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SGQ - Painel 10.2 (Ações Corretivas)</title>
+    
+    <!-- Tailwind CSS para Estilização -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Lucide Icons para Ícones -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <!-- SweetAlert2 para Modais e Mensagens -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <!-- FIREBASE V8 -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-storage.js"></script>
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; }
+        .custom-scrollbar::-webkit-scrollbar { height: 8px; width: 8px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        * { text-transform: uppercase !important; }
+    </style>
+
+    <script>
+        // Função de navegação segura para o ambiente
+        function navigateTo(url) {
+            if (window.location.protocol === 'blob:' || window.location.origin === 'null') {
+                if (typeof Swal !== 'undefined') {
+                    Swal.fire({
+                        title: 'Navegação Simulada',
+                        html: `O redirecionamento para <br><b>${url}</b><br> funcionará perfeitamente no seu servidor oficial.<br><br><span class="text-xs text-gray-500">Nota: O ambiente de pré-visualização atual bloqueia a mudança direta de ficheiros HTML locais.</span>`,
+                        icon: 'info',
+                        confirmButtonColor: '#d97706'
+                    });
+                } else {
+                    console.log('Navegação para: ' + url);
+                }
+            } else {
+                try {
+                    window.location.href = url;
+                } catch (e) {
+                    console.warn("Erro de navegação:", e);
+                }
+            }
+        }
+    </script>
+</head>
+<body class="flex flex-col h-screen text-gray-800 bg-gray-50">
+
+    <!-- ========================================================================= -->
+    <!-- MENU ESPECÍFICO DO MÓDULO DE OCORRÊNCIAS -->
+    <!-- ========================================================================= -->
+    <header class="bg-white shadow-sm z-20 no-print">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <!-- Logotipo / Título Dinâmico do Menu -->
+                <div class="flex items-center flex-1">
+                    <div class="flex-shrink-0 flex items-center mr-6" id="menu-logo-container">
+                        <div class="p-2 bg-emerald-100 rounded-lg mr-3"><i data-lucide="check-circle" class="w-6 h-6 text-emerald-700"></i></div>
+                        <h1 class="text-xl font-bold text-gray-800">Ocorrências <span class="text-emerald-600">10.2 (AC)</span></h1>
+                    </div>
+                    
+                    <!-- Desktop Menu -->
+                    <nav class="hidden lg:flex space-x-6 h-full">
+                        <div class="relative flex items-center h-full">
+                            <a href="#" onclick="navigateTo('oco_dashboard.html')" class="inline-flex items-center px-1 h-full border-b-2 border-transparent text-sm font-medium text-gray-500 hover:text-indigo-600 transition-colors focus:outline-none">Dashboard</a>
+                        </div>
+                        <div class="relative flex items-center h-full">
+                            <a href="#" onclick="navigateTo('oco_formularios.html')" class="inline-flex items-center px-1 h-full border-b-2 border-transparent text-sm font-medium text-gray-500 hover:text-blue-600 transition-colors focus:outline-none">Formulários</a>
+                        </div>
+                        <div class="relative flex items-center h-full">
+                            <a href="#" onclick="navigateTo('oco_painel_8.7.html')" class="inline-flex items-center px-1 h-full border-b-2 border-transparent text-sm font-medium text-gray-500 hover:text-amber-600 transition-colors focus:outline-none">Painel 8.7 (NC)</a>
+                        </div>
+                        <div class="relative flex items-center h-full">
+                            <a href="#" onclick="navigateTo('oco_painel_10.2.html')" class="inline-flex items-center px-1 h-full border-b-2 border-emerald-600 text-sm font-bold text-emerald-700 bg-emerald-50 transition-colors focus:outline-none">Painel 10.2 (AC)</a>
+                        </div>
+                        <div class="relative flex items-center h-full">
+                            <a href="#" onclick="navigateTo('oco_relatorio_impressao.html')" class="inline-flex items-center px-1 h-full border-b-2 border-transparent text-sm font-medium text-gray-500 hover:text-slate-800 transition-colors focus:outline-none">Relatórios</a>
+                        </div>
+
+                        <!-- Menu Aplicativos Externos -->
+                        <div class="relative group h-full flex items-center">
+                            <button class="inline-flex items-center px-1 h-full border-b-2 border-transparent text-sm font-medium text-gray-500 hover:text-indigo-600 transition-colors focus:outline-none">
+                                Aplicativos <i data-lucide="layout-grid" class="w-4 h-4 ml-1"></i>
+                            </button>
+                            <div class="absolute right-0 top-16 w-64 bg-white border border-gray-200 rounded-b-lg shadow-xl hidden group-hover:block transition-all z-50">
+                                <div class="px-4 py-2 text-[10px] font-black text-indigo-500 uppercase tracking-widest bg-indigo-50 border-b border-indigo-100">Outros Sistemas</div>
+                                <a href="#" onclick="navigateTo('oco_dashboard.html')" class="block px-5 py-3 text-sm font-medium text-gray-600 hover:bg-gray-50 hover:text-indigo-600 border-l-4 border-transparent transition-colors flex items-center"><i data-lucide="shield-alert" class="w-4 h-4 mr-2 text-indigo-500"></i> Gestão de Ocorrências</a>
+                                <a href="#" onclick="navigateTo('calibracao.html')" class="block px-5 py-3 text-sm font-medium text-gray-600 hover:bg-gray-50 hover:text-indigo-600 border-l-4 border-transparent transition-colors flex items-center"><i data-lucide="scale" class="w-4 h-4 mr-2 text-indigo-500"></i> Ativos e Calibração</a>
+                                <a href="#" onclick="navigateTo('Indicador.html')" class="block px-5 py-3 text-sm font-medium text-gray-600 hover:bg-gray-50 hover:text-indigo-600 border-l-4 border-transparent transition-colors flex items-center"><i data-lucide="line-chart" class="w-4 h-4 mr-2 text-indigo-500"></i> Painel de Indicadores</a>
+                                <a href="#" onclick="navigateTo('dashboard.html')" class="block px-5 py-3 text-sm font-medium text-gray-600 hover:bg-gray-50 hover:text-indigo-600 border-l-4 border-transparent transition-colors flex items-center"><i data-lucide="users" class="w-4 h-4 mr-2 text-indigo-500"></i> Gestão de Pessoas</a>
+                            </div>
+                        </div>
+                    </nav>
+                </div>
+                
+                <!-- Ações do Utilizador -->
+                <div class="flex items-center space-x-4">
+                    <a href="#" onclick="navigateTo('index.html')" class="hidden lg:inline-flex items-center px-4 py-2 border border-transparent text-sm font-bold rounded-md shadow-sm text-white bg-slate-800 hover:bg-slate-700 focus:outline-none transition-colors">
+                        <i data-lucide="arrow-left" class="w-4 h-4 mr-2"></i> PORTAL
+                    </a>
+                    <button class="text-gray-400 hover:text-gray-600 relative transition-colors" onclick="showDevInfo()"><i data-lucide="info" class="w-5 h-5"></i></button>
+                    <div class="h-8 w-8 rounded-full bg-emerald-600 flex items-center justify-center text-white font-bold text-sm shadow-sm" id="user-avatar">--</div>
+                    <!-- Mobile menu button -->
+                    <button type="button" onclick="document.getElementById('mobile-menu').classList.toggle('hidden')" class="lg:hidden p-2 rounded-md text-gray-400 hover:bg-gray-100">
+                        <i data-lucide="menu" class="w-6 h-6"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Mobile Menu -->
+        <div class="hidden lg:hidden absolute w-full bg-white z-50 border-t shadow-lg max-h-[80vh] overflow-y-auto" id="mobile-menu">
+            <div class="pt-2 pb-3 space-y-1">
+                <a href="#" onclick="navigateTo('oco_dashboard.html')" class="block pl-6 py-3 border-l-4 border-transparent text-gray-800 font-bold hover:bg-gray-50 text-sm flex items-center mb-1">
+                    <i data-lucide="layout-dashboard" class="w-5 h-5 mr-2 text-indigo-600"></i> Dashboard
+                </a>
+                <a href="#" onclick="navigateTo('oco_formularios.html')" class="block pl-6 py-2 border-l-4 border-transparent text-gray-600 font-medium hover:bg-gray-50 text-sm">Formulários</a>
+                <a href="#" onclick="navigateTo('oco_painel_8.7.html')" class="block pl-6 py-2 border-l-4 border-transparent text-gray-600 font-medium hover:bg-gray-50 text-sm">Painel 8.7 (NC)</a>
+                <a href="#" onclick="navigateTo('oco_painel_10.2.html')" class="block pl-6 py-2 border-l-4 border-emerald-600 text-emerald-700 bg-emerald-50 font-bold text-sm">Painel 10.2 (AC)</a>
+                <a href="#" onclick="navigateTo('oco_relatorio_impressao.html')" class="block pl-6 py-2 border-l-4 border-transparent text-gray-600 font-medium hover:bg-gray-50 text-sm">Relatórios</a>
+
+                <div class="border-t border-gray-100 mt-3 pt-2">
+                    <a href="#" onclick="navigateTo('index.html')" class="block pl-6 py-3 text-white bg-slate-800 hover:bg-slate-700 font-bold"><i data-lucide="arrow-left" class="w-5 h-5 inline mr-2"></i> PORTAL</a>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="flex-1 overflow-auto bg-gray-50 p-4 md:p-6" id="main-container">
+        <div class="max-w-7xl mx-auto mb-6 flex flex-col md:flex-row md:justify-between md:items-center">
+            <div>
+                <h2 class="text-2xl font-semibold text-gray-800" id="page-title">Ações Corretivas (Req. 10.2)</h2>
+                <p class="text-sm text-gray-500 mt-1">Gestão de análise de causa raiz e planos de ação.</p>
+            </div>
+             <button onclick="navigateTo('oco_formularios.html?tab=ac')" class="mt-4 md:mt-0 bg-emerald-600 text-white px-4 py-2 rounded-lg text-sm font-bold shadow-sm hover:bg-emerald-700 transition flex items-center">
+                 <i data-lucide="plus-circle" class="w-4 h-4 mr-2"></i> Nova Ação Corretiva
+             </button>
+        </div>
+        
+        <div class="max-w-7xl mx-auto" id="app-content">
+            <!-- Loading Inicial -->
+            <div id="loading-state" class="flex h-64 w-full items-center justify-center">
+                <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-emerald-600"></div>
+                <span class="ml-3 text-gray-500 font-medium">A carregar registos 10.2...</span>
+            </div>
+            
+            <div id="ac-content" class="hidden">
+                <!-- Filtros Rápidos -->
+                <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 mb-6 flex flex-col sm:flex-row gap-4 items-center">
+                    <div class="relative w-full sm:w-96">
+                        <i data-lucide="search" class="w-4 h-4 absolute left-3 top-3 text-gray-400"></i>
+                        <input type="text" id="search-input" oninput="renderACTable()" placeholder="Procurar por RNC, RO ou descrição..." class="w-full pl-9 pr-4 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                    </div>
+                    <div class="flex gap-2 w-full sm:w-auto overflow-x-auto custom-scrollbar pb-1 sm:pb-0" id="filter-buttons">
+                        <button onclick="setFilter('Todas', this)" class="filter-btn px-4 py-2 bg-emerald-50 text-emerald-700 border border-emerald-200 font-bold rounded-lg text-xs whitespace-nowrap">Todas</button>
+                        <button onclick="setFilter('Pendente', this)" class="filter-btn px-4 py-2 bg-white text-gray-600 border border-gray-200 hover:bg-gray-50 font-bold rounded-lg text-xs whitespace-nowrap">Pendentes</button>
+                        <button onclick="setFilter('Em Andamento', this)" class="filter-btn px-4 py-2 bg-white text-gray-600 border border-gray-200 hover:bg-gray-50 font-bold rounded-lg text-xs whitespace-nowrap">Em Andamento</button>
+                        <button onclick="setFilter('Concluído', this)" class="filter-btn px-4 py-2 bg-white text-gray-600 border border-gray-200 hover:bg-gray-50 font-bold rounded-lg text-xs whitespace-nowrap">Concluídas</button>
+                    </div>
+                </div>
+
+                <!-- Tabela de ACs -->
+                <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-sm border-collapse">
+                            <thead class="bg-gray-50 border-b border-gray-200">
+                                <tr>
+                                    <th class="p-4 font-bold text-gray-500 uppercase text-xs">RNC / RO Origem</th>
+                                    <th class="p-4 font-bold text-gray-500 uppercase text-xs">Setor</th>
+                                    <th class="p-4 font-bold text-gray-500 uppercase text-xs">Título / Desvio</th>
+                                    <th class="p-4 font-bold text-gray-500 uppercase text-xs">Causa Raiz</th>
+                                    <th class="p-4 font-bold text-gray-500 uppercase text-xs text-center">Status</th>
+                                    <th class="p-4 font-bold text-gray-500 uppercase text-xs text-center">Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody id="ac-table-body" class="divide-y divide-gray-100">
+                                <!-- Preenchido via JavaScript -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyBqV0KOQMAYR4z6P_RKnrQPDfkAR2CsXBI",
+            authDomain: "gestao-de-pessoas-49200.firebaseapp.com",
+            projectId: "gestao-de-pessoas-49200",
+            storageBucket: "gestao-de-pessoas-49200.firebasestorage.app",
+            messagingSenderId: "615097388185",
+            appId: "1:615097388185:web:ef87969b64f4a886f23c08"
+        };
+        
+        if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth(); const db = firebase.firestore();
+        db.settings({ experimentalForceLongPolling: true });
+
+        let currentUser = null;
+        let rncsList = [];
+        let currentFilter = 'Todas';
+
+        function showDevInfo() { Swal.fire({ title: 'Painel 10.2 (AC)', text: 'Controlo exclusivo de Ações Corretivas.', icon: 'info' }); }
+
+        function loadACsFromFirestore() {
+            db.collection("ocorrencias")
+              .onSnapshot((snapshot) => {
+                  if (!snapshot.empty) {
+                      const allDocs = snapshot.docs.map(doc => ({ idDb: doc.id, ...doc.data() }));
+                      // Filtra apenas as ocorrências que necessitam de RNC (Unificadas)
+                      rncsList = allDocs.filter(o => (o.necessitaRNC || '').toUpperCase() === 'SIM');
+                      rncsList.sort((a, b) => new Date(b.timestamp || b.dataOcorrencia || 0) - new Date(a.timestamp || a.dataOcorrencia || 0));
+                  } else {
+                      rncsList = [];
+                  }
+                  document.getElementById('loading-state').classList.add('hidden');
+                  document.getElementById('ac-content').classList.remove('hidden');
+                  renderACTable();
+              }, (error) => {
+                  console.error("Erro leitura ocorrencias:", error);
+                  Swal.fire('Erro', 'Falha ao carregar as Ações Corretivas da nuvem.', 'error');
+              });
+        }
+
+        function setFilter(status, btnElement) {
+            currentFilter = status;
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.className = "filter-btn px-4 py-2 bg-white text-gray-600 border border-gray-200 hover:bg-gray-50 font-bold rounded-lg text-xs whitespace-nowrap";
+            });
+            btnElement.className = "filter-btn px-4 py-2 bg-emerald-50 text-emerald-700 border border-emerald-200 font-bold rounded-lg text-xs whitespace-nowrap";
+            renderACTable();
+        }
+
+        function renderACTable() {
+            const tbody = document.getElementById('ac-table-body');
+            const searchTerm = document.getElementById('search-input').value.toLowerCase().trim();
+            
+            let filtered = rncsList.filter(ac => {
+                const titleMatch = ac.titulo || '';
+                const roMatch = ac.id || ''; 
+                const rncMatch = ac.rncId || ''; 
+                const causaMatch = ac.rncCausaRaiz || '';
+
+                const matchSearch = searchTerm === '' || 
+                                    roMatch.toLowerCase().includes(searchTerm) || 
+                                    rncMatch.toLowerCase().includes(searchTerm) || 
+                                    titleMatch.toLowerCase().includes(searchTerm) ||
+                                    causaMatch.toLowerCase().includes(searchTerm);
+                
+                const statusStr = (ac.rncStatusAcao || 'PENDENTE').toUpperCase().trim();
+                let matchStatus = false;
+                if (currentFilter === 'Todas') matchStatus = true;
+                else if (currentFilter === 'Pendente') matchStatus = statusStr === 'PENDENTE';
+                else if (currentFilter === 'Em Andamento') matchStatus = statusStr === 'EM ANDAMENTO';
+                else if (currentFilter === 'Concluído') matchStatus = statusStr === 'CONCLUÍDO';
+                
+                return matchSearch && matchStatus;
+            });
+
+            if (filtered.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="6" class="p-10 text-center text-gray-500"><i data-lucide="inbox" class="w-10 h-10 mx-auto text-gray-300 mb-3"></i><p>Nenhuma Ação Corretiva encontrada.</p></td></tr>`;
+            } else {
+                tbody.innerHTML = filtered.map(ac => {
+                    const statusStr = (ac.rncStatusAcao || 'PENDENTE').toUpperCase().trim();
+                    let statusClass = 'bg-gray-100 text-gray-800 border-gray-200';
+                    if(statusStr === 'PENDENTE') statusClass = 'bg-slate-100 text-slate-700 border-slate-200';
+                    if(statusStr === 'EM ANDAMENTO') statusClass = 'bg-yellow-50 text-yellow-700 border-yellow-200';
+                    if(statusStr === 'CONCLUÍDO') statusClass = 'bg-green-50 text-green-700 border-green-200';
+                    if(statusStr === 'ATRASADO') statusClass = 'bg-red-50 text-red-700 border-red-200';
+
+                    const title = ac.titulo || 'Sem Título';
+                    const causa = ac.rncCausaRaiz || 'Aguardando Análise';
+                    const rncCode = ac.rncId || 'S/C';
+                    const roCode = ac.id || 'RO-N/A';
+                    const area = ac.area || ac.setor || '-';
+
+                    return `
+                        <tr class="hover:bg-gray-50 transition-colors">
+                            <td class="p-4">
+                                <span class="font-black text-red-600 text-xs block">${rncCode}</span>
+                                <span class="text-[10px] text-gray-500 font-bold">Vínculo: ${roCode}</span>
+                            </td>
+                            <td class="p-4 text-gray-600 text-xs font-bold">${area}</td>
+                            <td class="p-4 text-gray-800 text-xs font-bold max-w-xs truncate" title="${title}">${title}</td>
+                            <td class="p-4 text-gray-600 text-xs truncate max-w-xs italic" title="${causa}">${causa}</td>
+                            <td class="p-4 text-center"><span class="px-2 py-1 rounded text-[10px] font-black border ${statusClass} uppercase">${statusStr}</span></td>
+                            <td class="p-4 text-center flex justify-center space-x-2">
+                                <button onclick="viewAC('${ac.idDb}')" class="text-emerald-600 hover:text-emerald-800 p-1.5 bg-emerald-50 hover:bg-emerald-100 rounded transition-colors" title="Visualizar Detalhes"><i data-lucide="eye" class="w-4 h-4"></i></button>
+                                <button onclick="editAC('${ac.idDb}')" class="text-blue-600 hover:text-blue-800 p-1.5 bg-blue-50 hover:bg-blue-100 rounded transition-colors" title="Editar Ação Corretiva"><i data-lucide="pencil" class="w-4 h-4"></i></button>
+                                <button onclick="printAC('${ac.idDb}')" class="text-slate-600 hover:text-slate-800 p-1.5 bg-slate-100 hover:bg-slate-200 rounded transition-colors" title="Imprimir Relatório"><i data-lucide="printer" class="w-4 h-4"></i></button>
+                                <button onclick="deleteAC('${ac.idDb}')" class="text-red-600 hover:text-red-800 p-1.5 bg-red-50 hover:bg-red-100 rounded transition-colors" title="Remover RNC"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                            </td>
+                        </tr>
+                    `;
+                }).join('');
+            }
+            if(window.lucide) window.lucide.createIcons();
+        }
+
+        function editAC(idDb) {
+            // Navega forçando a abertura da aba correta de Ação Corretiva (tab=ac)
+            navigateTo(`oco_formularios.html?edit=${idDb}&tab=ac`); 
+        }
+
+        function printAC(idDb) {
+            // Redireciona para a página de impressão passando o ID do banco
+            navigateTo(`oco_relatorio_impressao.html?id=${idDb}`);
+        }
+
+        async function deleteAC(idDb) {
+            const result = await Swal.fire({
+                title: 'Desvincular e Excluir RNC?',
+                html: `Esta ação limpará os dados da Ação Corretiva. A Ocorrência original (RO) será <b>mantida no Painel 8.7</b>.`,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#94a3b8',
+                confirmButtonText: 'Sim, excluir RNC!',
+                cancelButtonText: 'Cancelar'
+            });
+
+            if (result.isConfirmed) {
+                try {
+                    Swal.fire({ title: 'A processar...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+                    // Remove apenas a obrigatoriedade e os dados da RNC, mantendo o RO intacto
+                    await db.collection("ocorrencias").doc(idDb).update({
+                        necessitaRNC: 'NÃO',
+                        rncId: '',
+                        rncCausaRaiz: '',
+                        rncAcaoCorretiva: '',
+                        rncResponsavelAcao: '',
+                        rncPrevisao: '',
+                        rncStatusAcao: ''
+                    });
+                    Swal.fire('Removida!', 'A Ação Corretiva foi desvinculada com sucesso.', 'success');
+                } catch (err) {
+                    console.error(err);
+                    Swal.fire('Erro', 'Ocorreu um problema.', 'error');
+                }
+            }
+        }
+
+        function viewAC(idDb) {
+            const ac = rncsList.find(o => o.idDb === idDb);
+            if(!ac) return;
+            
+            const rncCode = ac.rncId || 'S/C';
+            const roCode = ac.id || 'N/A';
+            const causa = ac.rncCausaRaiz || 'Aguardando Análise';
+            const plano = ac.rncAcaoCorretiva || 'Sem Plano de Ação';
+            const statusStr = ac.rncStatusAcao || 'PENDENTE';
+            const prazo = ac.rncPrevisao ? ac.rncPrevisao.split('-').reverse().join('/') : '-';
+            
+            Swal.fire({
+                title: `<span class="text-emerald-700 font-black">${rncCode}</span>`,
+                html: `
+                    <div class="text-left text-sm space-y-3 mt-4 text-gray-700">
+                        <p><strong class="text-gray-900">Vínculo Origem:</strong> <span class="font-bold text-red-600">${roCode}</span></p>
+                        <p><strong class="text-gray-900">Desvio / Ocorrência:</strong> ${ac.titulo || '-'}</p>
+                        <div class="bg-gray-50 p-3 rounded-lg border border-gray-200 mt-2">
+                            <strong class="text-gray-900 uppercase text-xs tracking-widest">Causa Raiz Identificada:</strong><br/>
+                            <span class="mt-1 block italic">${causa}</span>
+                        </div>
+                        <div class="bg-emerald-50 p-3 rounded-lg border border-emerald-100 mt-2">
+                            <strong class="text-emerald-900 uppercase text-xs tracking-widest">Plano de Ação Corretiva:</strong><br/>
+                            <span class="mt-1 block text-emerald-800">${plano}</span>
+                        </div>
+                        <div class="grid grid-cols-2 gap-2 mt-3">
+                            <p><strong class="text-gray-900">Responsável Ação:</strong> ${ac.rncResponsavelAcao || '-'}</p>
+                            <p><strong class="text-gray-900">Previsão:</strong> ${prazo}</p>
+                        </div>
+                        <p class="mt-3 pt-3 border-t border-gray-100"><strong class="text-gray-900">Status da AC:</strong> <span class="font-black uppercase text-emerald-600 ml-1">${statusStr}</span></p>
+                    </div>
+                `,
+                icon: 'info',
+                width: '600px',
+                confirmButtonText: 'Fechar',
+                confirmButtonColor: '#10b981'
+            });
+        }
+
+        auth.onAuthStateChanged((user) => { 
+            if (user) { 
+                currentUser = user; 
+                if(document.getElementById('user-avatar')) {
+                    document.getElementById('user-avatar').innerText = user.email ? user.email.charAt(0).toUpperCase() : 'U'; 
+                }
+                loadACsFromFirestore();
+            } else {
+                auth.signInAnonymously().then(() => {
+                    currentUser = { email: 'Local' };
+                    loadACsFromFirestore();
+                }); 
+            }
+        });
+    </script>
+</body>
+</html>

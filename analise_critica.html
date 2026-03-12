@@ -1,0 +1,669 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SGQ - Análise Crítica da Direção (ISO 9001)</title>
+    
+    <!-- Tailwind CSS para Estilização -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Lucide Icons para Ícones -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <!-- SweetAlert2 para Modais e Mensagens -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; }
+        
+        /* Forçar caixa alta no padrão corporativo */
+        .uppercase-all { text-transform: uppercase; }
+        input[type="text"], input[type="date"], textarea { text-transform: uppercase; }
+        
+        .custom-scrollbar::-webkit-scrollbar { height: 8px; width: 8px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        
+        @media print {
+            @page { margin: 1.5cm; size: A4 portrait; }
+            body { -webkit-print-color-adjust: exact; print-color-adjust: exact; background: white; text-transform: uppercase; }
+            .no-print { display: none !important; }
+            .page-break { page-break-after: always; }
+        }
+    </style>
+
+    <script>
+        function navigateTo(url) { window.location.href = url; }
+        function showDevInfo() { Swal.fire({ title: 'Análise Crítica da Direção', text: 'Módulo de Registo de Atas - ISO 9001 Req. 9.3.', icon: 'info' }); }
+    </script>
+</head>
+<body class="flex flex-col h-screen text-slate-800 bg-slate-50 uppercase-all">
+
+    <!-- ========================================================================= -->
+    <!-- MENU CORPORATIVO INTEGRADO -->
+    <!-- ========================================================================= -->
+    <header class="bg-white shadow-sm z-20 no-print sticky top-0">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <!-- Logotipo / Título Dinâmico do Menu -->
+                <div class="flex items-center flex-1">
+                    <div class="flex-shrink-0 flex items-center mr-6" id="menu-logo-container">
+                        <div class="p-2 bg-teal-100 rounded-lg mr-3"><i data-lucide="presentation-chart" class="w-6 h-6 text-teal-700"></i></div>
+                        <h1 class="text-xl font-bold text-gray-800">SGQ <span class="text-teal-600">Direção</span></h1>
+                    </div>
+                    
+                    <!-- Desktop Menu -->
+                    <nav class="hidden lg:flex space-x-6 h-full">
+                        <div class="relative flex items-center h-full">
+                            <a href="#" onclick="changeView('dashboard')" class="inline-flex items-center px-1 h-full border-b-2 border-teal-600 text-sm font-bold text-teal-700 bg-teal-50 transition-colors focus:outline-none" id="nav-dash">Painel de Atas</a>
+                        </div>
+                        
+                        <!-- Menu Aplicativos Externos -->
+                        <div class="relative group h-full flex items-center ml-4">
+                            <button class="inline-flex items-center px-1 h-full border-b-2 border-transparent text-sm font-medium text-slate-500 hover:text-teal-600 transition-colors focus:outline-none">
+                                Aplicativos <i data-lucide="layout-grid" class="w-4 h-4 ml-1"></i>
+                            </button>
+                            <div class="absolute right-0 top-16 w-64 bg-white border border-slate-200 rounded-b-lg shadow-xl hidden group-hover:block transition-all z-50">
+                                <div class="px-4 py-2 text-[10px] font-black text-indigo-500 uppercase tracking-widest bg-indigo-50 border-b border-indigo-100">Outros Sistemas</div>
+                                <a href="#" onclick="navigateTo('oco_dashboard.html')" class="block px-5 py-3 text-sm font-medium text-slate-600 hover:bg-slate-50 hover:text-indigo-600 border-l-4 border-transparent transition-colors flex items-center"><i data-lucide="shield-alert" class="w-4 h-4 mr-2 text-indigo-500"></i> Gestão de Ocorrências</a>
+                                <a href="#" onclick="navigateTo('Documentos.html')" class="block px-5 py-3 text-sm font-medium text-slate-600 hover:bg-slate-50 hover:text-emerald-600 border-l-4 border-transparent transition-colors flex items-center"><i data-lucide="files" class="w-4 h-4 mr-2 text-emerald-500"></i> Gestão de Documentos</a>
+                                <a href="#" onclick="navigateTo('cal_dashboard.html')" class="block px-5 py-3 text-sm font-medium text-slate-600 hover:bg-slate-50 hover:text-amber-600 border-l-4 border-transparent transition-colors flex items-center"><i data-lucide="scale" class="w-4 h-4 mr-2 text-amber-500"></i> Ativos e Calibração</a>
+                                <a href="#" onclick="navigateTo('dashboard.html')" class="block px-5 py-3 text-sm font-medium text-slate-600 hover:bg-slate-50 hover:text-sky-600 border-l-4 border-transparent transition-colors flex items-center"><i data-lucide="users" class="w-4 h-4 mr-2 text-sky-500"></i> Gestão de Pessoas (RH)</a>
+                                <a href="#" onclick="navigateTo('analise_critica.html')" class="block px-5 py-3 text-sm font-bold text-teal-700 bg-teal-50 border-l-4 border-teal-500 transition-colors flex items-center"><i data-lucide="presentation-chart" class="w-4 h-4 mr-2 text-teal-600"></i> Análise Crítica da Direção</a>
+                                <a href="#" onclick="navigateTo('Indicador.html')" class="block px-5 py-3 text-sm font-medium text-slate-600 hover:bg-slate-50 hover:text-violet-600 border-l-4 border-transparent transition-colors flex items-center"><i data-lucide="line-chart" class="w-4 h-4 mr-2 text-violet-500"></i> Painel de Indicadores</a>
+                            </div>
+                        </div>
+                    </nav>
+                </div>
+                
+                <div class="flex items-center space-x-4">
+                    <a href="#" onclick="navigateTo('index.html')" class="hidden lg:inline-flex items-center px-4 py-2 border border-transparent text-sm font-bold rounded-md shadow-sm text-white bg-slate-800 hover:bg-slate-700 focus:outline-none transition-colors">
+                        <i data-lucide="arrow-left" class="w-4 h-4 mr-2"></i> PORTAL
+                    </a>
+                    <button class="text-slate-400 hover:text-slate-600 relative transition-colors" onclick="showDevInfo()"><i data-lucide="info" class="w-5 h-5"></i></button>
+                    <div class="h-8 w-8 rounded-full bg-teal-600 flex items-center justify-center text-white font-bold text-sm shadow-sm" id="user-avatar">--</div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="flex-1 overflow-auto bg-slate-50 p-4 md:p-6 no-print" id="main-container">
+        
+        <!-- LOADING STATE -->
+        <div id="loading-state" class="flex flex-col h-64 w-full items-center justify-center">
+            <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-teal-600 mb-4"></div>
+            <span class="text-slate-500 font-bold tracking-widest text-xs">Sincronizando Atas da Direção...</span>
+        </div>
+
+        <!-- DASHBOARD VIEW -->
+        <div id="view-dashboard" class="hidden max-w-7xl mx-auto space-y-6">
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div>
+                    <h2 class="text-2xl font-black text-slate-800 tracking-tight flex items-center">
+                        Gestão de Atas (Req. 9.3)
+                    </h2>
+                    <p class="text-sm font-bold text-slate-500 mt-1 tracking-wider">Histórico de Reuniões de Análise Crítica do SGQ.</p>
+                </div>
+                <button onclick="openAtaForm()" class="bg-teal-600 hover:bg-teal-700 text-white px-5 py-2.5 rounded-lg text-xs font-black tracking-widest shadow-md transition-colors flex items-center">
+                    <i data-lucide="plus-circle" class="w-4 h-4 mr-2"></i> Nova Reunião
+                </button>
+            </div>
+
+            <!-- KPIs -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="bg-white rounded-xl shadow-sm p-6 border border-slate-200 border-l-4 border-l-teal-500 flex items-center justify-between">
+                    <div><p class="text-[10px] font-black text-slate-400 tracking-widest">Total de Atas Registadas</p><h3 class="text-3xl font-black text-slate-800 mt-1" id="kpi-total">0</h3></div>
+                    <div class="p-3 bg-teal-50 rounded-full text-teal-600"><i data-lucide="folders" class="w-6 h-6"></i></div>
+                </div>
+                <div class="bg-white rounded-xl shadow-sm p-6 border border-slate-200 border-l-4 border-l-amber-500 flex items-center justify-between">
+                    <div><p class="text-[10px] font-black text-slate-400 tracking-widest">Atas em Elaboração</p><h3 class="text-3xl font-black text-slate-800 mt-1" id="kpi-drafts">0</h3></div>
+                    <div class="p-3 bg-amber-50 rounded-full text-amber-600"><i data-lucide="pen-tool" class="w-6 h-6"></i></div>
+                </div>
+                <div class="bg-white rounded-xl shadow-sm p-6 border border-slate-200 border-l-4 border-l-indigo-500 flex items-center justify-between">
+                    <div><p class="text-[10px] font-black text-slate-400 tracking-widest">Ações Pendentes Geradas</p><h3 class="text-3xl font-black text-slate-800 mt-1" id="kpi-actions">0</h3></div>
+                    <div class="p-3 bg-indigo-50 rounded-full text-indigo-600"><i data-lucide="list-todo" class="w-6 h-6"></i></div>
+                </div>
+            </div>
+
+            <!-- Tabela de Atas -->
+            <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+                <div class="p-4 bg-slate-50 border-b border-slate-200 flex justify-between items-center">
+                    <h3 class="font-black text-slate-700 text-sm tracking-widest">Registos de Análise Crítica</h3>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-slate-100 text-[10px] text-slate-500 tracking-widest border-b border-slate-200">
+                                <th class="p-4 font-black">Ref / Data</th>
+                                <th class="p-4 font-black">Líder / Responsável</th>
+                                <th class="p-4 font-black">Status</th>
+                                <th class="p-4 font-black text-center">Ações Geradas</th>
+                                <th class="p-4 font-black text-right">Opções</th>
+                            </tr>
+                        </thead>
+                        <tbody id="atas-table-body" class="divide-y divide-slate-100 text-xs font-bold text-slate-700">
+                            <!-- Injetado via JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- FORM VIEW -->
+        <div id="view-form" class="hidden max-w-5xl mx-auto bg-white rounded-xl shadow-lg border border-slate-200 overflow-hidden mb-10">
+            <div class="p-5 bg-slate-50 border-b border-slate-200 flex justify-between items-center sticky top-0 z-10">
+                <h3 class="font-black text-slate-800 text-lg tracking-widest flex items-center" id="form-title">
+                    <button onclick="changeView('dashboard')" class="mr-3 text-slate-400 hover:text-teal-600 transition-colors"><i data-lucide="arrow-left" class="w-5 h-5"></i></button>
+                    Nova Reunião de Análise Crítica
+                </h3>
+                <div class="flex items-center gap-3">
+                    <span id="form-status-badge" class="px-3 py-1 rounded-full text-[10px] font-black border bg-slate-100 text-slate-600 border-slate-300">RASCUNHO</span>
+                    <button onclick="saveAta(false)" class="bg-slate-800 hover:bg-slate-900 text-white px-4 py-2 rounded-lg text-[10px] font-black tracking-widest shadow-md transition-colors flex items-center">
+                        <i data-lucide="save" class="w-4 h-4 mr-2"></i> Gravar Rascunho
+                    </button>
+                    <button onclick="saveAta(true)" id="btn-concluir" class="bg-teal-600 hover:bg-teal-700 text-white px-4 py-2 rounded-lg text-[10px] font-black tracking-widest shadow-md transition-colors flex items-center">
+                        <i data-lucide="check-circle" class="w-4 h-4 mr-2"></i> Encerrar Ata
+                    </button>
+                </div>
+            </div>
+
+            <div class="p-6 md:p-8 space-y-8">
+                <input type="hidden" id="ata-id">
+                
+                <!-- Secção 1: Dados Gerais -->
+                <section>
+                    <h4 class="text-sm font-black text-teal-700 border-b border-teal-100 pb-2 mb-4 flex items-center">
+                        <i data-lucide="info" class="w-4 h-4 mr-2"></i> 1. Identificação da Reunião
+                    </h4>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+                        <div>
+                            <label class="block text-[10px] text-slate-500 font-bold mb-1">Data da Reunião *</label>
+                            <input type="date" id="ata-data" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-teal-500">
+                        </div>
+                        <div>
+                            <label class="block text-[10px] text-slate-500 font-bold mb-1">Líder da Reunião (Direção) *</label>
+                            <input type="text" id="ata-lider" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-teal-500" placeholder="Nome do Responsável">
+                        </div>
+                        <div>
+                            <label class="block text-[10px] text-slate-500 font-bold mb-1">Participantes (Separados por vírgula) *</label>
+                            <input type="text" id="ata-participantes" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-teal-500" placeholder="Ex: João, Maria, Carlos">
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Secção 2: Entradas (Req 9.3.2) -->
+                <section>
+                    <h4 class="text-sm font-black text-teal-700 border-b border-teal-100 pb-2 mb-4 flex items-center">
+                        <i data-lucide="import" class="w-4 h-4 mr-2"></i> 2. Entradas da Análise Crítica (Req. 9.3.2)
+                    </h4>
+                    <p class="text-[10px] text-slate-500 font-bold mb-4">Descreva as conclusões e análises para cada um dos tópicos normativos abaixo.</p>
+                    
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-[11px] text-slate-700 font-bold mb-1">a) Estado das ações de análises críticas anteriores</label>
+                            <textarea id="ent-acoes-ant" rows="2" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-teal-500 custom-scrollbar"></textarea>
+                        </div>
+                        <div>
+                            <label class="block text-[11px] text-slate-700 font-bold mb-1">b) Mudanças em questões externas e internas relevantes ao SGQ</label>
+                            <textarea id="ent-mudancas" rows="2" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-teal-500 custom-scrollbar"></textarea>
+                        </div>
+                        <div>
+                            <label class="block text-[11px] text-slate-700 font-bold mb-1">c) Informação sobre o Desempenho e Eficácia do SGQ (Satisfação, Indicadores, NCs, Auditorias, Fornecedores)</label>
+                            <textarea id="ent-desempenho" rows="4" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-teal-500 custom-scrollbar" placeholder="Resumo dos resultados dos indicadores, auditorias e fornecedores..."></textarea>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-[11px] text-slate-700 font-bold mb-1">d) Adequação de Recursos</label>
+                                <textarea id="ent-recursos" rows="2" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-teal-500 custom-scrollbar"></textarea>
+                            </div>
+                            <div>
+                                <label class="block text-[11px] text-slate-700 font-bold mb-1">e) Eficácia das Ações para Riscos e Oportunidades</label>
+                                <textarea id="ent-riscos" rows="2" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-teal-500 custom-scrollbar"></textarea>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Secção 3: Saídas (Req 9.3.3) -->
+                <section>
+                    <h4 class="text-sm font-black text-teal-700 border-b border-teal-100 pb-2 mb-4 flex items-center">
+                        <i data-lucide="export" class="w-4 h-4 mr-2"></i> 3. Saídas da Análise Crítica (Req. 9.3.3)
+                    </h4>
+                    
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-[11px] text-slate-700 font-bold mb-1">Decisões sobre Oportunidades de Melhoria e Mudanças no SGQ</label>
+                            <textarea id="sai-melhorias" rows="3" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-teal-500 custom-scrollbar"></textarea>
+                        </div>
+                        <div>
+                            <label class="block text-[11px] text-slate-700 font-bold mb-1">Decisões sobre Necessidade de Recursos</label>
+                            <textarea id="sai-recursos" rows="2" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-teal-500 custom-scrollbar"></textarea>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Secção 4: Plano de Ação -->
+                <section>
+                    <div class="flex justify-between items-center border-b border-teal-100 pb-2 mb-4">
+                        <h4 class="text-sm font-black text-teal-700 flex items-center">
+                            <i data-lucide="list-checks" class="w-4 h-4 mr-2"></i> 4. Plano de Ação Gerado
+                        </h4>
+                        <button type="button" onclick="addActionRow()" class="text-[10px] font-bold bg-teal-50 text-teal-700 px-3 py-1 rounded-md hover:bg-teal-100 transition-colors">
+                            + ADICIONAR AÇÃO
+                        </button>
+                    </div>
+                    
+                    <div class="bg-slate-50 border border-slate-200 rounded-lg overflow-hidden">
+                        <table class="w-full text-left text-xs">
+                            <thead class="bg-slate-100 text-slate-500 border-b border-slate-200">
+                                <tr>
+                                    <th class="p-2 font-bold w-1/2">O que Fazer? (Ação)</th>
+                                    <th class="p-2 font-bold w-1/4">Quem? (Responsável)</th>
+                                    <th class="p-2 font-bold w-1/4">Quando? (Prazo)</th>
+                                    <th class="p-2 text-center w-10"></th>
+                                </tr>
+                            </thead>
+                            <tbody id="action-plan-body" class="divide-y divide-slate-200">
+                                <!-- Linhas injetadas via JS -->
+                            </tbody>
+                        </table>
+                        <div id="action-plan-empty" class="p-4 text-center text-slate-400 text-[10px] font-bold hidden">
+                            NENHUMA AÇÃO REGISTADA.
+                        </div>
+                    </div>
+                </section>
+
+            </div>
+        </div>
+    </main>
+
+    <!-- ÁREA DE IMPRESSÃO (Oculta na tela, visível no Print) -->
+    <div id="print-area" class="hidden print:block w-full text-black">
+        <!-- Estrutura injetada via JS no momento da impressão -->
+    </div>
+
+    <!-- Importação Modular do Firebase V11 -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, initializeFirestore, collection, onSnapshot, doc, setDoc, updateDoc, addDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyBqV0KOQMAYR4z6P_RKnrQPDfkAR2CsXBI",
+            authDomain: "gestao-de-pessoas-49200.firebaseapp.com",
+            projectId: "gestao-de-pessoas-49200",
+            storageBucket: "gestao-de-pessoas-49200.firebasestorage.app",
+            messagingSenderId: "615097388185",
+            appId: "1:615097388185:web:ef87969b64f4a886f23c08"
+        };
+        const app_id = "gestao-de-pessoas-49200";
+
+        let db, currentUser = null;
+        let atasData = [];
+        let actionPlanData = []; // [{ id: tempId, acao: '', resp: '', prazo: '' }]
+
+        async function initApp() {
+            try {
+                const app = initializeApp(firebaseConfig);
+                const auth = getAuth(app);
+                db = initializeFirestore(app, { experimentalForceLongPolling: true });
+
+                onAuthStateChanged(auth, (user) => { 
+                    if (user) { 
+                        currentUser = user; 
+                        document.getElementById('user-avatar').innerText = user.email ? user.email.charAt(0).toUpperCase() : 'U'; 
+                        loadAtas(); 
+                    } else {
+                        signInAnonymously(auth).then(() => {
+                            currentUser = { email: 'Local' };
+                            loadAtas();
+                        }); 
+                    }
+                });
+            } catch (error) {
+                console.error("Error initializing:", error);
+            }
+        }
+
+        function loadAtas() {
+            const atasRef = collection(db, `artifacts/${app_id}/public/data/analise_critica`);
+            onSnapshot(atasRef, (snapshot) => {
+                atasData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                // Ordenar por data decrescente
+                atasData.sort((a, b) => new Date(b.dataReuniao || 0) - new Date(a.dataReuniao || 0));
+                
+                updateDashboard();
+                
+                document.getElementById('loading-state').classList.add('hidden');
+                document.getElementById('view-dashboard').classList.remove('hidden');
+            });
+        }
+
+        function updateDashboard() {
+            const total = atasData.length;
+            const drafts = atasData.filter(a => a.status !== 'Concluída').length;
+            let pendingActions = 0;
+
+            let tableHtml = '';
+
+            atasData.forEach(ata => {
+                const dateStr = ata.dataReuniao ? ata.dataReuniao.split('-').reverse().join('/') : '-';
+                const actionsCount = (ata.planoAcao || []).length;
+                pendingActions += actionsCount; // Simplificação: assume que todas de ata concluída ainda precisam de folow-up no sistema principal
+
+                const statusColor = ata.status === 'Concluída' ? 'bg-green-100 text-green-700 border-green-300' : 'bg-slate-200 text-slate-600 border-slate-300';
+
+                tableHtml += `
+                    <tr class="hover:bg-slate-50 transition-colors border-b border-slate-100">
+                        <td class="p-4">
+                            <div class="font-black text-slate-800">ATA-${ata.id.substring(0,5).toUpperCase()}</div>
+                            <div class="text-[10px] text-slate-400 font-bold mt-0.5"><i data-lucide="calendar" class="inline w-3 h-3 mr-1"></i>${dateStr}</div>
+                        </td>
+                        <td class="p-4 font-bold text-slate-600">${ata.lider || '-'}</td>
+                        <td class="p-4"><span class="px-2 py-1 rounded text-[9px] font-black border ${statusColor}">${ata.status || 'Rascunho'}</span></td>
+                        <td class="p-4 text-center font-bold text-indigo-600">${actionsCount} Ações</td>
+                        <td class="p-4 text-right">
+                            <button onclick="window.editAta('${ata.id}')" class="text-indigo-500 hover:text-indigo-700 p-1 mr-2" title="Ver / Editar"><i data-lucide="edit-3" class="w-4 h-4"></i></button>
+                            <button onclick="window.printAta('${ata.id}')" class="text-slate-400 hover:text-slate-700 p-1 mr-2" title="Imprimir / PDF"><i data-lucide="printer" class="w-4 h-4"></i></button>
+                            ${ata.status !== 'Concluída' ? `<button onclick="window.deleteAta('${ata.id}')" class="text-red-400 hover:text-red-600 p-1"><i data-lucide="trash" class="w-4 h-4"></i></button>` : ''}
+                        </td>
+                    </tr>
+                `;
+            });
+
+            document.getElementById('atas-table-body').innerHTML = tableHtml || `<tr><td colspan="5" class="p-8 text-center text-slate-400 text-xs font-bold uppercase">Nenhum registo encontrado.</td></tr>`;
+            
+            document.getElementById('kpi-total').innerText = total;
+            document.getElementById('kpi-drafts').innerText = drafts;
+            document.getElementById('kpi-actions').innerText = pendingActions;
+
+            if(window.lucide) lucide.createIcons();
+        }
+
+        // --- GESTÃO DO FORMULÁRIO ---
+
+        window.changeView = function(view) {
+            if (view === 'dashboard') {
+                document.getElementById('view-form').classList.add('hidden');
+                document.getElementById('view-dashboard').classList.remove('hidden');
+            } else if (view === 'form') {
+                document.getElementById('view-dashboard').classList.add('hidden');
+                document.getElementById('view-form').classList.remove('hidden');
+            }
+        };
+
+        window.openAtaForm = function() {
+            // Limpa o formulário
+            document.getElementById('ata-id').value = '';
+            document.getElementById('ata-data').value = new Date().toISOString().split('T')[0];
+            document.getElementById('ata-lider').value = '';
+            document.getElementById('ata-participantes').value = '';
+            
+            // Entradas
+            document.getElementById('ent-acoes-ant').value = '';
+            document.getElementById('ent-mudancas').value = '';
+            document.getElementById('ent-desempenho').value = '';
+            document.getElementById('ent-recursos').value = '';
+            document.getElementById('ent-riscos').value = '';
+            
+            // Saídas
+            document.getElementById('sai-melhorias').value = '';
+            document.getElementById('sai-recursos').value = '';
+            
+            actionPlanData = [];
+            renderActionPlan();
+
+            document.getElementById('form-title').innerHTML = '<button onclick="changeView(\'dashboard\')" class="mr-3 text-slate-400 hover:text-teal-600 transition-colors"><i data-lucide="arrow-left" class="w-5 h-5"></i></button> Nova Reunião de Análise Crítica';
+            
+            setFormStatus('Rascunho');
+            changeView('form');
+        };
+
+        window.editAta = function(id) {
+            const ata = atasData.find(a => a.id === id);
+            if (!ata) return;
+
+            document.getElementById('ata-id').value = ata.id;
+            document.getElementById('ata-data').value = ata.dataReuniao || '';
+            document.getElementById('ata-lider').value = ata.lider || '';
+            document.getElementById('ata-participantes').value = ata.participantes || '';
+            
+            const ent = ata.entradas || {};
+            document.getElementById('ent-acoes-ant').value = ent.acoes_ant || '';
+            document.getElementById('ent-mudancas').value = ent.mudancas || '';
+            document.getElementById('ent-desempenho').value = ent.desempenho || '';
+            document.getElementById('ent-recursos').value = ent.recursos || '';
+            document.getElementById('ent-riscos').value = ent.riscos || '';
+            
+            const sai = ata.saidas || {};
+            document.getElementById('sai-melhorias').value = sai.melhorias || '';
+            document.getElementById('sai-recursos').value = sai.recursos || '';
+            
+            actionPlanData = ata.planoAcao ? JSON.parse(JSON.stringify(ata.planoAcao)) : [];
+            // Garantir IDs temporários para o plano de ação se não tiver
+            actionPlanData.forEach((a, i) => { if(!a.id) a.id = 'temp_' + i; });
+            
+            renderActionPlan();
+
+            document.getElementById('form-title').innerHTML = `<button onclick="changeView('dashboard')" class="mr-3 text-slate-400 hover:text-teal-600 transition-colors"><i data-lucide="arrow-left" class="w-5 h-5"></i></button> ATA-${ata.id.substring(0,5).toUpperCase()}`;
+            
+            setFormStatus(ata.status || 'Rascunho');
+            changeView('form');
+        };
+
+        function setFormStatus(status) {
+            const badge = document.getElementById('form-status-badge');
+            const btnConcluir = document.getElementById('btn-concluir');
+            
+            badge.innerText = status.toUpperCase();
+            if (status === 'Concluída') {
+                badge.className = 'px-3 py-1 rounded-full text-[10px] font-black border bg-green-100 text-green-700 border-green-300';
+                btnConcluir.classList.add('hidden'); // Esconde encerrar se já está encerrada
+            } else {
+                badge.className = 'px-3 py-1 rounded-full text-[10px] font-black border bg-slate-100 text-slate-600 border-slate-300';
+                btnConcluir.classList.remove('hidden');
+            }
+        }
+
+        // --- PLANO DE AÇÃO DINÂMICO ---
+
+        window.addActionRow = function() {
+            actionPlanData.push({ id: 'temp_' + Date.now(), acao: '', responsavel: '', prazo: '' });
+            renderActionPlan();
+        };
+
+        window.removeActionRow = function(id) {
+            actionPlanData = actionPlanData.filter(a => a.id !== id);
+            renderActionPlan();
+        };
+
+        window.updateActionRow = function(id, field, value) {
+            const item = actionPlanData.find(a => a.id === id);
+            if (item) item[field] = value.toUpperCase();
+        };
+
+        function renderActionPlan() {
+            const tbody = document.getElementById('action-plan-body');
+            const empty = document.getElementById('action-plan-empty');
+
+            if (actionPlanData.length === 0) {
+                tbody.innerHTML = '';
+                empty.classList.remove('hidden');
+            } else {
+                empty.classList.add('hidden');
+                tbody.innerHTML = actionPlanData.map(a => `
+                    <tr>
+                        <td class="p-2"><input type="text" value="${a.acao}" onchange="updateActionRow('${a.id}', 'acao', this.value)" class="w-full bg-white border border-slate-200 p-1.5 rounded focus:ring-1 focus:ring-teal-500 outline-none"></td>
+                        <td class="p-2"><input type="text" value="${a.responsavel}" onchange="updateActionRow('${a.id}', 'responsavel', this.value)" class="w-full bg-white border border-slate-200 p-1.5 rounded focus:ring-1 focus:ring-teal-500 outline-none"></td>
+                        <td class="p-2"><input type="date" value="${a.prazo}" onchange="updateActionRow('${a.id}', 'prazo', this.value)" class="w-full bg-white border border-slate-200 p-1.5 rounded focus:ring-1 focus:ring-teal-500 outline-none"></td>
+                        <td class="p-2 text-center"><button onclick="removeActionRow('${a.id}')" class="text-red-400 hover:text-red-600"><i data-lucide="x-circle" class="w-4 h-4"></i></button></td>
+                    </tr>
+                `).join('');
+            }
+            if(window.lucide) lucide.createIcons();
+        }
+
+        // --- SAVE / DELETE ---
+
+        window.saveAta = async function(isConclusion) {
+            if (!currentUser) return;
+            
+            const dataReuniao = document.getElementById('ata-data').value;
+            const lider = document.getElementById('ata-lider').value;
+
+            if (isConclusion && (!dataReuniao || !lider)) {
+                return Swal.fire('Atenção', 'Data e Líder são obrigatórios para encerrar a ata.', 'warning');
+            }
+
+            if (isConclusion) {
+                const conf = await Swal.fire({ title: 'Encerrar Ata?', text: "Após concluída, a ata passa a ser o registo oficial. Confirmar?", icon: 'question', showCancelButton: true, confirmButtonColor: '#0d9488' });
+                if (!conf.isConfirmed) return;
+            }
+
+            const id = document.getElementById('ata-id').value;
+            
+            const payload = {
+                dataReuniao: dataReuniao,
+                lider: lider.toUpperCase(),
+                participantes: document.getElementById('ata-participantes').value.toUpperCase(),
+                entradas: {
+                    acoes_ant: document.getElementById('ent-acoes-ant').value.toUpperCase(),
+                    mudancas: document.getElementById('ent-mudancas').value.toUpperCase(),
+                    desempenho: document.getElementById('ent-desempenho').value.toUpperCase(),
+                    recursos: document.getElementById('ent-recursos').value.toUpperCase(),
+                    riscos: document.getElementById('ent-riscos').value.toUpperCase()
+                },
+                saidas: {
+                    melhorias: document.getElementById('sai-melhorias').value.toUpperCase(),
+                    recursos: document.getElementById('sai-recursos').value.toUpperCase()
+                },
+                planoAcao: actionPlanData.map(a => ({ acao: a.acao, responsavel: a.responsavel, prazo: a.prazo })), // Limpa IDs temporarios
+                status: isConclusion ? 'Concluída' : 'Rascunho',
+                updatedAt: new Date().toISOString()
+            };
+
+            try {
+                if (id) {
+                    await updateDoc(doc(db, `artifacts/${app_id}/public/data/analise_critica`, id), payload);
+                } else {
+                    payload.createdAt = new Date().toISOString();
+                    await addDoc(collection(db, `artifacts/${app_id}/public/data/analise_critica`), payload);
+                }
+                
+                Swal.fire({ title: 'Sucesso!', text: 'Registo salvo com sucesso.', icon: 'success', timer: 1500, showConfirmButton: false });
+                changeView('dashboard');
+                
+            } catch (error) {
+                console.error(error);
+                Swal.fire('Erro', 'Falha ao gravar no banco de dados.', 'error');
+            }
+        };
+
+        window.deleteAta = async function(id) {
+            const conf = await Swal.fire({ title: 'Excluir?', text: "Deseja remover este registo permanentemente?", icon: 'warning', showCancelButton: true, confirmButtonColor: '#e11d48' });
+            if (conf.isConfirmed) {
+                try {
+                    await deleteDoc(doc(db, `artifacts/${app_id}/public/data/analise_critica`, id));
+                } catch(e) { console.error(e); }
+            }
+        };
+
+        // --- IMPRESSÃO (ISO 9001 Format) ---
+        window.printAta = function(id) {
+            const ata = atasData.find(a => a.id === id);
+            if (!ata) return;
+
+            const printArea = document.getElementById('print-area');
+            const dateStr = ata.dataReuniao ? ata.dataReuniao.split('-').reverse().join('/') : '-';
+
+            let actionHtml = '';
+            if (ata.planoAcao && ata.planoAcao.length > 0) {
+                actionHtml = `
+                    <table class="w-full border-collapse border border-black text-xs mt-4">
+                        <thead class="bg-gray-100">
+                            <tr>
+                                <th class="border border-black p-2 text-left">Ação Requerida</th>
+                                <th class="border border-black p-2 text-left">Responsável</th>
+                                <th class="border border-black p-2 text-center">Prazo</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${ata.planoAcao.map(a => `
+                                <tr>
+                                    <td class="border border-black p-2">${a.acao}</td>
+                                    <td class="border border-black p-2">${a.responsavel}</td>
+                                    <td class="border border-black p-2 text-center">${a.prazo ? a.prazo.split('-').reverse().join('/') : ''}</td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                `;
+            } else {
+                actionHtml = '<p class="text-xs italic mt-2">NENHUMA AÇÃO REGISTADA NESTA REUNIÃO.</p>';
+            }
+
+            const e = ata.entradas || {};
+            const s = ata.saidas || {};
+
+            printArea.innerHTML = `
+                <div class="mb-6 pb-2 border-b-2 border-black flex justify-between items-end">
+                    <div>
+                        <h1 class="text-2xl font-black">ATA DE REUNIÃO - ANÁLISE CRÍTICA DA DIREÇÃO</h1>
+                        <p class="text-sm font-bold text-gray-600 mt-1">SISTEMA DE GESTÃO DA QUALIDADE - ISO 9001 (REQ 9.3)</p>
+                    </div>
+                    <div class="text-right">
+                        <p class="text-sm font-bold">REF: ATA-${ata.id.substring(0,5).toUpperCase()}</p>
+                        <p class="text-sm">Data: ${dateStr}</p>
+                    </div>
+                </div>
+
+                <div class="mb-6 grid grid-cols-2 gap-4 text-sm border border-black p-4">
+                    <div><strong>Líder da Reunião (Direção):</strong> ${ata.lider || '-'}</div>
+                    <div><strong>Participantes:</strong> ${ata.participantes || '-'}</div>
+                </div>
+
+                <h2 class="text-lg font-bold bg-gray-200 border border-black p-2 mb-2">1. ENTRADAS DA ANÁLISE (REQ 9.3.2)</h2>
+                <div class="border border-black p-4 mb-6 text-sm space-y-4">
+                    <div><strong>a) Ações de análises críticas anteriores:</strong><br>${(e.acoes_ant || 'ND').replace(/\n/g, '<br>')}</div>
+                    <div><strong>b) Mudanças em questões externas e internas:</strong><br>${(e.mudancas || 'ND').replace(/\n/g, '<br>')}</div>
+                    <div><strong>c) Desempenho e Eficácia do SGQ:</strong><br>${(e.desempenho || 'ND').replace(/\n/g, '<br>')}</div>
+                    <div><strong>d) Adequação de Recursos:</strong><br>${(e.recursos || 'ND').replace(/\n/g, '<br>')}</div>
+                    <div><strong>e) Eficácia das Ações para Riscos e Oportunidades:</strong><br>${(e.riscos || 'ND').replace(/\n/g, '<br>')}</div>
+                </div>
+
+                <h2 class="text-lg font-bold bg-gray-200 border border-black p-2 mb-2">2. SAÍDAS DA ANÁLISE (REQ 9.3.3)</h2>
+                <div class="border border-black p-4 mb-6 text-sm space-y-4">
+                    <div><strong>a) Oportunidades de Melhoria e Mudanças no SGQ:</strong><br>${(s.melhorias || 'ND').replace(/\n/g, '<br>')}</div>
+                    <div><strong>b) Necessidade de Recursos:</strong><br>${(s.recursos || 'ND').replace(/\n/g, '<br>')}</div>
+                </div>
+
+                <h2 class="text-lg font-bold bg-gray-200 border border-black p-2 mb-2 page-break-avoid">3. PLANO DE AÇÃO</h2>
+                ${actionHtml}
+
+                <div class="mt-20 flex justify-between pt-4 text-sm font-bold">
+                    <div class="text-center w-1/3"><div class="border-b border-black mb-2 h-6"></div>${ata.lider || 'DIREÇÃO'}</div>
+                    <div class="text-center w-1/3"><div class="border-b border-black mb-2 h-6"></div>REPRESENTANTE SGQ</div>
+                </div>
+            `;
+
+            // Oculta a tela normal e mostra a área de impressão
+            document.querySelectorAll('header, main').forEach(el => el.style.display = 'none');
+            printArea.classList.remove('hidden');
+
+            setTimeout(() => {
+                window.print();
+                document.querySelectorAll('header, main').forEach(el => el.style.display = '');
+                printArea.classList.add('hidden');
+                printArea.innerHTML = '';
+            }, 500);
+        };
+
+        // Init
+        document.addEventListener("DOMContentLoaded", initApp);
+    </script>
+</body>
+</html>

@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SGQ - Log de Calibração (ISO 9001)</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome para Ícones -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Lucide Icons para Menu Unificado -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        isoBlue: '#0f4c81',
+                    }
+                }
+            }
+        }
+
+        // Função de navegação segura para os links do menu
+        function navigateTo(url) {
+            if (window.location.protocol === 'blob:' || window.location.origin === 'null') {
+                alert(`Navegação Simulada: O redirecionamento para ${url} funcionará no seu servidor real.`);
+            } else {
+                try { window.location.href = url; } catch (e) { console.warn("Erro de navegação:", e); }
+            }
+        }
+        function showDevInfo() { alert('Módulo de Calibração em operação. Acompanhamento ISO 9001 (Req 7.1.5).'); }
+    </script>
+    
+    <style>
+        /* Estilos personalizados para scrollbar e transições */
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb { background: #c1c1c1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #a8a8a8; }
+        .fade-in { animation: fadeIn 0.3s ease-in-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        
+        /* Forçar caixa alta em inputs de texto visualmente */
+        input[type="text"] { text-transform: uppercase; }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800 font-sans min-h-screen flex flex-col uppercase">
+
+    <!-- ========================================================================= -->
+    <!-- MENU PADRÃO SGQ UNIFICADO (MULTI-PÁGINA) -->
+    <!-- ========================================================================= -->
+    <header class="bg-white shadow-sm z-40 sticky top-0 print:hidden">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <!-- Logotipo / Título Dinâmico do Menu -->
+                <div class="flex items-center flex-1">
+                    <div class="flex-shrink-0 flex items-center mr-6" id="menu-logo-container">
+                        <div class="p-2 bg-amber-100 rounded-lg mr-3"><i data-lucide="scale" class="w-6 h-6 text-amber-700"></i></div>
+                        <h1 class="text-xl font-bold text-gray-800">SGQ <span class="text-amber-600">Calibração</span></h1>
+                    </div>
+                    
+                    <!-- Desktop Menu -->
+                    <nav class="hidden lg:flex space-x-2 h-full">
+                        <div class="relative flex items-center h-full">
+                            <button onclick="navigateTo('cal_dashboard.html')" class="inline-flex items-center px-3 h-full border-b-2 border-transparent text-sm font-medium text-gray-500 hover:text-amber-600 transition-colors focus:outline-none uppercase">Dashboard</button>
+                        </div>
+                        <div class="relative flex items-center h-full">
+                            <button onclick="navigateTo('cal_cadastro.html')" class="inline-flex items-center px-3 h-full border-b-2 border-transparent text-sm font-medium text-gray-500 hover:text-amber-600 transition-colors focus:outline-none uppercase">Cadastro</button>
+                        </div>
+                        <div class="relative flex items-center h-full">
+                            <button onclick="navigateTo('cal_lancamento.html')" class="inline-flex items-center px-3 h-full border-b-2 border-transparent text-sm font-medium text-gray-500 hover:text-amber-600 transition-colors focus:outline-none uppercase">Calibração</button>
+                        </div>
+                        <div class="relative flex items-center h-full">
+                            <button onclick="navigateTo('cal_historico.html')" class="inline-flex items-center px-3 h-full border-b-2 border-transparent text-sm font-medium text-gray-500 hover:text-amber-600 transition-colors focus:outline-none uppercase">Histórico</button>
+                        </div>
+                        <div class="relative flex items-center h-full">
+                            <button onclick="navigateTo('cal_log.html')" class="inline-flex items-center px-3 h-full border-b-2 border-amber-600 text-sm font-bold text-amber-700 bg-amber-50 transition-colors focus:outline-none uppercase">Logs</button>
+                        </div>
+
+                        <!-- Menu Aplicativos Externos -->
+                        <div class="relative group h-full flex items-center ml-4">
+                            <button class="inline-flex items-center px-2 h-full border-b-2 border-transparent text-sm font-medium text-gray-500 hover:text-indigo-600 transition-colors focus:outline-none uppercase">
+                                Aplicativos <i data-lucide="layout-grid" class="w-4 h-4 ml-1"></i>
+                            </button>
+                            <div class="absolute right-0 top-16 w-64 bg-white border border-gray-200 rounded-b-lg shadow-xl hidden group-hover:block transition-all z-50">
+                                <div class="px-4 py-2 text-[10px] font-black text-indigo-500 uppercase tracking-widest bg-indigo-50 border-b border-indigo-100">Outros Sistemas</div>
+                                <a href="#" onclick="navigateTo('oco_dashboard.html')" class="block px-5 py-3 text-sm font-medium text-gray-600 hover:bg-gray-50 hover:text-indigo-600 border-l-4 border-transparent transition-colors flex items-center"><i data-lucide="shield-alert" class="w-4 h-4 mr-2 text-indigo-500"></i> Gestão de Ocorrências</a>
+                                <a href="#" onclick="navigateTo('cal_dashboard.html')" class="block px-5 py-3 text-sm font-medium text-gray-600 hover:bg-gray-50 hover:text-indigo-600 border-l-4 border-transparent transition-colors flex items-center"><i data-lucide="scale" class="w-4 h-4 mr-2 text-indigo-500"></i> Ativos e Calibração</a>
+                                <a href="#" onclick="navigateTo('Indicador.html')" class="block px-5 py-3 text-sm font-medium text-gray-600 hover:bg-gray-50 hover:text-indigo-600 border-l-4 border-transparent transition-colors flex items-center"><i data-lucide="line-chart" class="w-4 h-4 mr-2 text-indigo-500"></i> Painel de Indicadores</a>
+                                <a href="#" onclick="navigateTo('dashboard.html')" class="block px-5 py-3 text-sm font-medium text-gray-600 hover:bg-gray-50 hover:text-indigo-600 border-l-4 border-transparent transition-colors flex items-center"><i data-lucide="users" class="w-4 h-4 mr-2 text-indigo-500"></i> Gestão de Pessoas</a>
+                            </div>
+                        </div>
+                    </nav>
+                </div>
+                
+                <!-- Ações do Utilizador -->
+                <div class="flex items-center space-x-4">
+                    <a href="#" onclick="navigateTo('index.html')" class="hidden lg:inline-flex items-center px-4 py-2 border border-transparent text-sm font-bold rounded-md shadow-sm text-white bg-slate-800 hover:bg-slate-700 focus:outline-none transition-colors uppercase">
+                        <i data-lucide="arrow-left" class="w-4 h-4 mr-2"></i> PORTAL
+                    </a>
+                    <button class="text-gray-400 hover:text-gray-600 relative transition-colors" onclick="showDevInfo()"><i data-lucide="info" class="w-5 h-5"></i></button>
+                    <div class="h-8 w-8 rounded-full bg-amber-600 flex items-center justify-center text-white font-bold text-sm shadow-sm uppercase" id="user-avatar">U</div>
+                    <!-- Mobile menu button -->
+                    <button type="button" onclick="document.getElementById('mobile-menu').classList.toggle('hidden')" class="lg:hidden p-2 rounded-md text-gray-400 hover:bg-gray-100">
+                        <i data-lucide="menu" class="w-6 h-6"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Mobile Menu -->
+        <div class="hidden lg:hidden absolute w-full bg-white z-50 border-t shadow-lg max-h-[80vh] overflow-y-auto" id="mobile-menu">
+            <div class="pt-2 pb-3 space-y-1">
+                <button onclick="navigateTo('cal_dashboard.html')" class="w-full text-left block pl-6 py-2 border-l-4 border-transparent text-gray-600 font-medium hover:bg-gray-50 text-sm uppercase flex items-center">
+                    <i data-lucide="layout-dashboard" class="w-4 h-4 mr-2 text-gray-400"></i> Dashboard
+                </button>
+                <button onclick="navigateTo('cal_cadastro.html')" class="w-full text-left block pl-6 py-2 border-l-4 border-transparent text-gray-600 font-medium hover:bg-gray-50 text-sm uppercase flex items-center"><i data-lucide="file-signature" class="w-4 h-4 mr-2 text-gray-400"></i> Cadastro</button>
+                <button onclick="navigateTo('cal_lancamento.html')" class="w-full text-left block pl-6 py-2 border-l-4 border-transparent text-gray-600 font-medium hover:bg-gray-50 text-sm uppercase flex items-center"><i data-lucide="stamp" class="w-4 h-4 mr-2 text-gray-400"></i> Calibração</button>
+                <button onclick="navigateTo('cal_historico.html')" class="w-full text-left block pl-6 py-2 border-l-4 border-transparent text-gray-600 font-medium hover:bg-gray-50 text-sm uppercase flex items-center"><i data-lucide="clock-rotate-left" class="w-4 h-4 mr-2 text-gray-400"></i> Histórico</button>
+                <button onclick="navigateTo('cal_log.html')" class="w-full text-left block pl-6 py-3 border-l-4 border-amber-600 bg-amber-50 text-amber-700 font-bold text-sm uppercase flex items-center mb-1"><i data-lucide="list-ul" class="w-5 h-5 mr-2 text-amber-600"></i> Logs</button>
+
+                <div class="border-t border-gray-100 mt-3 pt-2">
+                    <a href="#" onclick="navigateTo('index.html')" class="block pl-6 py-3 text-white bg-slate-800 hover:bg-slate-700 font-bold uppercase"><i data-lucide="arrow-left" class="w-5 h-5 inline mr-2"></i> PORTAL</a>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Elemento oculto para a lógica antiga não quebrar (data) -->
+    <span id="currentDate" class="hidden"></span>
+
+    <!-- Main Content -->
+    <main class="flex-grow max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full fade-in">
+        
+        <!-- CABEÇALHO DA PÁGINA -->
+        <div class="flex justify-between items-center border-b pb-4 mb-6">
+            <h2 class="text-2xl font-bold text-gray-700 flex items-center gap-2 uppercase tracking-tight">
+                <i class="fa-solid fa-list-ul text-isoBlue"></i> REGISTRO DE ATIVIDADES (LOGS)
+            </h2>
+            <button onclick="navigateTo('cal_dashboard.html')" class="text-xs font-bold text-gray-500 hover:text-indigo-600 flex items-center uppercase transition-colors">
+                <i class="fa-solid fa-arrow-left mr-1"></i> Voltar ao Painel
+            </button>
+        </div>
+
+        <div id="loading-state" class="flex h-32 w-full items-center justify-center">
+            <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-amber-600"></div>
+            <span class="ml-3 text-gray-500 font-medium text-sm">A carregar logs...</span>
+        </div>
+
+        <!-- TABELA DE LOGS -->
+        <div id="logs-container" class="hidden max-w-6xl mx-auto bg-white rounded-lg shadow-md border overflow-hidden">
+            <div class="p-6 border-b bg-gray-50 flex justify-between items-center">
+                <h3 class="text-sm font-bold text-gray-600 uppercase tracking-widest">RASTREABILIDADE DE SISTEMA</h3>
+                <span class="text-[10px] font-bold text-gray-400 border px-3 py-1 rounded-full uppercase bg-white">ISO 9001 AUDITORIA</span>
+            </div>
+            
+            <div class="overflow-x-auto max-h-[600px] overflow-y-auto custom-scrollbar">
+                <table class="min-w-full divide-y divide-gray-200 text-xs">
+                    <thead class="bg-gray-100 sticky top-0 shadow-sm z-10">
+                        <tr>
+                            <th class="px-6 py-4 text-left font-bold uppercase tracking-widest text-gray-500">Data / Hora</th>
+                            <th class="px-6 py-4 text-left font-bold uppercase tracking-widest text-gray-500">Ação</th>
+                            <th class="px-6 py-4 text-left font-bold uppercase tracking-widest text-gray-500">Utilizador (ID)</th>
+                            <th class="px-6 py-4 text-left font-bold uppercase tracking-widest text-gray-500">Descrição Detalhada</th>
+                        </tr>
+                    </thead>
+                    <tbody id="logsTableBody" class="bg-white divide-y divide-gray-100 uppercase">
+                        <!-- Logs renderizados via JS -->
+                    </tbody>
+                </table>
+            </div>
+            
+            <div id="logsEmptyState" class="hidden py-20 text-center flex flex-col items-center">
+                <i data-lucide="inbox" class="w-12 h-12 text-gray-300 mb-3"></i>
+                <p class="text-gray-400 font-bold uppercase">Nenhum registro de atividade encontrado.</p>
+            </div>
+        </div>
+
+    </main>
+
+    <footer class="bg-gray-800 text-gray-400 py-6 text-center text-[10px] font-bold uppercase mt-auto print:hidden">
+        &copy; 2026 REVIMAQ - Controle de Monitoramento e Medição (ISO 9001:2015)
+    </footer>
+
+    <!-- Scripts de Lógica -->
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyBqV0KOQMAYR4z6P_RKnrQPDfkAR2CsXBI",
+            authDomain: "gestao-de-pessoas-49200.firebaseapp.com",
+            projectId: "gestao-de-pessoas-49200",
+            storageBucket: "gestao-de-pessoas-49200.firebasestorage.app",
+            messagingSenderId: "615097388185",
+            appId: "1:615097388185:web:efe0ff09ca41de81f23c08"
+        };
+
+        let logs = [], db, userId, appId = 'gestao-de-pessoas-49200';
+
+        async function init() {
+            try {
+                const { initializeApp } = await import("https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js");
+                const { getAuth, signInAnonymously, onAuthStateChanged } = await import("https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js");
+                const { getFirestore, doc, onSnapshot } = await import("https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js");
+
+                const app = initializeApp(firebaseConfig);
+                const auth = getAuth(app);
+                db = getFirestore(app);
+
+                onAuthStateChanged(auth, async user => {
+                    if (user) {
+                        userId = user.uid;
+                        if(document.getElementById('user-avatar')) {
+                            document.getElementById('user-avatar').innerText = user.email ? user.email.charAt(0).toUpperCase() : 'U'; 
+                        }
+
+                        // Carregar Inventário de Calibração Global para extrair apenas os Logs
+                        const globalDocRef = doc(db, 'calibracao', 'inventario_geral');
+                        
+                        onSnapshot(globalDocRef, async snap => {
+                            if (snap.exists() && snap.data().logs) {
+                                logs = snap.data().logs || [];
+                            } else {
+                                logs = [];
+                            }
+                            
+                            document.getElementById('loading-state').classList.add('hidden');
+                            document.getElementById('logs-container').classList.remove('hidden');
+                            
+                            renderLogsTable();
+
+                            if(window.lucide) window.lucide.createIcons();
+                        }, (err) => {
+                            console.error("ERRO FIREBASE:", err);
+                        });
+                    } else {
+                        // Faz login anônimo apenas se não houver NENHUM usuário logado
+                        await signInAnonymously(auth);
+                    }
+                });
+            } catch (e) { 
+                console.error("Erro na inicialização:", e);
+                const local = JSON.parse(localStorage.getItem('backup_calibracao') || '{"logs":[]}');
+                logs = local.logs || [];
+                
+                document.getElementById('loading-state').classList.add('hidden');
+                document.getElementById('logs-container').classList.remove('hidden');
+                
+                renderLogsTable();
+            }
+        }
+
+        function renderLogsTable() {
+            const tbody = document.getElementById('logsTableBody');
+            const empty = document.getElementById('logsEmptyState');
+            if (!tbody) return;
+            
+            if (logs.length === 0) { 
+                empty.classList.remove('hidden'); 
+                tbody.innerHTML = ''; 
+            } else {
+                empty.classList.add('hidden');
+                
+                // Ordena do mais recente para o mais antigo (caso não esteja já ordenado)
+                const sortedLogs = [...logs].sort((a, b) => new Date(b.data) - new Date(a.data));
+                
+                tbody.innerHTML = sortedLogs.map(l => {
+                    // Cor do badge de ação
+                    let actionClass = 'bg-gray-100 text-gray-700 border-gray-200';
+                    const acaoUpper = (l.acao || '').toUpperCase();
+                    
+                    if (acaoUpper.includes('ADICIONAR') || acaoUpper.includes('CRIAR')) actionClass = 'bg-green-50 text-green-700 border-green-200';
+                    else if (acaoUpper.includes('EDITAR') || acaoUpper.includes('ATUALIZAR')) actionClass = 'bg-blue-50 text-blue-700 border-blue-200';
+                    else if (acaoUpper.includes('ELIMINAR') || acaoUpper.includes('EXCLUIR')) actionClass = 'bg-red-50 text-red-700 border-red-200';
+                    else if (acaoUpper.includes('CALIBRAÇÃO')) actionClass = 'bg-amber-50 text-amber-700 border-amber-200';
+                    
+                    return `
+                    <tr class="hover:bg-slate-50 transition-colors border-b border-gray-100">
+                        <td class="px-6 py-4 font-bold text-gray-500 whitespace-nowrap text-[11px]">${new Date(l.data).toLocaleString('pt-PT')}</td>
+                        <td class="px-6 py-4"><span class="px-2.5 py-1 rounded text-[9px] font-black border ${actionClass} uppercase tracking-widest">${l.acao}</span></td>
+                        <td class="px-6 py-4 font-black text-indigo-500 text-[10px] tracking-widest">${l.user}</td>
+                        <td class="px-6 py-4 font-medium text-slate-700 uppercase text-[11px]">${l.detalhe}</td>
+                    </tr>
+                `}).join('');
+            }
+            if(window.lucide) window.lucide.createIcons();
+        }
+
+        window.onload = init;
+    </script>
+</body>
+</html>

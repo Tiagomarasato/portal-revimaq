@@ -1,0 +1,929 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SGQ - Lançar Calibração (ISO 9001)</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome para Ícones -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Lucide Icons para Menu Unificado -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        isoBlue: '#0f4c81',
+                    }
+                }
+            }
+        }
+
+        function navigateTo(url) {
+            window.location.href = url;
+        }
+        function showDevInfo() { alert('Módulo de Calibração em operação. Acompanhamento ISO 9001 (Req 7.1.5).'); }
+    </script>
+    
+    <style>
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb { background: #c1c1c1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #a8a8a8; }
+        .fade-in { animation: fadeIn 0.3s ease-in-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        input[type="text"], textarea { text-transform: uppercase; }
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #f8fafc; border-radius: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800 font-sans min-h-screen flex flex-col uppercase">
+
+    <!-- MENU PADRÃO SGQ UNIFICADO -->
+    <header class="bg-white shadow-sm z-40 sticky top-0 print:hidden">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center flex-1">
+                    <div class="flex-shrink-0 flex items-center mr-6" id="menu-logo-container">
+                        <div class="p-2 bg-amber-100 rounded-lg mr-3"><i data-lucide="scale" class="w-6 h-6 text-amber-700"></i></div>
+                        <h1 class="text-xl font-bold text-gray-800">SGQ <span class="text-amber-600">Calibração</span></h1>
+                    </div>
+                    
+                    <nav class="hidden lg:flex space-x-2 h-full">
+                        <div class="relative flex items-center h-full">
+                            <button onclick="navigateTo('cal_dashboard.html')" class="inline-flex items-center px-3 h-full border-b-2 border-transparent text-sm font-medium text-gray-500 hover:text-amber-600 transition-colors focus:outline-none uppercase">Dashboard</button>
+                        </div>
+                        <div class="relative flex items-center h-full">
+                            <button onclick="navigateTo('cal_cadastro.html')" class="inline-flex items-center px-3 h-full border-b-2 border-transparent text-sm font-medium text-gray-500 hover:text-amber-600 transition-colors focus:outline-none uppercase">Cadastro</button>
+                        </div>
+                        <div class="relative flex items-center h-full">
+                            <button onclick="navigateTo('cal_lancamento.html')" class="inline-flex items-center px-3 h-full border-b-2 border-amber-600 text-sm font-bold text-amber-700 bg-amber-50 transition-colors focus:outline-none uppercase">Calibração</button>
+                        </div>
+                        <div class="relative flex items-center h-full">
+                            <button onclick="navigateTo('cal_historico.html')" class="inline-flex items-center px-3 h-full border-b-2 border-transparent text-sm font-medium text-gray-500 hover:text-amber-600 transition-colors focus:outline-none uppercase">Histórico</button>
+                        </div>
+                        <div class="relative flex items-center h-full">
+                            <button onclick="navigateTo('cal_log.html')" class="inline-flex items-center px-3 h-full border-b-2 border-transparent text-sm font-medium text-gray-500 hover:text-amber-600 transition-colors focus:outline-none uppercase">Logs</button>
+                        </div>
+
+                        <div class="relative group h-full flex items-center ml-4">
+                            <button class="inline-flex items-center px-2 h-full border-b-2 border-transparent text-sm font-medium text-gray-500 hover:text-indigo-600 transition-colors focus:outline-none uppercase">
+                                Aplicativos <i data-lucide="layout-grid" class="w-4 h-4 ml-1"></i>
+                            </button>
+                            <div class="absolute right-0 top-16 w-64 bg-white border border-gray-200 rounded-b-lg shadow-xl hidden group-hover:block transition-all z-50">
+                                <div class="px-4 py-2 text-[10px] font-black text-indigo-500 uppercase tracking-widest bg-indigo-50 border-b border-indigo-100">Outros Sistemas</div>
+                                <a href="#" onclick="navigateTo('oco_dashboard.html')" class="block px-5 py-3 text-sm font-medium text-gray-600 hover:bg-gray-50 hover:text-indigo-600 border-l-4 border-transparent transition-colors flex items-center"><i data-lucide="shield-alert" class="w-4 h-4 mr-2 text-indigo-500"></i> Gestão de Ocorrências</a>
+                                <a href="#" onclick="navigateTo('cal_dashboard.html')" class="block px-5 py-3 text-sm font-medium text-gray-600 hover:bg-gray-50 hover:text-indigo-600 border-l-4 border-transparent transition-colors flex items-center"><i data-lucide="scale" class="w-4 h-4 mr-2 text-indigo-500"></i> Ativos e Calibração</a>
+                                <a href="#" onclick="navigateTo('Indicador.html')" class="block px-5 py-3 text-sm font-medium text-gray-600 hover:bg-gray-50 hover:text-indigo-600 border-l-4 border-transparent transition-colors flex items-center"><i data-lucide="line-chart" class="w-4 h-4 mr-2 text-indigo-500"></i> Painel de Indicadores</a>
+                                <a href="#" onclick="navigateTo('dashboard.html')" class="block px-5 py-3 text-sm font-medium text-gray-600 hover:bg-gray-50 hover:text-indigo-600 border-l-4 border-transparent transition-colors flex items-center"><i data-lucide="users" class="w-4 h-4 mr-2 text-indigo-500"></i> Gestão de Pessoas</a>
+                            </div>
+                        </div>
+                    </nav>
+                </div>
+                
+                <div class="flex items-center space-x-4">
+                    <a href="#" onclick="navigateTo('index.html')" class="hidden lg:inline-flex items-center px-4 py-2 border border-transparent text-sm font-bold rounded-md shadow-sm text-white bg-slate-800 hover:bg-slate-700 focus:outline-none transition-colors uppercase">
+                        <i data-lucide="arrow-left" class="w-4 h-4 mr-2"></i> PORTAL
+                    </a>
+                    <button class="text-gray-400 hover:text-gray-600 relative transition-colors" onclick="showDevInfo()"><i data-lucide="info" class="w-5 h-5"></i></button>
+                    <div class="h-8 w-8 rounded-full bg-amber-600 flex items-center justify-center text-white font-bold text-sm shadow-sm uppercase" id="user-avatar">U</div>
+                    <button type="button" onclick="document.getElementById('mobile-menu').classList.toggle('hidden')" class="lg:hidden p-2 rounded-md text-gray-400 hover:bg-gray-100">
+                        <i data-lucide="menu" class="w-6 h-6"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <div class="hidden lg:hidden absolute w-full bg-white z-50 border-t shadow-lg max-h-[80vh] overflow-y-auto" id="mobile-menu">
+            <div class="pt-2 pb-3 space-y-1">
+                <button onclick="navigateTo('cal_dashboard.html')" class="w-full text-left block pl-6 py-2 border-l-4 border-transparent text-gray-600 font-medium hover:bg-gray-50 text-sm uppercase flex items-center">
+                    <i data-lucide="layout-dashboard" class="w-4 h-4 mr-2 text-gray-400"></i> Dashboard
+                </button>
+                <button onclick="navigateTo('cal_cadastro.html')" class="w-full text-left block pl-6 py-2 border-l-4 border-transparent text-gray-600 font-medium hover:bg-gray-50 text-sm uppercase flex items-center"><i data-lucide="file-signature" class="w-4 h-4 mr-2 text-gray-400"></i> Cadastro</button>
+                <button onclick="navigateTo('cal_lancamento.html')" class="w-full text-left block pl-6 py-3 border-l-4 border-amber-600 bg-amber-50 text-amber-700 font-bold text-sm uppercase flex items-center mb-1"><i data-lucide="stamp" class="w-5 h-5 mr-2 text-amber-600"></i> Calibração</button>
+                <button onclick="navigateTo('cal_historico.html')" class="w-full text-left block pl-6 py-2 border-l-4 border-transparent text-gray-600 font-medium hover:bg-gray-50 text-sm uppercase flex items-center"><i data-lucide="clock-rotate-left" class="w-4 h-4 mr-2 text-gray-400"></i> Histórico</button>
+                <button onclick="navigateTo('cal_log.html')" class="w-full text-left block pl-6 py-2 border-l-4 border-transparent text-gray-600 font-medium hover:bg-gray-50 text-sm uppercase flex items-center"><i data-lucide="list-ul" class="w-4 h-4 mr-2 text-gray-400"></i> Logs</button>
+
+                <div class="border-t border-gray-100 mt-3 pt-2">
+                    <a href="#" onclick="navigateTo('index.html')" class="block pl-6 py-3 text-white bg-slate-800 hover:bg-slate-700 font-bold uppercase"><i data-lucide="arrow-left" class="w-5 h-5 inline mr-2"></i> PORTAL</a>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full fade-in">
+        
+        <div class="max-w-5xl mx-auto bg-white rounded-lg shadow-md p-6 uppercase">
+            <div class="flex justify-between items-center border-b pb-4 mb-6">
+                <h2 class="text-lg font-bold text-gray-700 flex items-center gap-2 uppercase" id="calibracaoTitle">
+                    <i class="fa-solid fa-stamp text-isoBlue"></i> Lançar Nova Calibração
+                </h2>
+                <button onclick="navigateTo('cal_dashboard.html')" class="text-xs font-bold text-gray-500 hover:text-indigo-600 flex items-center uppercase transition-colors">
+                    <i class="fa-solid fa-arrow-left mr-1"></i> Voltar
+                </button>
+            </div>
+
+            <div id="loading-state" class="flex h-32 w-full items-center justify-center">
+                <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-amber-600"></div>
+                <span class="ml-3 text-gray-500 font-medium text-sm">A carregar dados...</span>
+            </div>
+
+            <form id="calibracaoForm" class="space-y-5 hidden uppercase">
+                <input type="hidden" id="calibracaoEditOriginal" value="">
+
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 mb-1">Selecione o Instrumento *</label>
+                    <select id="selectEquipamentoCal" onchange="carregarCriterioEquipamento()" required class="w-full border border-gray-300 rounded-md px-3 py-3 focus:outline-none focus:ring-2 focus:ring-isoBlue/20 bg-white uppercase font-bold shadow-sm"></select>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 uppercase">
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 mb-1">Data da Calibração *</label>
+                        <input type="date" id="novaDataCal" onchange="autoCalcularProximaData()" required class="border border-gray-300 rounded-md px-3 py-2 w-full outline-none focus:ring-2 focus:ring-isoBlue/20">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 mb-1">Nº do Certificado *</label>
+                        <input type="text" id="novoCertificado" required placeholder="Ex: CAL-2026-001" class="border border-gray-300 rounded-md px-3 py-2 w-full outline-none focus:ring-2 focus:ring-isoBlue/20 uppercase">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 uppercase mt-2">
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 mb-1">Laboratório / Fornecedor</label>
+                        <input type="text" id="calLaboratorio" placeholder="Ex: LABELO, MITUTOYO..." class="border border-gray-300 rounded-md px-3 py-2 w-full outline-none focus:ring-2 focus:ring-isoBlue/20 uppercase">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 mb-1">Rastreabilidade (Selo RBC)?</label>
+                        <div class="mt-2 flex items-center h-8">
+                            <input type="checkbox" id="calRbc" class="w-5 h-5 text-isoBlue border-gray-300 rounded focus:ring-isoBlue">
+                            <span class="ml-2 text-xs font-bold text-gray-600">SIM, POSSUI SELO</span>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 mb-1">Próxima Calibração</label>
+                        <input type="date" id="novaProximaCal" class="border border-gray-300 rounded-md px-3 py-2 w-full outline-none focus:ring-2 focus:ring-isoBlue/20 text-gray-600 font-bold bg-gray-50" title="Calculado automaticamente, mas pode ser alterado se necessário.">
+                    </div>
+                </div>
+
+                <!-- CAIXA DE CÁLCULO -->
+                <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 space-y-4">
+                    <div class="flex justify-between items-center border-b border-blue-200 pb-2">
+                        <h3 class="text-sm font-bold text-isoBlue"><i class="fa-solid fa-calculator mr-2"></i> Avaliação do Certificado (Erro + Incerteza)</h3>
+                        <button type="button" onclick="adicionarLinhaMedicao()" class="bg-blue-100 text-isoBlue px-3 py-1 rounded text-[10px] font-bold hover:bg-blue-200 transition-colors uppercase shadow-sm"><i class="fa-solid fa-plus mr-1"></i> Adicionar Medida</button>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-[10px] font-bold text-blue-800 mb-1">Critério de Aceitação Global (EMA)</label>
+                        <input type="text" id="calCriterioEMA" readonly class="w-full md:w-1/3 border border-blue-200 bg-blue-100/50 rounded-md px-3 py-2 outline-none text-gray-600 font-bold" placeholder="Selecione um instrumento">
+                    </div>
+
+                    <!-- Container das Medidas -->
+                    <div class="bg-white p-3 rounded border border-blue-100 shadow-sm overflow-x-auto">
+                        <div class="flex items-center gap-1 mb-2 px-1 border-b border-gray-100 pb-2 min-w-[850px]">
+                            <div class="w-24 text-[9px] font-bold text-gray-500 uppercase">Medida</div>
+                            <div class="w-12 text-[9px] font-bold text-gray-500 uppercase">U.M.</div>
+                            <div class="flex-1 text-[9px] font-bold text-gray-500 uppercase">Valor Referência</div>
+                            <div class="flex-1 text-[9px] font-bold text-gray-500 uppercase">Valor Medido</div>
+                            <div class="flex-1 text-[9px] font-bold text-gray-500 uppercase">Incerteza (U)</div>
+                            <div class="flex-1 text-[9px] font-bold text-blue-600 uppercase" title="Deixe em branco para usar o EMA Global">EMA (Valor e Tipo)</div>
+                            <div class="w-16 text-[9px] font-bold text-gray-500 uppercase text-center" title="Módulo do Erro somado com a Incerteza">|E| + U</div>
+                            <div class="w-16 text-[9px] font-bold text-gray-500 uppercase text-center" title="Erro em Porcentagem">Erro %</div>
+                            <div class="w-8 text-[9px] font-bold text-gray-500 uppercase text-center">Status</div>
+                            <div class="w-6"></div>
+                        </div>
+                        <div id="medidasContainer" class="space-y-2 max-h-64 overflow-y-auto custom-scrollbar pr-1 min-w-[850px]">
+                            <!-- Linhas de medida geradas via JS -->
+                        </div>
+                    </div>
+
+                    <!-- Resumo -->
+                    <div class="flex flex-col sm:flex-row items-center gap-4 bg-white p-3 rounded border border-blue-100 shadow-sm mt-4">
+                        <div class="flex-1 w-full">
+                            <span class="block text-[10px] font-bold text-gray-500">Pior Caso Encontrado</span>
+                            <input type="text" id="calResultadoSoma" readonly class="w-full bg-transparent border-none text-lg font-black text-gray-700 p-0 outline-none" placeholder="0.00">
+                        </div>
+                        <div class="hidden sm:block w-px h-10 bg-gray-200"></div>
+                        <div class="flex-1 w-full text-center">
+                            <span class="block text-[10px] font-bold text-gray-500 mb-1">Status Final do Equipamento</span>
+                            <div id="calBadgeStatus" class="inline-block px-4 py-1.5 rounded text-xs font-black bg-gray-100 text-gray-400 border border-gray-200 w-full text-center">AGUARDANDO DADOS</div>
+                            <input type="hidden" id="calStatusFinal" value="">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- OBSERVAÇÕES -->
+                <div class="border-t border-gray-200 pt-4 mt-4 uppercase">
+                    <label class="block text-xs font-bold text-gray-500 mb-1">Observações / Parecer Técnico</label>
+                    <textarea id="calObservacoes" rows="2" class="border border-gray-300 rounded-md px-3 py-2 w-full outline-none focus:ring-2 focus:ring-isoBlue/20 uppercase text-xs" placeholder="Descreva observações, restrições de uso ou detalhes da calibração..."></textarea>
+                </div>
+
+                <!-- ANEXOS -->
+                <div class="border-t border-blue-200 pt-4 mt-4 uppercase">
+                    <label class="block text-[10px] font-bold text-blue-800 mb-1 uppercase">Anexos do Certificado (Storage Ativo)</label>
+                    <input type="file" id="fileAnexosCal" multiple onchange="processarAnexosCalibracao(event)" class="text-xs uppercase w-full bg-white border border-blue-200 rounded p-1.5" accept=".pdf,image/*">
+                    <div id="listaAnexosCalForm" class="mt-2 space-y-1"></div>
+                </div>
+
+                <div class="flex gap-3 pt-4 border-t border-gray-100">
+                    <button type="submit" id="btnSubmit" class="w-full bg-emerald-600 text-white py-3 rounded-lg font-bold shadow-md hover:bg-emerald-700 transition-all uppercase">Salvar Calibração</button>
+                </div>
+            </form>
+        </div>
+
+    </main>
+
+    <footer class="bg-gray-800 text-gray-400 py-6 text-center text-[10px] font-bold uppercase mt-auto uppercase print:hidden">
+        &copy; 2026 REVIMAQ - Controle de Monitoramento e Medição (ISO 9001:2015)
+    </footer>
+
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyBqV0KOQMAYR4z6P_RKnrQPDfkAR2CsXBI",
+            authDomain: "gestao-de-pessoas-49200.firebaseapp.com",
+            projectId: "gestao-de-pessoas-49200",
+            storageBucket: "gestao-de-pessoas-49200.firebasestorage.app",
+            messagingSenderId: "615097388185",
+            appId: "1:615097388185:web:efe0ff09ca41de81f23c08"
+        };
+
+        let ativos = [], logs = [], db, userId, appId = 'gestao-de-pessoas-49200';
+        let anexosCalibracaoPendentes = [];
+        
+        // Módulos do Storage Global
+        let firebaseStorage = null;
+        let storageRefModule = null;
+        let uploadBytesModule = null;
+        let getDownloadURLModule = null;
+
+        let state = { roles: [], employees: [] };
+        let userPermissions = {};
+
+        async function init() {
+            try {
+                const { initializeApp } = await import("https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js");
+                const { getAuth, signInAnonymously, onAuthStateChanged } = await import("https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js");
+                const { getFirestore, doc, collection, onSnapshot, setDoc, getDoc } = await import("https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js");
+                
+                // Importar o Firebase Storage para uploads ilimitados do Blaze
+                const { getStorage, ref, uploadBytes, getDownloadURL } = await import("https://www.gstatic.com/firebasejs/11.6.1/firebase-storage.js");
+                storageRefModule = ref;
+                uploadBytesModule = uploadBytes;
+                getDownloadURLModule = getDownloadURL;
+
+                const app = initializeApp(firebaseConfig);
+                const auth = getAuth(app);
+                db = getFirestore(app);
+                firebaseStorage = getStorage(app);
+
+                onAuthStateChanged(auth, async user => {
+                    if (user) {
+                        userId = user.uid;
+                        if(document.getElementById('user-avatar')) {
+                            document.getElementById('user-avatar').innerText = user.email ? user.email.charAt(0).toUpperCase() : 'U'; 
+                        }
+
+                        const rolesRef = collection(db, 'artifacts', appId, 'public', 'data', 'roles');
+                        onSnapshot(rolesRef, snap => {
+                            state.roles = snap.docs.map(d => d.data());
+                            updatePermissions(user);
+                        });
+
+                        const empRef = collection(db, 'artifacts', appId, 'public', 'data', 'employees');
+                        onSnapshot(empRef, snap => {
+                            state.employees = snap.docs.map(d => d.data());
+                            updatePermissions(user);
+                        });
+
+                        const globalDocRef = doc(db, 'calibracao', 'inventario_geral');
+                        onSnapshot(globalDocRef, async snap => {
+                            if (snap.exists() && snap.data().lista && snap.data().lista.length > 0) {
+                                ativos = snap.data().lista;
+                                logs = snap.data().logs || [];
+                            }
+                            
+                            document.getElementById('loading-state').classList.add('hidden');
+                            document.getElementById('calibracaoForm').classList.remove('hidden');
+                            
+                            populateSelects();
+                            checkEditMode();
+
+                            if(window.lucide) window.lucide.createIcons();
+                        }, (err) => {
+                            console.error("ERRO FIREBASE:", err);
+                        });
+                    } else {
+                        // Faz login anónimo apenas se não houver NENHUM utilizador logado
+                        await signInAnonymously(auth);
+                    }
+                });
+            } catch (e) { 
+                console.error(e);
+                const local = JSON.parse(localStorage.getItem('backup_calibracao') || '{"lista":[],"logs":[]}');
+                ativos = local.lista || []; logs = local.logs || [];
+                
+                document.getElementById('loading-state').classList.add('hidden');
+                document.getElementById('calibracaoForm').classList.remove('hidden');
+                
+                populateSelects();
+                checkEditMode();
+            }
+        }
+
+        function updatePermissions(user) {
+            if (user && user.email && user.email !== 'Local') {
+                const currentEmp = state.employees.find(e => e.email === user.email);
+                if (currentEmp) {
+                    const roleObj = state.roles.find(r => r.name === currentEmp.role);
+                    if (roleObj && roleObj.permissions) userPermissions = roleObj.permissions;
+                    else userPermissions = {};
+                } else {
+                    userPermissions = {};
+                }
+            } else {
+                userPermissions = { calibracao: { view:true, create:true, edit:true, delete:true } };
+            }
+        }
+
+        function checkPerm(module, action) {
+            if (userId && (!userPermissions || Object.keys(userPermissions).length === 0)) return true;
+            const modPerms = userPermissions[module] || userPermissions['ativos'] || userPermissions['equipamentos'];
+            if (!modPerms) return false;
+            return modPerms[action] === true;
+        }
+
+        async function salvar() {
+            if (!userId) return;
+            const { doc, setDoc } = await import("https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js");
+            const globalDocRef = doc(db, 'calibracao', 'inventario_geral');
+            await setDoc(globalDocRef, { lista: ativos, logs: logs });
+            
+            try {
+                localStorage.setItem('backup_calibracao', JSON.stringify({ lista: ativos, logs: logs }));
+            } catch (e) {
+                console.warn("Armazenamento local cheio. O backup local foi ignorado, mas os dados foram salvos na nuvem com sucesso.");
+            }
+        }
+
+        async function registrarLog(acao, detalhe) {
+            logs.unshift({
+                data: new Date().toISOString(),
+                acao: acao.toUpperCase(),
+                user: userId ? userId.substring(0, 8).toUpperCase() : "SISTEMA",
+                detalhe: detalhe.toUpperCase()
+            });
+            if (logs.length > 500) logs.pop();
+            await salvar();
+        }
+
+        function calcularProx(d, m) { 
+            const date = new Date(d + 'T12:00:00'); 
+            date.setMonth(date.getMonth() + m); 
+            return date.toISOString().split('T')[0]; 
+        }
+
+        function populateSelects() {
+            const calSelect = document.getElementById('selectEquipamentoCal');
+            if(!calSelect) return;
+
+            const currentCalVal = calSelect.value;
+            const html = '<option value="">-- SELECIONAR EQUIPAMENTO --</option>' + 
+                         ativos.sort((a,b)=>a.tag.localeCompare(b.tag)).map(a => `<option value="${a.id}">${a.tag} - ${a.descricao}</option>`).join('');
+            
+            calSelect.innerHTML = html;
+            if (currentCalVal) calSelect.value = currentCalVal; 
+        }
+
+        function processarAnexosCalibracao(e) {
+            const files = Array.from(e.target.files);
+            files.forEach(f => {
+                // Guarda o Objeto "File" real para fazer upload para o Cloud Storage depois!
+                anexosCalibracaoPendentes.push({ 
+                    nome: f.name.toUpperCase(), 
+                    tipo: f.type, 
+                    fileObj: f 
+                });
+                renderListaFicheirosCalibracao();
+            });
+        }
+
+        function renderListaFicheirosCalibracao() {
+            document.getElementById('listaAnexosCalForm').innerHTML = anexosCalibracaoPendentes.map((f, i) => `
+                <div class="flex justify-between items-center bg-green-50 p-1.5 rounded border border-green-100">
+                    <span class="text-[9px] font-bold text-green-800 truncate w-3/4"><i class="fa-solid fa-file mr-1"></i> ${f.nome}</span>
+                    <button type="button" onclick="anexosCalibracaoPendentes.splice(${i},1); renderListaFicheirosCalibracao()" class="text-red-500 text-xs"><i class="fa-solid fa-trash"></i></button>
+                </div>
+            `).join('');
+        }
+
+        function adicionarLinhaMedicaoComValores(nomeMedida, um, ponto, medido, inc, emaLinhaVal, emaLinhaTipo) {
+            const n = nomeMedida !== undefined ? nomeMedida : '';
+            const u = um !== undefined ? um : '';
+            const p = ponto !== undefined ? ponto : '';
+            const m = medido !== undefined ? medido : '';
+            const i = inc !== undefined ? inc : '';
+            const eV = emaLinhaVal !== undefined ? emaLinhaVal : '';
+            const eT = emaLinhaTipo !== undefined ? emaLinhaTipo : 'abs';
+            
+            const container = document.getElementById('medidasContainer');
+            const id = Date.now() + Math.floor(Math.random() * 1000);
+            const div = document.createElement('div');
+            div.className = "flex items-center gap-1 medida-row hover:bg-gray-50 transition-colors p-1 rounded min-w-[850px]";
+            div.id = `medida-${id}`;
+            div.innerHTML = `
+                <div class="w-24">
+                    <input type="text" class="medida-nome w-full border border-gray-300 rounded px-1.5 py-1.5 text-xs outline-none focus:border-isoBlue uppercase" placeholder="MEDIDA" value="${n}">
+                </div>
+                <div class="w-12">
+                    <input type="text" class="medida-um w-full border border-gray-300 rounded px-1 py-1.5 text-xs outline-none focus:border-isoBlue uppercase" placeholder="U.M." value="${u}">
+                </div>
+                <div class="flex-1">
+                    <input type="number" step="any" class="medida-ponto w-full border border-gray-300 rounded px-1.5 py-1.5 text-xs outline-none focus:border-isoBlue" placeholder="V. REF." oninput="calcularAvaliacaoCalibracao()" value="${p}">
+                </div>
+                <div class="flex-1">
+                    <input type="number" step="any" class="medida-medido w-full border border-gray-300 rounded px-1.5 py-1.5 text-xs outline-none focus:border-isoBlue" placeholder="MEDIDO" oninput="calcularAvaliacaoCalibracao()" value="${m}">
+                </div>
+                <div class="flex-1">
+                    <input type="number" step="any" class="medida-incerteza w-full border border-gray-300 rounded px-1.5 py-1.5 text-xs outline-none focus:border-isoBlue" placeholder="INCERTEZA" oninput="calcularAvaliacaoCalibracao()" value="${i}">
+                </div>
+                <div class="flex-1 flex gap-1">
+                    <input type="number" step="any" class="medida-ema-val w-3/5 border border-blue-200 bg-blue-50/50 rounded px-1.5 py-1.5 text-xs outline-none focus:border-isoBlue placeholder-blue-300" placeholder="Valor" oninput="calcularAvaliacaoCalibracao()" value="${eV}">
+                    <select class="medida-ema-tipo w-2/5 border border-blue-200 bg-blue-50/50 rounded px-0 py-1.5 text-[10px] outline-none focus:border-isoBlue font-bold cursor-pointer" onchange="calcularAvaliacaoCalibracao()">
+                        <option value="abs" ${eT === 'abs' ? 'selected' : ''}>U.M.</option>
+                        <option value="perc" ${eT === 'perc' ? 'selected' : ''}>%</option>
+                    </select>
+                </div>
+                <div class="w-16 text-center">
+                    <span class="medida-resultado text-[10px] font-bold text-gray-600">-</span>
+                </div>
+                <div class="w-16 text-center">
+                    <span class="medida-resultado-perc text-[10px] font-bold text-gray-600">-</span>
+                </div>
+                <div class="w-8 text-center flex items-center justify-center">
+                    <span class="medida-status-icon text-gray-300"><i class="fa-solid fa-minus"></i></span>
+                </div>
+                <button type="button" onclick="removerLinhaMedicao('${id}')" class="text-red-400 hover:text-red-600 w-6 flex justify-center"><i class="fa-solid fa-trash"></i></button>
+            `;
+            container.appendChild(div);
+        }
+
+        function adicionarLinhaMedicao() {
+            adicionarLinhaMedicaoComValores('', '', '', '', '', '', 'abs');
+        }
+
+        function autoCalcularProximaData() {
+            const data = document.getElementById('novaDataCal').value;
+            const idEq = document.getElementById('selectEquipamentoCal').value;
+            const isEditMode = document.getElementById('calibracaoEditOriginal').value !== '';
+            
+            if (data && idEq && !isEditMode) {
+                const eq = ativos.find(a => String(a.id) === String(idEq));
+                const freq = eq ? (eq.frequencia || 12) : 12;
+                document.getElementById('novaProximaCal').value = calcularProx(data, freq);
+            }
+        }
+
+        function removerLinhaMedicao(id) {
+            const el = document.getElementById(`medida-${id}`);
+            if (el) el.remove();
+            calcularAvaliacaoCalibracao();
+        }
+
+        function carregarCriterioEquipamento() {
+            const isAutoLoading = document.getElementById('calibracaoEditOriginal').value !== ''; 
+            if(!isAutoLoading) document.getElementById('calibracaoEditOriginal').value = ''; 
+
+            const id = document.getElementById('selectEquipamentoCal').value;
+            const emaInput = document.getElementById('calCriterioEMA');
+            
+            if (id) {
+                const eq = ativos.find(a => String(a.id) === String(id));
+                if(eq) {
+                    const isPercent = (eq.erroMaximo || '').includes('%');
+                    const criterioNumerico = eq.erroMaximo ? eq.erroMaximo.replace(/[^0-9.,]/g, '').replace(',', '.') : '';
+                    emaInput.value = criterioNumerico + (isPercent ? '%' : '');
+                } else {
+                    emaInput.value = '';
+                }
+            } else {
+                emaInput.value = '';
+            }
+
+            autoCalcularProximaData();
+
+            if(!isAutoLoading) {
+                document.getElementById('medidasContainer').innerHTML = '';
+                adicionarLinhaMedicao(); 
+                calcularAvaliacaoCalibracao();
+            }
+        }
+
+        function calcularAvaliacaoCalibracao() {
+            const emaRaw = document.getElementById('calCriterioEMA').value;
+            const isPercent = emaRaw.includes('%');
+            const emaStr = emaRaw.replace(/[^0-9.,]/g, '').replace(',', '.');
+            const ema = parseFloat(emaStr);
+            const rows = document.querySelectorAll('.medida-row');
+            
+            let maxSoma = -1;
+            let maxSomaPerc = -1;
+            let worstErro = 0;
+            let worstIncerteza = 0;
+            let temValores = false;
+            let temReprovadoNaLinha = false;
+
+            rows.forEach(row => {
+                const pontoInp = row.querySelector('.medida-ponto').value.replace(',', '.');
+                const medidoInp = row.querySelector('.medida-medido').value.replace(',', '.');
+                const incInp = row.querySelector('.medida-incerteza').value.replace(',', '.');
+                
+                const emaLinhaValInp = row.querySelector('.medida-ema-val').value;
+                const emaLinhaTipo = row.querySelector('.medida-ema-tipo').value;
+                
+                const resSpan = row.querySelector('.medida-resultado');
+                const resPercSpan = row.querySelector('.medida-resultado-perc');
+                const iconSpan = row.querySelector('.medida-status-icon');
+                
+                const ponto = parseFloat(pontoInp);
+                const medido = parseFloat(medidoInp);
+                const inc = parseFloat(incInp);
+                
+                if (!isNaN(ponto) && !isNaN(medido) && !isNaN(inc)) {
+                    temValores = true;
+                    
+                    const erro = medido - ponto;
+                    const soma = Math.abs(erro) + inc;
+                    
+                    let somaPerc = 0;
+                    if (ponto !== 0) {
+                        somaPerc = (soma / Math.abs(ponto)) * 100;
+                    }
+                    
+                    resSpan.innerText = soma.toFixed(4);
+                    resPercSpan.innerText = somaPerc.toFixed(3) + '%';
+                    
+                    // Avaliação do EMA na Linha vs Global
+                    let emaAlvo = ema;
+                    let isPercentAlvo = isPercent;
+                    
+                    if (emaLinhaValInp.trim() !== '') {
+                        isPercentAlvo = (emaLinhaTipo === 'perc');
+                        emaAlvo = parseFloat(emaLinhaValInp.replace(',', '.'));
+                    }
+                    
+                    const valorComparacao = isPercentAlvo ? somaPerc : soma;
+                    
+                    // Formatação Visual Baseada no Tipo Avaliado
+                    let classRes = "medida-resultado text-[10px] font-bold";
+                    let classResPerc = "medida-resultado-perc text-[10px] font-bold";
+
+                    if (isPercentAlvo) {
+                        classRes += " text-gray-400 opacity-40"; // apaga o absoluto
+                        if (!isNaN(emaAlvo) && emaAlvo > 0) {
+                            if (valorComparacao > emaAlvo) {
+                                classResPerc += " text-red-600";
+                                iconSpan.innerHTML = '<i class="fa-solid fa-circle-xmark text-red-500" title="Reprovado"></i>';
+                                temReprovadoNaLinha = true;
+                            } else {
+                                classResPerc += " text-green-600";
+                                iconSpan.innerHTML = '<i class="fa-solid fa-circle-check text-green-500" title="Aprovado"></i>';
+                            }
+                        } else {
+                            classResPerc += " text-gray-600";
+                            iconSpan.innerHTML = '<i class="fa-solid fa-minus text-gray-300" title="Sem EMA"></i>';
+                        }
+                    } else {
+                        classResPerc += " text-gray-400 opacity-40"; // apaga a porcentagem
+                        if (!isNaN(emaAlvo) && emaAlvo > 0) {
+                            if (valorComparacao > emaAlvo) {
+                                classRes += " text-red-600";
+                                iconSpan.innerHTML = '<i class="fa-solid fa-circle-xmark text-red-500" title="Reprovado"></i>';
+                                temReprovadoNaLinha = true;
+                            } else {
+                                classRes += " text-green-600";
+                                iconSpan.innerHTML = '<i class="fa-solid fa-circle-check text-green-500" title="Aprovado"></i>';
+                            }
+                        } else {
+                            classRes += " text-gray-600";
+                            iconSpan.innerHTML = '<i class="fa-solid fa-minus text-gray-300" title="Sem EMA"></i>';
+                        }
+                    }
+
+                    resSpan.className = classRes;
+                    resPercSpan.className = classResPerc;
+
+                    const currentEvalSoma = isPercent ? somaPerc : soma;
+                    const maxEvalSoma = isPercent ? maxSomaPerc : maxSoma;
+
+                    if (currentEvalSoma > maxEvalSoma) {
+                        maxSoma = soma;
+                        maxSomaPerc = somaPerc;
+                        worstErro = erro;
+                        worstIncerteza = inc;
+                    }
+                } else {
+                    resSpan.innerText = '-';
+                    resSpan.className = "medida-resultado text-[10px] font-bold text-gray-600";
+                    if(resPercSpan) {
+                        resPercSpan.innerText = '-';
+                        resPercSpan.className = "medida-resultado-perc text-[10px] font-bold text-gray-600";
+                    }
+                    iconSpan.innerHTML = '<i class="fa-solid fa-minus text-gray-300"></i>';
+                }
+            });
+
+            const somaInput = document.getElementById('calResultadoSoma');
+            const badge = document.getElementById('calBadgeStatus');
+            const hiddenStatus = document.getElementById('calStatusFinal');
+
+            somaInput.dataset.worstErro = worstErro;
+            somaInput.dataset.worstIncerteza = worstIncerteza;
+
+            if (temValores) {
+                if (isPercent) {
+                    somaInput.value = `${maxSomaPerc.toFixed(3)}% (${maxSoma.toFixed(4)} abs)`;
+                } else {
+                    somaInput.value = maxSoma.toFixed(4);
+                }
+
+                const valorComparacaoFinal = isPercent ? maxSomaPerc : maxSoma;
+
+                if (temReprovadoNaLinha || (!isNaN(ema) && ema > 0 && valorComparacaoFinal > ema)) {
+                    badge.innerText = "REPROVADO";
+                    badge.className = "inline-block px-4 py-1.5 rounded text-xs font-black bg-red-100 text-red-700 border border-red-200 w-full text-center";
+                    hiddenStatus.value = "REPROVADO";
+                } else if (!isNaN(ema) && ema > 0) {
+                    badge.innerText = "APROVADO";
+                    badge.className = "inline-block px-4 py-1.5 rounded text-xs font-black bg-green-100 text-green-700 border border-green-200 w-full text-center";
+                    hiddenStatus.value = "APROVADO";
+                } else {
+                    badge.innerText = "SEM CRITÉRIO (EMA)";
+                    badge.className = "inline-block px-4 py-1.5 rounded text-xs font-black bg-yellow-100 text-yellow-700 border border-yellow-200 w-full text-center";
+                    hiddenStatus.value = "ANALISAR MANUALMENTE";
+                }
+            } else {
+                somaInput.value = '';
+                badge.innerText = "AGUARDANDO DADOS";
+                badge.className = "inline-block px-4 py-1.5 rounded text-xs font-black bg-gray-100 text-gray-400 border border-gray-200 w-full text-center";
+                hiddenStatus.value = "";
+            }
+        }
+
+        function recalcularStatusAtivo(idx) {
+            if (ativos[idx].historico && ativos[idx].historico.length > 0) {
+                const sorted = [...ativos[idx].historico].sort((x, y) => new Date(y.data) - new Date(x.data));
+                const ultima = sorted[0];
+                ativos[idx].dataUltimaCal = ultima.data;
+                ativos[idx].certificado = ultima.certificado;
+                ativos[idx].ultimoLab = ultima.laboratorio;
+                ativos[idx].ultimoRbc = ultima.rbc;
+                ativos[idx].dataProximaCal = ultima.proxima;
+                ativos[idx].ultimoErro = ultima.erro;
+                ativos[idx].ultimaIncerteza = ultima.incerteza;
+                ativos[idx].ultimasMedidas = ultima.medidas;
+                ativos[idx].ultimoStatusCal = ultima.status;
+                ativos[idx].ultimaObs = ultima.observacoes;
+            } else {
+                ativos[idx].dataUltimaCal = '';
+                ativos[idx].certificado = '';
+                ativos[idx].ultimoLab = '';
+                ativos[idx].ultimoRbc = false;
+                ativos[idx].dataProximaCal = '';
+                ativos[idx].ultimoErro = '';
+                ativos[idx].ultimaIncerteza = '';
+                ativos[idx].ultimasMedidas = [];
+                ativos[idx].ultimoStatusCal = '';
+                ativos[idx].ultimaObs = '';
+            }
+        }
+
+        document.getElementById('calibracaoForm').addEventListener('submit', async e => {
+            e.preventDefault();
+            
+            const btnSubmit = document.getElementById('btnSubmit');
+            btnSubmit.disabled = true;
+            btnSubmit.innerText = 'A PROCESSAR DADOS...';
+
+            try {
+                const editIndex = document.getElementById('calibracaoEditOriginal').value;
+                const id = document.getElementById('selectEquipamentoCal').value;
+                const idx = ativos.findIndex(a => String(a.id) === String(id));
+                
+                if (idx === -1) {
+                    alert("Equipamento não encontrado. Por favor, selecione novamente na lista.");
+                    btnSubmit.disabled = false;
+                    btnSubmit.innerText = 'Salvar Calibração';
+                    return;
+                }
+
+                const data = document.getElementById('novaDataCal').value;
+                const cert = document.getElementById('novoCertificado').value.toUpperCase();
+                const lab = document.getElementById('calLaboratorio').value.toUpperCase();
+                const rbc = document.getElementById('calRbc').checked;
+                const obs = document.getElementById('calObservacoes').value.toUpperCase();
+                let proximaCal = document.getElementById('novaProximaCal').value;
+                const statusAvaliacao = document.getElementById('calStatusFinal').value;
+                
+                if (statusAvaliacao === 'REPROVADO') {
+                    const conf = confirm("ATENÇÃO: O equipamento foi reprovado no cálculo final de Erro + Incerteza > EMA.\n\nDeseja registrar a calibração mesmo assim e inativar o equipamento?");
+                    if (!conf) {
+                        btnSubmit.disabled = false;
+                        btnSubmit.innerText = 'Salvar Calibração';
+                        return;
+                    }
+                }
+
+                if (!proximaCal) proximaCal = calcularProx(data, ativos[idx].frequencia || 12);
+                
+                // Extração das Medidas
+                const rows = document.querySelectorAll('.medida-row');
+                const medidasArr = [];
+                rows.forEach(r => {
+                    const nomeMed = r.querySelector('.medida-nome').value;
+                    const um = r.querySelector('.medida-um').value;
+                    const p = r.querySelector('.medida-ponto').value;
+                    const med = r.querySelector('.medida-medido').value;
+                    const inc = r.querySelector('.medida-incerteza').value;
+                    const emaV = r.querySelector('.medida-ema-val').value;
+                    const emaT = r.querySelector('.medida-ema-tipo').value;
+                    
+                    if(p !== '' && med !== '' && inc !== '') {
+                        medidasArr.push({ 
+                            nomeMedida: nomeMed.toUpperCase(), 
+                            um: um.toUpperCase(), 
+                            ponto: p.toUpperCase(), 
+                            medido: med, 
+                            incerteza: inc, 
+                            emaLinhaVal: emaV, 
+                            emaLinhaTipo: emaT 
+                        });
+                    }
+                });
+
+                const somaInput = document.getElementById('calResultadoSoma');
+
+                // FAZER UPLOAD DOS ANEXOS PARA O STORAGE
+                btnSubmit.innerText = 'A FAZER UPLOAD DE ANEXOS...';
+                const processedAnexos = [];
+                for (let anexo of anexosCalibracaoPendentes) {
+                    if (anexo.fileObj && firebaseStorage) {
+                        const fileR = storageRefModule(firebaseStorage, `calibracao/${Date.now()}_${anexo.nome}`);
+                        await uploadBytesModule(fileR, anexo.fileObj);
+                        const url = await getDownloadURLModule(fileR);
+                        processedAnexos.push({ nome: anexo.nome, dados: url });
+                    } else {
+                        processedAnexos.push({ nome: anexo.nome, dados: anexo.dados });
+                    }
+                }
+                
+                const novaCal = {
+                    data: data,
+                    certificado: cert,
+                    laboratorio: lab,
+                    rbc: rbc,
+                    proxima: proximaCal,
+                    status: statusAvaliacao,
+                    erro: somaInput.dataset.worstErro || '',
+                    incerteza: somaInput.dataset.worstIncerteza || '',
+                    medidas: medidasArr,
+                    observacoes: obs,
+                    anexos: processedAnexos
+                };
+                
+                btnSubmit.innerText = 'A GRAVAR NO SISTEMA...';
+
+                if (!ativos[idx].historico) ativos[idx].historico = [];
+                
+                if (editIndex !== '') {
+                    const idxNum = parseInt(editIndex, 10);
+                    if (idxNum === -1) {
+                        ativos[idx].historico.push(novaCal);
+                    } else if (idxNum >= 0 && idxNum < ativos[idx].historico.length) {
+                        ativos[idx].historico[idxNum] = novaCal;
+                    } else {
+                        ativos[idx].historico.push(novaCal);
+                    }
+                    
+                    recalcularStatusAtivo(idx);
+                    await registrarLog("CALIBRAÇÃO", `CALIBRAÇÃO EDITADA NO ATIVO ${ativos[idx].tag}. RESULTADO: ${statusAvaliacao}.`);
+                } else {
+                    ativos[idx].historico.push(novaCal);
+                    
+                    recalcularStatusAtivo(idx);
+                    await registrarLog("CALIBRAÇÃO", `CERTIFICADO ${cert} LANÇADO PARA ${ativos[idx].tag}. RESULTADO: ${statusAvaliacao || 'REGISTRADO'}.`);
+                }
+                
+                // Sucesso
+                document.getElementById('calibracaoForm').reset(); 
+                document.getElementById('calibracaoEditOriginal').value = '';
+                document.getElementById('calibracaoTitle').innerHTML = '<i class="fa-solid fa-stamp text-isoBlue"></i> Lançar Nova Calibração';
+                document.getElementById('calLaboratorio').value = '';
+                document.getElementById('calRbc').checked = false;
+                document.getElementById('novaProximaCal').value = '';
+                document.getElementById('calObservacoes').value = '';
+                document.getElementById('medidasContainer').innerHTML = ''; 
+                document.getElementById('calBadgeStatus').className = "inline-block px-4 py-1.5 rounded text-xs font-black bg-gray-100 text-gray-400 border border-gray-200 w-full text-center";
+                document.getElementById('calBadgeStatus').innerText = "AGUARDANDO DADOS";
+                somaInput.value = '';
+                
+                anexosCalibracaoPendentes = [];
+                renderListaFicheirosCalibracao();
+                
+                navigateTo('cal_historico.html?id=' + id);
+
+            } catch (err) {
+                console.error(err);
+                alert("ERRO AO SALVAR CALIBRAÇÃO! " + err.message);
+                btnSubmit.disabled = false;
+                btnSubmit.innerText = 'Salvar Calibração';
+            }
+        });
+
+        function checkEditMode() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const eqId = urlParams.get('eqId');
+            const editIndex = urlParams.get('editIndex');
+
+            if (eqId && editIndex !== null) {
+                const a = ativos.find(x => String(x.id) === String(eqId));
+                if (!a) return;
+
+                const hIdx = parseInt(editIndex, 10);
+                let h;
+                
+                if (hIdx === -1) {
+                    h = {
+                        data: a.dataUltimaCal,
+                        certificado: a.certificado,
+                        laboratorio: a.ultimoLab || '',
+                        rbc: a.ultimoRbc || false,
+                        proxima: a.dataProximaCal,
+                        status: a.ultimoStatusCal,
+                        erro: a.ultimoErro,
+                        incerteza: a.ultimaIncerteza,
+                        medidas: a.ultimasMedidas || [],
+                        observacoes: a.ultimaObs || '',
+                        anexos: []
+                    };
+                } else {
+                    h = (a.historico || [])[hIdx];
+                }
+                
+                if (!h) return;
+
+                document.getElementById('calibracaoEditOriginal').value = hIdx;
+                
+                const sel = document.getElementById('selectEquipamentoCal');
+                if (sel) {
+                    sel.value = eqId;
+                    document.getElementById('calibracaoEditOriginal').value = hIdx; 
+                    
+                    const emaInput = document.getElementById('calCriterioEMA');
+                    const isPercent = (a.erroMaximo || '').includes('%');
+                    const criterioNumerico = a.erroMaximo ? a.erroMaximo.replace(/[^0-9.,]/g, '').replace(',', '.') : '';
+                    emaInput.value = criterioNumerico + (isPercent ? '%' : '');
+                }
+
+                document.getElementById('novaDataCal').value = h.data || '';
+                document.getElementById('novoCertificado').value = h.certificado || '';
+                document.getElementById('calLaboratorio').value = h.laboratorio || '';
+                document.getElementById('calRbc').checked = h.rbc === true;
+                document.getElementById('novaProximaCal').value = h.proxima || '';
+                document.getElementById('calObservacoes').value = h.observacoes || '';
+                document.getElementById('calibracaoTitle').innerHTML = `<i class="fa-solid fa-pen text-isoBlue"></i> Editar Calibração: ${h.certificado || 'S/C'}`;
+
+                anexosCalibracaoPendentes = [...(h.anexos || [])];
+                renderListaFicheirosCalibracao();
+
+                document.getElementById('medidasContainer').innerHTML = '';
+                if (h.medidas && h.medidas.length > 0) {
+                    h.medidas.forEach(m => {
+                        // Compatibilidade com dados antigos salvos no formato string "0.5%"
+                        let eV = m.emaLinhaVal !== undefined ? m.emaLinhaVal : '';
+                        let eT = m.emaLinhaTipo !== undefined ? m.emaLinhaTipo : 'abs';
+                        
+                        if (m.emaLinha !== undefined && m.emaLinhaVal === undefined) {
+                            eT = m.emaLinha.includes('%') ? 'perc' : 'abs';
+                            eV = m.emaLinha.replace(/[^0-9.,]/g, '');
+                        }
+
+                        adicionarLinhaMedicaoComValores(m.nomeMedida || '', m.um || '', m.ponto, m.medido, m.incerteza, eV, eT);
+                    });
+                } else {
+                    adicionarLinhaMedicao();
+                }
+
+                calcularAvaliacaoCalibracao();
+            } else {
+                document.getElementById('medidasContainer').innerHTML = '';
+                adicionarLinhaMedicao();
+            }
+        }
+
+        window.onload = init;
+    </script>
+</body>
+</html>
