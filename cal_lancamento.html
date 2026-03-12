@@ -58,6 +58,9 @@
                             <button onclick="navigateTo('cal_dashboard.html')" class="inline-flex items-center px-3 h-full border-b-2 border-transparent text-sm font-medium text-gray-500 hover:text-amber-600 transition-colors focus:outline-none uppercase">Dashboard</button>
                         </div>
                         <div class="relative flex items-center h-full">
+                            <button onclick="navigateTo('cal_cadastro.html')" class="inline-flex items-center px-3 h-full border-b-2 border-transparent text-sm font-medium text-gray-500 hover:text-amber-600 transition-colors focus:outline-none uppercase">Cadastro</button>
+                        </div>
+                        <div class="relative flex items-center h-full">
                             <button onclick="navigateTo('cal_lancamento.html')" class="inline-flex items-center px-3 h-full border-b-2 border-amber-600 text-sm font-bold text-amber-700 bg-amber-50 transition-colors focus:outline-none uppercase">Calibração</button>
                         </div>
                         <div class="relative flex items-center h-full">
@@ -100,6 +103,7 @@
                 <button onclick="navigateTo('cal_dashboard.html')" class="w-full text-left block pl-6 py-2 border-l-4 border-transparent text-gray-600 font-medium hover:bg-gray-50 text-sm uppercase flex items-center">
                     <i data-lucide="layout-dashboard" class="w-4 h-4 mr-2 text-gray-400"></i> Dashboard
                 </button>
+                <button onclick="navigateTo('cal_cadastro.html')" class="w-full text-left block pl-6 py-2 border-l-4 border-transparent text-gray-600 font-medium hover:bg-gray-50 text-sm uppercase flex items-center"><i data-lucide="file-signature" class="w-4 h-4 mr-2 text-gray-400"></i> Cadastro</button>
                 <button onclick="navigateTo('cal_lancamento.html')" class="w-full text-left block pl-6 py-3 border-l-4 border-amber-600 bg-amber-50 text-amber-700 font-bold text-sm uppercase flex items-center mb-1"><i data-lucide="stamp" class="w-5 h-5 mr-2 text-amber-600"></i> Calibração</button>
                 <button onclick="navigateTo('cal_historico.html')" class="w-full text-left block pl-6 py-2 border-l-4 border-transparent text-gray-600 font-medium hover:bg-gray-50 text-sm uppercase flex items-center"><i data-lucide="clock-rotate-left" class="w-4 h-4 mr-2 text-gray-400"></i> Histórico</button>
                 <button onclick="navigateTo('cal_log.html')" class="w-full text-left block pl-6 py-2 border-l-4 border-transparent text-gray-600 font-medium hover:bg-gray-50 text-sm uppercase flex items-center"><i data-lucide="list-ul" class="w-4 h-4 mr-2 text-gray-400"></i> Logs</button>
@@ -113,7 +117,7 @@
 
     <main class="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full fade-in">
         
-        <div class="max-w-4xl mx-auto bg-white rounded-lg shadow-md p-6 uppercase">
+        <div class="max-w-5xl mx-auto bg-white rounded-lg shadow-md p-6 uppercase">
             <div class="flex justify-between items-center border-b pb-4 mb-6">
                 <h2 class="text-lg font-bold text-gray-700 flex items-center gap-2 uppercase" id="calibracaoTitle">
                     <i class="fa-solid fa-stamp text-isoBlue"></i> Lançar Nova Calibração
@@ -139,11 +143,29 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4 uppercase">
                     <div>
                         <label class="block text-xs font-bold text-gray-500 mb-1">Data da Calibração *</label>
-                        <input type="date" id="novaDataCal" required class="border border-gray-300 rounded-md px-3 py-2 w-full outline-none focus:ring-2 focus:ring-isoBlue/20">
+                        <input type="date" id="novaDataCal" onchange="autoCalcularProximaData()" required class="border border-gray-300 rounded-md px-3 py-2 w-full outline-none focus:ring-2 focus:ring-isoBlue/20">
                     </div>
                     <div>
                         <label class="block text-xs font-bold text-gray-500 mb-1">Nº do Certificado *</label>
                         <input type="text" id="novoCertificado" required placeholder="Ex: CAL-2026-001" class="border border-gray-300 rounded-md px-3 py-2 w-full outline-none focus:ring-2 focus:ring-isoBlue/20 uppercase">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 uppercase mt-2">
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 mb-1">Laboratório / Fornecedor</label>
+                        <input type="text" id="calLaboratorio" placeholder="Ex: LABELO, MITUTOYO..." class="border border-gray-300 rounded-md px-3 py-2 w-full outline-none focus:ring-2 focus:ring-isoBlue/20 uppercase">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 mb-1">Rastreabilidade (Selo RBC)?</label>
+                        <div class="mt-2 flex items-center h-8">
+                            <input type="checkbox" id="calRbc" class="w-5 h-5 text-isoBlue border-gray-300 rounded focus:ring-isoBlue">
+                            <span class="ml-2 text-xs font-bold text-gray-600">SIM, POSSUI SELO</span>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 mb-1">Próxima Calibração</label>
+                        <input type="date" id="novaProximaCal" class="border border-gray-300 rounded-md px-3 py-2 w-full outline-none focus:ring-2 focus:ring-isoBlue/20 text-gray-600 font-bold bg-gray-50" title="Calculado automaticamente, mas pode ser alterado se necessário.">
                     </div>
                 </div>
 
@@ -160,16 +182,20 @@
                     </div>
 
                     <!-- Container das Medidas -->
-                    <div class="bg-white p-3 rounded border border-blue-100 shadow-sm">
-                        <div class="flex items-center gap-2 mb-2 px-1 border-b border-gray-100 pb-2">
-                            <div class="flex-1 text-[9px] font-bold text-gray-500 uppercase">Ponto (VVC)</div>
+                    <div class="bg-white p-3 rounded border border-blue-100 shadow-sm overflow-x-auto">
+                        <div class="flex items-center gap-1 mb-2 px-1 border-b border-gray-100 pb-2 min-w-[850px]">
+                            <div class="w-24 text-[9px] font-bold text-gray-500 uppercase">Medida</div>
+                            <div class="w-12 text-[9px] font-bold text-gray-500 uppercase">U.M.</div>
+                            <div class="flex-1 text-[9px] font-bold text-gray-500 uppercase">Valor Referência</div>
                             <div class="flex-1 text-[9px] font-bold text-gray-500 uppercase">Valor Medido</div>
                             <div class="flex-1 text-[9px] font-bold text-gray-500 uppercase">Incerteza (U)</div>
-                            <div class="w-16 sm:w-20 text-[9px] font-bold text-gray-500 uppercase text-center" title="Módulo do Erro somado com a Incerteza">|E| + U</div>
-                            <div class="w-16 sm:w-20 text-[9px] font-bold text-gray-500 uppercase text-center" title="Erro em Porcentagem">Erro %</div>
+                            <div class="flex-1 text-[9px] font-bold text-blue-600 uppercase" title="Deixe em branco para usar o EMA Global">EMA (Valor e Tipo)</div>
+                            <div class="w-16 text-[9px] font-bold text-gray-500 uppercase text-center" title="Módulo do Erro somado com a Incerteza">|E| + U</div>
+                            <div class="w-16 text-[9px] font-bold text-gray-500 uppercase text-center" title="Erro em Porcentagem">Erro %</div>
+                            <div class="w-8 text-[9px] font-bold text-gray-500 uppercase text-center">Status</div>
                             <div class="w-6"></div>
                         </div>
-                        <div id="medidasContainer" class="space-y-2 max-h-64 overflow-y-auto custom-scrollbar pr-1">
+                        <div id="medidasContainer" class="space-y-2 max-h-64 overflow-y-auto custom-scrollbar pr-1 min-w-[850px]">
                             <!-- Linhas de medida geradas via JS -->
                         </div>
                     </div>
@@ -187,6 +213,12 @@
                             <input type="hidden" id="calStatusFinal" value="">
                         </div>
                     </div>
+                </div>
+
+                <!-- OBSERVAÇÕES -->
+                <div class="border-t border-gray-200 pt-4 mt-4 uppercase">
+                    <label class="block text-xs font-bold text-gray-500 mb-1">Observações / Parecer Técnico</label>
+                    <textarea id="calObservacoes" rows="2" class="border border-gray-300 rounded-md px-3 py-2 w-full outline-none focus:ring-2 focus:ring-isoBlue/20 uppercase text-xs" placeholder="Descreva observações, restrições de uso ou detalhes da calibração..."></textarea>
                 </div>
 
                 <!-- ANEXOS -->
@@ -230,6 +262,15 @@
         let state = { roles: [], employees: [] };
         let userPermissions = {};
 
+        function formatarMinimo2Casas(valorNum, maxDecimais = 4) {
+            if (isNaN(valorNum)) return '';
+            let str = parseFloat(Number(valorNum).toFixed(maxDecimais)).toString();
+            let parts = str.split('.');
+            if (parts.length === 1) return str + '.00';
+            if (parts[1].length === 1) return str + '0';
+            return str;
+        }
+
         async function init() {
             try {
                 const { initializeApp } = await import("https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js");
@@ -247,8 +288,7 @@
                 db = getFirestore(app);
                 firebaseStorage = getStorage(app);
 
-                await signInAnonymously(auth);
-                onAuthStateChanged(auth, user => {
+                onAuthStateChanged(auth, async user => {
                     if (user) {
                         userId = user.uid;
                         if(document.getElementById('user-avatar')) {
@@ -284,6 +324,9 @@
                         }, (err) => {
                             console.error("ERRO FIREBASE:", err);
                         });
+                    } else {
+                        // Faz login anónimo apenas se não houver NENHUM utilizador logado
+                        await signInAnonymously(auth);
                     }
                 });
             } catch (e) { 
@@ -321,27 +364,16 @@
             return modPerms[action] === true;
         }
 
-        // ==============================================================
-        // BLOCO COM A TRAVA QUOTA EXCEEDED ERROR (PROTEÇÃO COMPLETA)
-        // ==============================================================
         async function salvar() {
             if (!userId) return;
+            const { doc, setDoc } = await import("https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js");
+            const globalDocRef = doc(db, 'calibracao', 'inventario_geral');
+            await setDoc(globalDocRef, { lista: ativos, logs: logs });
+            
             try {
-                const { doc, setDoc } = await import("https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js");
-                const globalDocRef = doc(db, 'calibracao', 'inventario_geral');
-                
-                // Grava na nuvem primeiro (O mais importante)
-                await setDoc(globalDocRef, { lista: ativos, logs: logs });
-                
-                // O bloco TRY CATCH evita que a falha de disco do PC quebre o sistema na sua tela
-                try {
-                    localStorage.setItem('backup_calibracao', JSON.stringify({ lista: ativos, logs: logs }));
-                } catch (e) {
-                    console.warn("ALERTA DE ESPAÇO: Memória Cache do navegador excedida. O backup secundário offline não foi gravado, mas os dados estão seguros na nuvem da Google.");
-                }
-            } catch(e) {
-                console.error("Erro Crítico no Salvar da Nuvem:", e);
-                throw e; // Lança erro caso a internet falhe
+                localStorage.setItem('backup_calibracao', JSON.stringify({ lista: ativos, logs: logs }));
+            } catch (e) {
+                console.warn("Armazenamento local cheio. O backup local foi ignorado, mas os dados foram salvos na nuvem com sucesso.");
             }
         }
 
@@ -396,32 +428,51 @@
             `).join('');
         }
 
-        // CORREÇÃO CRÍTICA: Campos exatos para cada linha, sem duplicados
-        function adicionarLinhaMedicaoComValores(ponto, medido, inc) {
+        function adicionarLinhaMedicaoComValores(nomeMedida, um, ponto, medido, inc, emaLinhaVal, emaLinhaTipo) {
+            const n = nomeMedida !== undefined ? nomeMedida : '';
+            const u = um !== undefined ? um : '';
             const p = ponto !== undefined ? ponto : '';
             const m = medido !== undefined ? medido : '';
             const i = inc !== undefined ? inc : '';
+            const eV = emaLinhaVal !== undefined ? emaLinhaVal : '';
+            const eT = emaLinhaTipo !== undefined ? emaLinhaTipo : 'abs';
             
             const container = document.getElementById('medidasContainer');
             const id = Date.now() + Math.floor(Math.random() * 1000);
             const div = document.createElement('div');
-            div.className = "flex items-center gap-2 medida-row hover:bg-gray-50 transition-colors p-1 rounded";
+            div.className = "flex items-center gap-1 medida-row hover:bg-gray-50 transition-colors p-1 rounded min-w-[850px]";
             div.id = `medida-${id}`;
             div.innerHTML = `
-                <div class="flex-1">
-                    <input type="number" step="any" class="medida-ponto w-full border border-gray-300 rounded px-2 py-1.5 text-xs outline-none focus:border-isoBlue" placeholder="PONTO" oninput="calcularAvaliacaoCalibracao()" value="${p}">
+                <div class="w-24">
+                    <input type="text" class="medida-nome w-full border border-gray-300 rounded px-1.5 py-1.5 text-xs outline-none focus:border-isoBlue uppercase" placeholder="MEDIDA" value="${n}">
+                </div>
+                <div class="w-12">
+                    <input type="text" class="medida-um w-full border border-gray-300 rounded px-1 py-1.5 text-xs outline-none focus:border-isoBlue uppercase" placeholder="U.M." value="${u}">
                 </div>
                 <div class="flex-1">
-                    <input type="number" step="any" class="medida-medido w-full border border-gray-300 rounded px-2 py-1.5 text-xs outline-none focus:border-isoBlue" placeholder="MEDIDO" oninput="calcularAvaliacaoCalibracao()" value="${m}">
+                    <input type="number" step="any" class="medida-ponto w-full border border-gray-300 rounded px-1.5 py-1.5 text-xs outline-none focus:border-isoBlue" placeholder="V. REF." oninput="calcularAvaliacaoCalibracao()" value="${p}">
                 </div>
                 <div class="flex-1">
-                    <input type="number" step="any" class="medida-incerteza w-full border border-gray-300 rounded px-2 py-1.5 text-xs outline-none focus:border-isoBlue" placeholder="INCERTEZA" oninput="calcularAvaliacaoCalibracao()" value="${i}">
+                    <input type="number" step="any" class="medida-medido w-full border border-gray-300 rounded px-1.5 py-1.5 text-xs outline-none focus:border-isoBlue" placeholder="MEDIDO" oninput="calcularAvaliacaoCalibracao()" value="${m}">
                 </div>
-                <div class="w-16 sm:w-20 text-center">
+                <div class="flex-1">
+                    <input type="number" step="any" class="medida-incerteza w-full border border-gray-300 rounded px-1.5 py-1.5 text-xs outline-none focus:border-isoBlue" placeholder="INCERTEZA" oninput="calcularAvaliacaoCalibracao()" value="${i}">
+                </div>
+                <div class="flex-1 flex gap-1">
+                    <input type="number" step="any" class="medida-ema-val w-3/5 border border-blue-200 bg-blue-50/50 rounded px-1.5 py-1.5 text-xs outline-none focus:border-isoBlue placeholder-blue-300" placeholder="Valor" oninput="calcularAvaliacaoCalibracao()" value="${eV}">
+                    <select class="medida-ema-tipo w-2/5 border border-blue-200 bg-blue-50/50 rounded px-0 py-1.5 text-[10px] outline-none focus:border-isoBlue font-bold cursor-pointer" onchange="calcularAvaliacaoCalibracao()">
+                        <option value="abs" ${eT === 'abs' ? 'selected' : ''}>U.M.</option>
+                        <option value="perc" ${eT === 'perc' ? 'selected' : ''}>%</option>
+                    </select>
+                </div>
+                <div class="w-16 text-center">
                     <span class="medida-resultado text-[10px] font-bold text-gray-600">-</span>
                 </div>
-                <div class="w-16 sm:w-20 text-center">
+                <div class="w-16 text-center">
                     <span class="medida-resultado-perc text-[10px] font-bold text-gray-600">-</span>
+                </div>
+                <div class="w-8 text-center flex items-center justify-center">
+                    <span class="medida-status-icon text-gray-300"><i class="fa-solid fa-minus"></i></span>
                 </div>
                 <button type="button" onclick="removerLinhaMedicao('${id}')" class="text-red-400 hover:text-red-600 w-6 flex justify-center"><i class="fa-solid fa-trash"></i></button>
             `;
@@ -429,7 +480,19 @@
         }
 
         function adicionarLinhaMedicao() {
-            adicionarLinhaMedicaoComValores('', '', '');
+            adicionarLinhaMedicaoComValores('', '', '', '', '', '', 'abs');
+        }
+
+        function autoCalcularProximaData() {
+            const data = document.getElementById('novaDataCal').value;
+            const idEq = document.getElementById('selectEquipamentoCal').value;
+            const isEditMode = document.getElementById('calibracaoEditOriginal').value !== '';
+            
+            if (data && idEq && !isEditMode) {
+                const eq = ativos.find(a => String(a.id) === String(idEq));
+                const freq = eq ? (eq.frequencia || 12) : 12;
+                document.getElementById('novaProximaCal').value = calcularProx(data, freq);
+            }
         }
 
         function removerLinhaMedicao(id) {
@@ -449,7 +512,11 @@
                 const eq = ativos.find(a => String(a.id) === String(id));
                 if(eq) {
                     const isPercent = (eq.erroMaximo || '').includes('%');
-                    const criterioNumerico = eq.erroMaximo ? eq.erroMaximo.replace(/[^0-9.,]/g, '').replace(',', '.') : '';
+                    let criterioNumerico = eq.erroMaximo ? eq.erroMaximo.replace(/[^0-9.,]/g, '').replace(',', '.') : '';
+                    if (criterioNumerico !== '') {
+                        let f = parseFloat(criterioNumerico);
+                        if (!isNaN(f)) criterioNumerico = formatarMinimo2Casas(f, 4);
+                    }
                     emaInput.value = criterioNumerico + (isPercent ? '%' : '');
                 } else {
                     emaInput.value = '';
@@ -508,8 +575,8 @@
                         somaPerc = (soma / Math.abs(ponto)) * 100;
                     }
                     
-                    resSpan.innerText = soma.toFixed(4);
-                    resPercSpan.innerText = somaPerc.toFixed(3) + '%';
+                    resSpan.innerText = formatarMinimo2Casas(soma, 4);
+                    resPercSpan.innerText = formatarMinimo2Casas(somaPerc, 4) + '%';
                     
                     // Avaliação do EMA na Linha vs Global
                     let emaAlvo = ema;
@@ -520,9 +587,10 @@
                         emaAlvo = parseFloat(emaLinhaValInp.replace(',', '.'));
                     }
                     
-                    // CORREÇÃO CRÍTICA: Arredondar para 5 casas decimais para evitar falhas do motor do navegador
-                    // Exemplo: 4.000000000000001 > 4 (Reprova) -> Ao usar toFixed(5) passa a 4 > 4 (Aprova)
-                    const valorComparacao = isPercentAlvo ? Number(somaPerc.toFixed(5)) : Number(soma.toFixed(5));
+                    // CORREÇÃO: Arredondar para 6 casas decimais antes da verificação
+                    // Isto impede que a imprecisão de ponto flutuante reprove valores exatos (ex: 4.00000000001 > 4.0)
+                    let valorComparacao = isPercentAlvo ? somaPerc : soma;
+                    valorComparacao = parseFloat(valorComparacao.toFixed(6));
                     
                     // Formatação Visual Baseada no Tipo Avaliado
                     let classRes = "medida-resultado text-[10px] font-bold";
@@ -592,13 +660,14 @@
 
             if (temValores) {
                 if (isPercent) {
-                    somaInput.value = `${maxSomaPerc.toFixed(3)}% (${maxSoma.toFixed(4)} abs)`;
+                    somaInput.value = `${formatarMinimo2Casas(maxSomaPerc, 4)}% (${formatarMinimo2Casas(maxSoma, 4)} abs)`;
                 } else {
-                    somaInput.value = maxSoma.toFixed(4);
+                    somaInput.value = formatarMinimo2Casas(maxSoma, 4);
                 }
 
-                // CORREÇÃO: Arredondar a avaliação final contra o EMA global com a mesma segurança
-                const valorComparacaoFinal = isPercent ? Number(maxSomaPerc.toFixed(5)) : Number(maxSoma.toFixed(5));
+                // CORREÇÃO: Aplicar o mesmo arredondamento de precisão (6 casas) no cálculo final
+                let valorComparacaoFinal = isPercent ? maxSomaPerc : maxSoma;
+                valorComparacaoFinal = parseFloat(valorComparacaoFinal.toFixed(6));
 
                 if (temReprovadoNaLinha || (!isNaN(ema) && ema > 0 && valorComparacaoFinal > ema)) {
                     badge.innerText = "REPROVADO";
@@ -627,19 +696,25 @@
                 const ultima = sorted[0];
                 ativos[idx].dataUltimaCal = ultima.data;
                 ativos[idx].certificado = ultima.certificado;
+                ativos[idx].ultimoLab = ultima.laboratorio;
+                ativos[idx].ultimoRbc = ultima.rbc;
                 ativos[idx].dataProximaCal = ultima.proxima;
                 ativos[idx].ultimoErro = ultima.erro;
                 ativos[idx].ultimaIncerteza = ultima.incerteza;
                 ativos[idx].ultimasMedidas = ultima.medidas;
                 ativos[idx].ultimoStatusCal = ultima.status;
+                ativos[idx].ultimaObs = ultima.observacoes;
             } else {
                 ativos[idx].dataUltimaCal = '';
                 ativos[idx].certificado = '';
+                ativos[idx].ultimoLab = '';
+                ativos[idx].ultimoRbc = false;
                 ativos[idx].dataProximaCal = '';
                 ativos[idx].ultimoErro = '';
                 ativos[idx].ultimaIncerteza = '';
                 ativos[idx].ultimasMedidas = [];
                 ativos[idx].ultimoStatusCal = '';
+                ativos[idx].ultimaObs = '';
             }
         }
 
@@ -664,6 +739,10 @@
 
                 const data = document.getElementById('novaDataCal').value;
                 const cert = document.getElementById('novoCertificado').value.toUpperCase();
+                const lab = document.getElementById('calLaboratorio').value.toUpperCase();
+                const rbc = document.getElementById('calRbc').checked;
+                const obs = document.getElementById('calObservacoes').value.toUpperCase();
+                let proximaCal = document.getElementById('novaProximaCal').value;
                 const statusAvaliacao = document.getElementById('calStatusFinal').value;
                 
                 if (statusAvaliacao === 'REPROVADO') {
@@ -675,17 +754,30 @@
                     }
                 }
 
-                const proximaCal = calcularProx(data, ativos[idx].frequencia || 12);
+                if (!proximaCal) proximaCal = calcularProx(data, ativos[idx].frequencia || 12);
                 
                 // Extração das Medidas
                 const rows = document.querySelectorAll('.medida-row');
                 const medidasArr = [];
                 rows.forEach(r => {
+                    const nomeMed = r.querySelector('.medida-nome').value;
+                    const um = r.querySelector('.medida-um').value;
                     const p = r.querySelector('.medida-ponto').value;
                     const med = r.querySelector('.medida-medido').value;
                     const inc = r.querySelector('.medida-incerteza').value;
+                    const emaV = r.querySelector('.medida-ema-val').value;
+                    const emaT = r.querySelector('.medida-ema-tipo').value;
+                    
                     if(p !== '' && med !== '' && inc !== '') {
-                        medidasArr.push({ ponto: p.toUpperCase(), medido: med, incerteza: inc });
+                        medidasArr.push({ 
+                            nomeMedida: nomeMed.toUpperCase(), 
+                            um: um.toUpperCase(), 
+                            ponto: p.toUpperCase(), 
+                            medido: med, 
+                            incerteza: inc, 
+                            emaLinhaVal: emaV, 
+                            emaLinhaTipo: emaT 
+                        });
                     }
                 });
 
@@ -708,11 +800,14 @@
                 const novaCal = {
                     data: data,
                     certificado: cert,
+                    laboratorio: lab,
+                    rbc: rbc,
                     proxima: proximaCal,
                     status: statusAvaliacao,
                     erro: somaInput.dataset.worstErro || '',
                     incerteza: somaInput.dataset.worstIncerteza || '',
                     medidas: medidasArr,
+                    observacoes: obs,
                     anexos: processedAnexos
                 };
                 
@@ -731,7 +826,6 @@
                     }
                     
                     recalcularStatusAtivo(idx);
-                    // O registrarLog já aciona o salvar() que tem o Try/Catch para a Quota
                     await registrarLog("CALIBRAÇÃO", `CALIBRAÇÃO EDITADA NO ATIVO ${ativos[idx].tag}. RESULTADO: ${statusAvaliacao}.`);
                 } else {
                     ativos[idx].historico.push(novaCal);
@@ -740,10 +834,14 @@
                     await registrarLog("CALIBRAÇÃO", `CERTIFICADO ${cert} LANÇADO PARA ${ativos[idx].tag}. RESULTADO: ${statusAvaliacao || 'REGISTRADO'}.`);
                 }
                 
-                // Sucesso Absoluto
+                // Sucesso
                 document.getElementById('calibracaoForm').reset(); 
                 document.getElementById('calibracaoEditOriginal').value = '';
                 document.getElementById('calibracaoTitle').innerHTML = '<i class="fa-solid fa-stamp text-isoBlue"></i> Lançar Nova Calibração';
+                document.getElementById('calLaboratorio').value = '';
+                document.getElementById('calRbc').checked = false;
+                document.getElementById('novaProximaCal').value = '';
+                document.getElementById('calObservacoes').value = '';
                 document.getElementById('medidasContainer').innerHTML = ''; 
                 document.getElementById('calBadgeStatus').className = "inline-block px-4 py-1.5 rounded text-xs font-black bg-gray-100 text-gray-400 border border-gray-200 w-full text-center";
                 document.getElementById('calBadgeStatus').innerText = "AGUARDANDO DADOS";
@@ -756,8 +854,7 @@
 
             } catch (err) {
                 console.error(err);
-                // Caso aconteça um erro real na nuvem (Net down) ele vai acusar aqui
-                alert("Ocorreu um erro no servidor! " + err.message);
+                alert("ERRO AO SALVAR CALIBRAÇÃO! " + err.message);
                 btnSubmit.disabled = false;
                 btnSubmit.innerText = 'Salvar Calibração';
             }
@@ -779,11 +876,14 @@
                     h = {
                         data: a.dataUltimaCal,
                         certificado: a.certificado,
+                        laboratorio: a.ultimoLab || '',
+                        rbc: a.ultimoRbc || false,
                         proxima: a.dataProximaCal,
                         status: a.ultimoStatusCal,
                         erro: a.ultimoErro,
                         incerteza: a.ultimaIncerteza,
                         medidas: a.ultimasMedidas || [],
+                        observacoes: a.ultimaObs || '',
                         anexos: []
                     };
                 } else {
@@ -801,12 +901,20 @@
                     
                     const emaInput = document.getElementById('calCriterioEMA');
                     const isPercent = (a.erroMaximo || '').includes('%');
-                    const criterioNumerico = a.erroMaximo ? a.erroMaximo.replace(/[^0-9.,]/g, '').replace(',', '.') : '';
+                    let criterioNumerico = a.erroMaximo ? a.erroMaximo.replace(/[^0-9.,]/g, '').replace(',', '.') : '';
+                    if (criterioNumerico !== '') {
+                        let f = parseFloat(criterioNumerico);
+                        if (!isNaN(f)) criterioNumerico = formatarMinimo2Casas(f, 4);
+                    }
                     emaInput.value = criterioNumerico + (isPercent ? '%' : '');
                 }
 
                 document.getElementById('novaDataCal').value = h.data || '';
                 document.getElementById('novoCertificado').value = h.certificado || '';
+                document.getElementById('calLaboratorio').value = h.laboratorio || '';
+                document.getElementById('calRbc').checked = h.rbc === true;
+                document.getElementById('novaProximaCal').value = h.proxima || '';
+                document.getElementById('calObservacoes').value = h.observacoes || '';
                 document.getElementById('calibracaoTitle').innerHTML = `<i class="fa-solid fa-pen text-isoBlue"></i> Editar Calibração: ${h.certificado || 'S/C'}`;
 
                 anexosCalibracaoPendentes = [...(h.anexos || [])];
@@ -815,7 +923,16 @@
                 document.getElementById('medidasContainer').innerHTML = '';
                 if (h.medidas && h.medidas.length > 0) {
                     h.medidas.forEach(m => {
-                        adicionarLinhaMedicaoComValores(m.ponto, m.medido, m.incerteza);
+                        // Compatibilidade com dados antigos salvos no formato string "0.5%"
+                        let eV = m.emaLinhaVal !== undefined ? m.emaLinhaVal : '';
+                        let eT = m.emaLinhaTipo !== undefined ? m.emaLinhaTipo : 'abs';
+                        
+                        if (m.emaLinha !== undefined && m.emaLinhaVal === undefined) {
+                            eT = m.emaLinha.includes('%') ? 'perc' : 'abs';
+                            eV = m.emaLinha.replace(/[^0-9.,]/g, '');
+                        }
+
+                        adicionarLinhaMedicaoComValores(m.nomeMedida || '', m.um || '', m.ponto, m.medido, m.incerteza, eV, eT);
                     });
                 } else {
                     adicionarLinhaMedicao();
